@@ -20,7 +20,7 @@
 ## 📁 项目结构
 
 ```
-high-quality-react-app/
+th-governance-web/
 ├── .vscode/                 # VSCode 配置
 │   ├── settings.json       # 工作区设置
 │   ├── extensions.json     # 推荐扩展
@@ -124,6 +124,7 @@ npm run build:analyze
 ### 浏览器兼容性
 
 支持现代浏览器：
+
 - Chrome >= 87
 - Firefox >= 78
 - Safari >= 14
@@ -149,9 +150,9 @@ cp .env.example .env.development
 ```
 
 支持的环境变量：
+
 - `VITE_APP_TITLE` - 应用标题
 - `VITE_APP_API_BASE_URL` - API 基础地址
-- `VITE_APP_ENABLE_MOCK` - 是否启用 Mock 数据
 - 更多配置请查看 `.env.example`
 
 ## 📚 最佳实践
@@ -186,21 +187,21 @@ export default MyComponent
 import { useState, useEffect } from 'react'
 
 interface UseApiResult<T> {
-  data: T | null
-  loading: boolean
-  error: string | null
+    data: T | null
+    loading: boolean
+    error: string | null
 }
 
 export const useApi = <T>(url: string): UseApiResult<T> => {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+    const [data, setData] = useState<T | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    // API 调用逻辑
-  }, [url])
+    useEffect(() => {
+        // API 调用逻辑
+    }, [url])
 
-  return { data, loading, error }
+    return { data, loading, error }
 }
 ```
 

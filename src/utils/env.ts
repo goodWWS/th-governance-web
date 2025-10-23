@@ -30,7 +30,6 @@ export const getAppConfig = () => {
         env: getEnv('VITE_APP_ENV', 'development'),
         apiBaseUrl: getEnv('VITE_APP_API_BASE_URL', 'http://localhost:8080/api'),
         apiTimeout: Number(getEnv('VITE_APP_API_TIMEOUT', '10000')),
-        enableMock: getEnv('VITE_APP_ENABLE_MOCK', 'false') === 'true',
         enableDevtools: getEnv('VITE_APP_ENABLE_DEVTOOLS', 'false') === 'true',
         enableAnalytics: getEnv('VITE_APP_ENABLE_ANALYTICS', 'false') === 'true',
         logLevel: getEnv('VITE_APP_LOG_LEVEL', 'info'),
@@ -48,7 +47,6 @@ export const printEnvInfo = () => {
         console.log('🌍 环境:', config.env)
         console.log('🔗 API地址:', config.apiBaseUrl)
         console.log('⏱️ 超时时间:', config.apiTimeout + 'ms')
-        console.log('🔧 Mock模式:', config.enableMock ? '开启' : '关闭')
         console.log('🛠️ 开发工具:', config.enableDevtools ? '开启' : '关闭')
         console.groupEnd()
     }
