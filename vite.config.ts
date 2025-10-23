@@ -100,11 +100,21 @@ export default defineConfig(({ mode }) => {
     // CSS 预处理器选项
     css: {
       devSourcemap: !isProduction,
+      modules: {
+        // CSS Modules 配置
+        localsConvention: 'camelCaseOnly',
+        generateScopedName: isProduction 
+          ? '[hash:base64:8]' 
+          : '[name]__[local]___[hash:base64:5]',
+        hashPrefix: 'th-governance',
+      },
       preprocessorOptions: {
         scss: {
-          additionalData: `@import "@/styles/variables.scss";`,
+          additionalData: `@use "@/styles/variables.scss" as *; @use "@/styles/mixins.scss" as *;`,
+          charset: false,
         },
       },
+      postcss: './postcss.config.js',
     },
   }
 })

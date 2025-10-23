@@ -1,4 +1,4 @@
-import { DashboardOutlined, DatabaseOutlined, SettingOutlined } from '@ant-design/icons'
+import { DashboardOutlined, DatabaseOutlined, SettingOutlined, BgColorsOutlined } from '@ant-design/icons'
 import { Layout, Menu, MenuProps } from 'antd'
 import React, { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -38,6 +38,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                     label: '数据治理',
                 },
             ],
+        },
+        {
+            key: '/style-demo',
+            icon: <BgColorsOutlined />,
+            label: '样式演示',
         },
     ]
 

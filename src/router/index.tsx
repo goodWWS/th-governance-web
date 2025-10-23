@@ -1,14 +1,10 @@
-import React from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import MainLayout from '../components/Layout/MainLayout';
 import Dashboard from '../pages/Dashboard';
 import DatabaseConnection from '../pages/DatabaseConnection';
 import DataGovernance from '../pages/DataGovernance';
+import { StyleDemo } from '../components/StyleDemo';
 
-/**
- * 路由配置
- * 使用 React Router v6 的 createBrowserRouter 创建路由
- */
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -16,7 +12,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/dashboard" replace />,
+        element: <Dashboard />,
       },
       {
         path: 'dashboard',
@@ -30,12 +26,12 @@ export const router = createBrowserRouter([
         path: 'data-governance',
         element: <DataGovernance />,
       },
+      {
+        path: 'style-demo',
+        element: <StyleDemo />,
+      },
     ],
-  },
-  {
-    path: '*',
-    element: <Navigate to="/dashboard" replace />,
   },
 ]);
 
-export default router;
+export default router
