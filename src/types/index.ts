@@ -42,7 +42,7 @@ export interface UserState {
 }
 
 // Redux Store 类型 (从 store 导入)
-export type { RootState, AppDispatch } from '../store'
+export type { AppDispatch, RootState } from '../store'
 
 export interface RouteConfig {
     path: string
@@ -153,3 +153,81 @@ export interface UploadOptions {
     onSuccess?: (response: unknown, file: File) => void
     onError?: (error: unknown, file: File) => void
 }
+
+// ==================== 数据治理相关类型定义 ====================
+
+// 数据治理操作结果类型
+export interface DataGovernanceResult {
+    /** 操作影响的记录数 */
+    count: number
+}
+
+// 数据治理日志类型
+export interface DataGovernanceLog {
+    /** 日志ID */
+    id: string
+    /** 操作类型 */
+    operationType: string
+    /** 操作描述 */
+    description: string
+    /** 操作状态 */
+    status: 'success' | 'failed' | 'running'
+    /** 开始时间 */
+    startTime: string
+    /** 结束时间 */
+    endTime?: string
+    /** 操作结果 */
+    result?: DataGovernanceResult
+    /** 错误信息 */
+    errorMessage?: string
+    /** 操作人员 */
+    operator?: string
+    /** 创建时间 */
+    createTime: string
+    /** 更新时间 */
+    updateTime: string
+}
+
+// 日志分页查询参数
+export interface LogPageParams extends PaginationParams {
+    /** 操作类型筛选 */
+    operationType?: string
+    /** 状态筛选 */
+    status?: 'success' | 'failed' | 'running'
+    /** 开始时间 */
+    startTime?: string
+    /** 结束时间 */
+    endTime?: string
+    /** 操作人员 */
+    operator?: string
+}
+
+// 日志分页响应
+export type LogPageResponse = PaginatedResponse<DataGovernanceLog>
+
+// 数据治理操作枚举
+export const DataGovernanceOperation = {
+    /** 清空数据、初始化 */
+    INIT: 'init',
+    /** 数据清洗、空格替换 */
+    CLEAN_DATA_FIELDS: 'cleanDataFields',
+    /** 数据去重 */
+    DEDUPLICATE_DATA: 'deduplicateData',
+    /** 标准对照 */
+    APPLY_STANDARD_MAPPING: 'applyStandardMapping',
+    /** EMPI 定义发放 */
+    ASSIGN_EMPI: 'assignEmpi',
+    /** EMOI 定义发放 */
+    ASSIGN_EMOI: 'assignEmoi',
+    /** 数据归一 */
+    NORMALIZE_DATA: 'normalizeData',
+    /** 丢孤 */
+    REMOVE_ORPHAN_RECORDS: 'removeOrphanRecords',
+    /** 数据脱敏 */
+    MASK_SENSITIVE_DATA: 'maskSensitiveData',
+    /** 同步数据 */
+    SYNC: 'sync',
+} as const
+
+export type DataGovernanceOperation =
+    (typeof DataGovernanceOperation)[keyof typeof DataGovernanceOperation]

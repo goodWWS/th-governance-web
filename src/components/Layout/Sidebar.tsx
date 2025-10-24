@@ -1,4 +1,4 @@
-import { DashboardOutlined, DatabaseOutlined, SettingOutlined, BgColorsOutlined } from '@ant-design/icons'
+import { DashboardOutlined, DatabaseOutlined, SettingOutlined } from '@ant-design/icons'
 import { Layout, Menu, MenuProps } from 'antd'
 import React, { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -39,11 +39,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                 },
             ],
         },
-        {
-            key: '/style-demo',
-            icon: <BgColorsOutlined />,
-            label: '样式演示',
-        },
+        // {
+        //     key: '/style-demo',
+        //     icon: <BgColorsOutlined />,
+        //     label: '样式演示',
+        // },
     ]
 
     // 获取当前选中的菜单项
@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                     color: '#1890ff',
                 }}
             >
-                {collapsed ? '医疗' : '医疗数据治理质控系统'}
+                {collapsed ? '医疗' : '数据治理平台'}
             </div>
             <Menu
                 mode='inline'

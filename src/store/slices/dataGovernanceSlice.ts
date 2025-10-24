@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import type { RootState } from '../index'
 
 // 数据治理任务状态类型
 export type TaskStatus = 'idle' | 'running' | 'completed' | 'error' | 'paused'
@@ -58,22 +59,19 @@ const initialState: DataGovernanceState = {
             id: '1',
             name: '数据清洗',
             description: '清理无效字符，确保数据质量',
-            status: 'completed',
-            progress: 100,
-            processedRecords: 1180000,
+            status: 'idle',
+            progress: 0,
+            processedRecords: 0,
             totalRecords: 1180000,
-            startTime: '2024-01-15 09:00:00',
-            endTime: '2024-01-15 10:30:00',
         },
         {
             id: '2',
             name: '数据去重',
             description: '移除重复数据，防止数据失真',
-            status: 'running',
-            progress: 75,
-            processedRecords: 33750,
+            status: 'idle',
+            progress: 0,
+            processedRecords: 0,
             totalRecords: 45000,
-            startTime: '2024-01-15 14:20:00',
         },
         {
             id: '3',
@@ -88,23 +86,19 @@ const initialState: DataGovernanceState = {
             id: '4',
             name: '标准字典对照',
             description: '将多源数据字典统一为标准字典',
-            status: 'completed',
-            progress: 100,
-            processedRecords: 850000,
+            status: 'idle',
+            progress: 0,
+            processedRecords: 0,
             totalRecords: 850000,
-            startTime: '2024-01-15 11:00:00',
-            endTime: '2024-01-15 12:45:00',
         },
         {
             id: '5',
             name: 'EMPI发放',
             description: '为同一患者发放唯一主索引',
-            status: 'error',
-            progress: 30,
-            processedRecords: 37500,
+            status: 'idle',
+            progress: 0,
+            processedRecords: 0,
             totalRecords: 125000,
-            startTime: '2024-01-15 13:15:00',
-            errorMessage: '身份证号格式验证失败',
         },
         {
             id: '6',
@@ -119,22 +113,19 @@ const initialState: DataGovernanceState = {
             id: '7',
             name: '数据归一',
             description: '统一数据格式和标准值',
-            status: 'completed',
-            progress: 100,
-            processedRecords: 920000,
+            status: 'idle',
+            progress: 0,
+            processedRecords: 0,
             totalRecords: 920000,
-            startTime: '2024-01-15 08:00:00',
-            endTime: '2024-01-15 09:30:00',
         },
         {
             id: '8',
             name: '孤儿数据处理',
             description: '清理无法关联主表的无效数据',
-            status: 'running',
-            progress: 60,
-            processedRecords: 9000,
+            status: 'idle',
+            progress: 0,
+            processedRecords: 0,
             totalRecords: 15000,
-            startTime: '2024-01-15 15:30:00',
         },
         {
             id: '9',
@@ -199,10 +190,50 @@ const initialState: DataGovernanceState = {
 // 异步操作：启动任务
 export const startTask = createAsyncThunk(
     'dataGovernance/startTask',
-    async (taskId: string, { rejectWithValue }) => {
+    async (taskId: string, { rejectWithValue, dispatch, getState }) => {
         try {
             // 模拟API调用
             await new Promise(resolve => setTimeout(resolve, 1000))
+            
+            // 获取任务的总记录数
+            const state = getState() as RootState
+            const task = state.dataGovernance.tasks.find(t => t.id === taskId)
+            const totalRecords = task?.totalRecords || 0
+            
+            // 启动进度模拟
+            const simulateProgress = () => {
+                let progress = 0
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15 + 5 // 每次增加5-20%
+                    if (progress >= 100) {
+                        progress = 100
+                        clearInterval(interval)
+                        // 任务完成
+                        dispatch(updateTaskProgress({
+                            taskId,
+                            progress: 100,
+                            processedRecords: totalRecords // 完成时处理记录数等于总记录数
+                        }))
+                        // 标记任务完成
+                        dispatch(completeTask({
+                            taskId,
+                            endTime: new Date().toLocaleString('zh-CN')
+                        }))
+                    } else {
+                        // 根据进度计算已处理记录数
+                        const processedRecords = Math.floor((progress / 100) * totalRecords)
+                        dispatch(updateTaskProgress({
+                            taskId,
+                            progress: Math.floor(progress),
+                            processedRecords
+                        }))
+                    }
+                }, 2000) // 每2秒更新一次
+            }
+            
+            // 延迟启动进度模拟
+            setTimeout(simulateProgress, 1000)
+            
             return {
                 taskId,
                 startTime: new Date().toLocaleString('zh-CN'),
@@ -344,6 +375,20 @@ const dataGovernanceSlice = createSlice({
         clearError: state => {
             state.error = null
         },
+
+        // 完成任务
+        completeTask: (
+            state,
+            action: PayloadAction<{ taskId: string; endTime: string }>
+        ) => {
+            const { taskId, endTime } = action.payload
+            const task = state.tasks.find(t => t.id === taskId)
+            if (task) {
+                task.status = 'completed'
+                task.endTime = endTime
+                task.progress = 100
+            }
+        },
     },
     extraReducers: builder => {
         builder
@@ -422,6 +467,7 @@ export const {
     removeConnection,
     updateStatistics,
     clearError,
+    completeTask,
 } = dataGovernanceSlice.actions
 
 // 导出 reducer

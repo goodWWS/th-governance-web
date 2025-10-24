@@ -1,8 +1,8 @@
 import axios, {
+    type AxiosError,
     type AxiosInstance,
     type AxiosRequestConfig,
     type AxiosResponse,
-    type AxiosError,
     type InternalAxiosRequestConfig,
 } from 'axios'
 import { getEnv } from './env'
@@ -29,8 +29,6 @@ export interface ApiResponse<T = unknown> {
     code: number
     message: string
     data: T
-    success: boolean
-    timestamp?: number
 }
 
 // 错误响应结构
@@ -102,7 +100,7 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-    (response: AxiosResponse) => {
+    (response: AxiosResponse): AxiosResponse => {
         const { config, data } = response
         const endTime = Date.now()
         const duration =
@@ -119,26 +117,7 @@ request.interceptors.response.use(
             data: data,
         })
 
-        // 统一处理响应数据格式
-        if (data && typeof data === 'object') {
-            // 如果后端返回的是标准格式
-            if ('code' in data && 'message' in data) {
-                // 业务逻辑错误
-                if (data.code !== 0 && data.code !== 200) {
-                    const error = new Error(data.message || '请求失败') as Error & {
-                        code: number
-                        response: AxiosResponse
-                    }
-                    error.code = data.code
-                    error.response = response
-                    return Promise.reject(error)
-                }
-                return data
-            }
-        }
-
-        // 直接返回数据
-        return data
+        return response
     },
     (error: AxiosError) => {
         const { config, response } = error

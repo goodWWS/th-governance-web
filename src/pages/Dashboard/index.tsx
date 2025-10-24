@@ -4,8 +4,9 @@ import {
     ClockCircleOutlined,
     DatabaseOutlined,
     ExclamationCircleOutlined,
+    HistoryOutlined,
 } from '@ant-design/icons'
-import { Card, Col, Progress, Row, Space, Statistic, Table, Tag, Typography } from 'antd'
+import { Alert, Card, Col, Progress, Row, Space, Statistic, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import React, { useState } from 'react'
 
@@ -184,10 +185,29 @@ const Dashboard: React.FC = () => {
 
     return (
         <div>
-            <Title level={2} style={{ marginBottom: 24 }}>
-                <BarChartOutlined style={{ marginRight: 8 }} />
-                数据治理仪表盘
-            </Title>
+            {/* 页面标题 - 与数据治理页面保持一致的风格 */}
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 24,
+                }}
+            >
+                <Title level={2} style={{ margin: 0 }}>
+                    <BarChartOutlined style={{ marginRight: 8 }} />
+                    数据治理仪表盘
+                </Title>
+            </div>
+
+            {/* 信息提示 - 与数据治理页面保持一致 */}
+            <Alert
+                message='数据治理概览'
+                description='实时监控数据治理工作流的执行状态、处理进度和数据质量指标，帮助您全面了解数据治理的整体情况。'
+                type='info'
+                showIcon
+                style={{ marginBottom: 24 }}
+            />
 
             {/* 统计卡片 */}
             <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -279,8 +299,14 @@ const Dashboard: React.FC = () => {
                 </Col>
             </Row>
 
-            {/* 任务执行状态表格 */}
-            <Card title='数据治理任务执行状态' style={{ marginBottom: 24 }}>
+            {/* 任务执行状态表格 - 使用Card包装，与数据治理页面保持一致 */}
+            <Card>
+                <div style={{ marginBottom: 16 }}>
+                    <Title level={4} style={{ margin: 0 }}>
+                        <HistoryOutlined style={{ marginRight: 8 }} />
+                        数据治理任务执行状态
+                    </Title>
+                </div>
                 <Table
                     columns={columns}
                     dataSource={taskData}
