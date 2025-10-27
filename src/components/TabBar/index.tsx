@@ -23,12 +23,7 @@ interface TabBarProps {
  * 页卡栏组件
  * 支持多页签管理、关闭功能和路由同步
  */
-const TabBar: React.FC<TabBarProps> = ({ 
-    className, 
-    maxTabs = 10,
-    onTabChange,
-    onTabClose 
-}) => {
+const TabBar: React.FC<TabBarProps> = ({ className, maxTabs = 10, onTabChange, onTabClose }) => {
     const navigate = useNavigate()
     const location = useLocation()
     const [activeKey, setActiveKey] = useState<string>('')
@@ -36,117 +31,122 @@ const TabBar: React.FC<TabBarProps> = ({
 
     // 路由标签映射
     const routeTabMap: Record<string, Omit<TabItem, 'key' | 'path'>> = {
-        '/dashboard': { 
-            label: '仪表盘', 
-            icon: <HomeOutlined />, 
-            closable: false 
+        '/dashboard': {
+            label: '仪表盘',
+            icon: <HomeOutlined />,
+            closable: false,
         },
-        '/database-connection': { 
-            label: '数据源管理', 
-            closable: true 
+        '/database-connection': {
+            label: '数据源管理',
+            closable: true,
         },
-        '/data-governance': { 
-            label: '数据治理', 
-            closable: true 
+        '/data-governance': {
+            label: '数据治理',
+            closable: true,
         },
-        '/data-quality-control/text': { 
-            label: '文本质控', 
-            closable: true 
+        '/data-quality-control/text': {
+            label: '文本质控',
+            closable: true,
         },
-        '/data-quality-control/comprehensive': { 
-            label: '综合质控', 
-            closable: true 
+        '/data-quality-control/comprehensive': {
+            label: '综合质控',
+            closable: true,
         },
-        '/data-quality-control/completeness': { 
-            label: '完整性质控', 
-            closable: true 
+        '/data-quality-control/completeness': {
+            label: '完整性质控',
+            closable: true,
         },
-        '/data-quality-control/basic-medical-logic': { 
-            label: '基础医疗逻辑质控', 
-            closable: true 
+        '/data-quality-control/basic-medical-logic': {
+            label: '基础医疗逻辑质控',
+            closable: true,
         },
-        '/data-quality-control/core-data': { 
-            label: '核心数据质控', 
-            closable: true 
-        },
-        '/data-structuring': { 
-            label: '数据结构化', 
-            closable: true 
+        '/data-quality-control/core-data': {
+            label: '核心数据质控',
+            closable: true,
         },
     }
 
     /**
      * 添加新标签页
      */
-    const addTab = useCallback((path: string) => {
-        const tabInfo = routeTabMap[path]
-        if (!tabInfo) return
+    const addTab = useCallback(
+        (path: string) => {
+            const tabInfo = routeTabMap[path]
+            if (!tabInfo) return
 
-        const newTab: TabItem = {
-            key: path,
-            path,
-            ...tabInfo
-        }
-
-        setTabs(prevTabs => {
-            const existingTab = prevTabs.find(tab => tab.key === path)
-            if (existingTab) {
-                return prevTabs
+            const newTab: TabItem = {
+                key: path,
+                path,
+                ...tabInfo,
             }
 
-            let newTabs = [...prevTabs, newTab]
-            
-            // 限制最大标签数量
-            if (newTabs.length > maxTabs) {
-                // 移除最旧的可关闭标签
-                const closableIndex = newTabs.findIndex(tab => tab.closable !== false)
-                if (closableIndex !== -1) {
-                    newTabs.splice(closableIndex, 1)
+            setTabs(prevTabs => {
+                const existingTab = prevTabs.find(tab => tab.key === path)
+                if (existingTab) {
+                    return prevTabs
                 }
-            }
 
-            return newTabs
-        })
-    }, [maxTabs])
+                const newTabs = [...prevTabs, newTab]
+
+                // 限制最大标签数量
+                if (newTabs.length > maxTabs) {
+                    // 移除最旧的可关闭标签
+                    const closableIndex = newTabs.findIndex(tab => tab.closable !== false)
+                    if (closableIndex !== -1) {
+                        newTabs.splice(closableIndex, 1)
+                    }
+                }
+
+                return newTabs
+            })
+        },
+        [maxTabs]
+    )
 
     /**
      * 移除标签页
      */
-    const removeTab = useCallback((targetKey: string) => {
-        setTabs(prevTabs => {
-            const newTabs = prevTabs.filter(tab => tab.key !== targetKey)
-            
-            // 如果关闭的是当前激活的标签，需要切换到其他标签
-            if (targetKey === activeKey) {
-                const targetIndex = prevTabs.findIndex(tab => tab.key === targetKey)
-                let nextActiveKey = ''
-                
-                if (newTabs.length > 0) {
-                    // 优先选择右侧标签，如果没有则选择左侧
-                    if (targetIndex < newTabs.length) {
-                        nextActiveKey = newTabs[targetIndex].key
-                    } else {
-                        nextActiveKey = newTabs[newTabs.length - 1].key
+    const removeTab = useCallback(
+        (targetKey: string) => {
+            setTabs(prevTabs => {
+                const newTabs = prevTabs.filter(tab => tab.key !== targetKey)
+
+                // 如果关闭的是当前激活的标签，需要切换到其他标签
+                if (targetKey === activeKey) {
+                    const targetIndex = prevTabs.findIndex(tab => tab.key === targetKey)
+                    let nextActiveKey = ''
+
+                    if (newTabs.length > 0) {
+                        // 优先选择右侧标签，如果没有则选择左侧
+                        if (targetIndex < newTabs.length) {
+                            nextActiveKey = newTabs[targetIndex].key
+                        } else {
+                            nextActiveKey = newTabs[newTabs.length - 1].key
+                        }
+
+                        navigate(nextActiveKey)
                     }
-                    
-                    navigate(nextActiveKey)
                 }
-            }
-            
-            return newTabs
-        })
-        
-        onTabClose?.(targetKey)
-    }, [activeKey, navigate, onTabClose])
+
+                return newTabs
+            })
+
+            onTabClose?.(targetKey)
+        },
+        [activeKey, navigate, onTabClose]
+    )
 
     /**
      * 标签页切换
      */
-    const handleTabChange = useCallback((key: string) => {
-        setActiveKey(key)
-        navigate(key)
-        onTabChange?.(key)
-    }, [navigate, onTabChange])
+    const handleTabChange = useCallback(
+        (key: string) => {
+            setActiveKey(key)
+            navigate(key)
+            onTabChange?.(key)
+        },
+        [navigate, onTabChange]
+    )
 
     /**
      * 标签页编辑（关闭）
@@ -180,19 +180,19 @@ const TabBar: React.FC<TabBarProps> = ({
             </span>
         ),
         closable: tab.closable !== false,
-        closeIcon: <CloseOutlined className={styles.closeIcon} />
+        closeIcon: <CloseOutlined className={styles.closeIcon} />,
     }))
 
     return (
         <div className={`${styles.tabBarWrapper} ${className || ''}`}>
             <Tabs
-                type="editable-card"
+                type='editable-card'
                 activeKey={activeKey}
                 items={tabItems}
                 onChange={handleTabChange}
                 onEdit={handleTabEdit}
                 className={styles.tabBar}
-                size="small"
+                size='small'
                 hideAdd
             />
         </div>

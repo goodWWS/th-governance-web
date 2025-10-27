@@ -91,11 +91,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             ],
         },
         // {
-        //     key: '/data-structuring',
-        //     icon: <ApartmentOutlined />,
-        //     label: '数据结构化',
-        // },
-        // {
         //     key: '/style-demo',
         //     icon: <BgColorsOutlined />,
         //     label: '样式演示',

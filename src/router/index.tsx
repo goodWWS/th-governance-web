@@ -71,10 +71,6 @@ export const router = createBrowserRouter([
                 element: <CoreDataQualityControl />,
             },
             // {
-            //     path: 'data-structuring',
-            //     element: <DataStructuring />,
-            // },
-            // {
             //     path: 'style-demo',
             //     element: <StyleDemo />,
             // },

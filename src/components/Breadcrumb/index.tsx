@@ -36,7 +36,6 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className }) => {
         '/data-quality-control/completeness': { title: '完整性质控' },
         '/data-quality-control/basic-medical-logic': { title: '基础医疗逻辑质控' },
         '/data-quality-control/core-data': { title: '核心数据质控' },
-        '/data-structuring': { title: '数据结构化' },
     }
 
     /**
