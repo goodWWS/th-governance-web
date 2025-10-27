@@ -231,3 +231,44 @@ export const DataGovernanceOperation = {
 
 export type DataGovernanceOperation =
     (typeof DataGovernanceOperation)[keyof typeof DataGovernanceOperation]
+
+// 数据库连接相关类型定义
+export interface DbConnection {
+    id: string
+    connectionName: string
+    dbType: string
+    dbHost: string
+    dbPort: string
+    dbName: string
+    dbUsername: string
+    dbPassword: string
+    dbStatus: number
+    remark: string
+    createUser: string
+    createTime: string
+}
+
+export interface DbConnectionPageParams {
+    pageNo: number
+    pageSize: number
+    dbType?: string
+    dbStatus?: number
+}
+
+export interface DbConnectionPageData {
+    pageNo: number
+    pageSize: number
+    total: number
+    list: DbConnection[]
+    statusStats: {
+        abnormalCount: number
+        connectedCount: number
+        totalConnections: number
+    }
+}
+
+export interface DbConnectionPageResponse {
+    code: number
+    msg: string
+    data: DbConnectionPageData
+}

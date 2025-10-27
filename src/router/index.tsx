@@ -4,6 +4,14 @@ import Dashboard from '../pages/Dashboard'
 import DatabaseConnection from '../pages/DatabaseConnection'
 import DataGovernance from '../pages/DataGovernance'
 import ExecutionDetail from '../pages/DataGovernance/ExecutionDetail'
+import ExecutionHistory from '../pages/DataGovernance/ExecutionHistory'
+import WorkflowConfig from '../pages/DataGovernance/WorkflowConfig'
+import DataQualityControl from '../pages/DataQualityControl'
+import BasicMedicalLogicQualityControl from '../pages/DataQualityControl/BasicMedicalLogicQualityControl'
+import CompletenessQualityControl from '../pages/DataQualityControl/CompletenessQualityControl'
+import ComprehensiveQualityControl from '../pages/DataQualityControl/ComprehensiveQualityControl'
+import CoreDataQualityControl from '../pages/DataQualityControl/CoreDataQualityControl'
+import TextQualityControl from '../pages/DataQualityControl/TextQualityControl'
 
 export const router = createBrowserRouter([
     {
@@ -27,9 +35,45 @@ export const router = createBrowserRouter([
                 element: <DataGovernance />,
             },
             {
+                path: 'data-governance/workflow-config',
+                element: <WorkflowConfig />,
+            },
+            {
+                path: 'data-governance/execution-history',
+                element: <ExecutionHistory />,
+            },
+            {
                 path: 'data-governance/execution/:id',
                 element: <ExecutionDetail />,
             },
+            {
+                path: 'data-quality-control',
+                element: <DataQualityControl />,
+            },
+            {
+                path: 'data-quality-control/text',
+                element: <TextQualityControl />,
+            },
+            {
+                path: 'data-quality-control/comprehensive',
+                element: <ComprehensiveQualityControl />,
+            },
+            {
+                path: 'data-quality-control/completeness',
+                element: <CompletenessQualityControl />,
+            },
+            {
+                path: 'data-quality-control/basic-medical-logic',
+                element: <BasicMedicalLogicQualityControl />,
+            },
+            {
+                path: 'data-quality-control/core-data',
+                element: <CoreDataQualityControl />,
+            },
+            // {
+            //     path: 'data-structuring',
+            //     element: <DataStructuring />,
+            // },
             // {
             //     path: 'style-demo',
             //     element: <StyleDemo />,

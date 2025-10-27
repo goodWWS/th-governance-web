@@ -6,6 +6,8 @@
 import type {
     DataGovernanceLog,
     DataGovernanceResult,
+    DbConnectionPageParams,
+    DbConnectionPageResponse,
     LogPageParams,
     LogPageResponse,
 } from '@/types'
@@ -186,6 +188,111 @@ export class DataGovernanceService {
             )
         }
     }
+
+    /**
+     * @description 新增数据库连接配置
+     * @param connection 数据库连接信息
+     * @returns Promise<DataGovernanceResult>
+     */
+    static async addDbConnection(connection: {
+        dbType: string
+        dbHost: string
+        dbPort: string
+        dbName: string
+        dbUsername: string
+        dbPassword: string
+        dbStatus: number
+        remark: string
+        createUser: string
+    }): Promise<any> {
+        try {
+            return await api.post<any>('/data/governance/db-connection', connection)
+        } catch (error) {
+            throw new Error(
+                `新增数据库连接失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
+
+    /**
+     * 分页查询数据库连接配置列表
+     * @description 根据条件分页查询数据库连接信息
+     * @param params 查询参数 { pageNo, pageSize, dbType?, dbStatus? }
+     * @returns Promise<DbConnectionPageResponse>
+     */
+    static async getDbConnectionPage(
+        params: DbConnectionPageParams
+    ): Promise<DbConnectionPageResponse> {
+        try {
+            return await api.get<DbConnectionPageResponse>('/data/governance/db-connection/page', {
+                params,
+            })
+        } catch (error) {
+            throw new Error(
+                `获取数据库连接列表失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
+
+    /**
+     * 删除数据库连接
+     */
+    static async deleteDbConnection(id: string, updateUser: string): Promise<any> {
+        try {
+            return await api.delete<any>(`/data/governance/db-connection/${id}`, {
+                params: { updateUser },
+            })
+        } catch (error) {
+            throw new Error(
+                `删除数据库连接失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
+
+    /**
+     * 更新数据库连接
+     */
+    static async updateDbConnection(
+        id: string,
+        connection: {
+            dbType: string
+            dbHost: string
+            dbPort: string
+            dbName: string
+            dbUsername: string
+            dbPassword: string
+            dbStatus: number
+            remark: string
+            updateUser: string
+        }
+    ): Promise<any> {
+        try {
+            return await api.put<any>(`/data/governance/db-connection/${id}`, connection)
+        } catch (error) {
+            throw new Error(
+                `更新数据库连接失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
+
+    /**
+     * 测试数据库连接
+     * @description 测试数据库连接是否可用
+     * @param id 数据库连接ID
+     * @returns Promise<any>
+     */
+    static async testDbConnection(id: string): Promise<any> {
+        try {
+            if (!id) {
+                throw new Error('数据库连接ID不能为空')
+            }
+            return await api.post<any>(`/data/governance/db-connection/mock-test/${id}`)
+        } catch (error) {
+            throw new Error(
+                `测试数据库连接失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
 }
 
 /**
@@ -208,6 +315,13 @@ export const dataGovernanceService = {
     // 日志查询操作
     getLogPage: DataGovernanceService.getLogPage,
     getLogDetail: DataGovernanceService.getLogDetail,
+
+    // 数据库配置操作
+    addDbConnection: DataGovernanceService.addDbConnection,
+    getDbConnectionPage: DataGovernanceService.getDbConnectionPage,
+    deleteDbConnection: DataGovernanceService.deleteDbConnection,
+    updateDbConnection: DataGovernanceService.updateDbConnection,
+    testDbConnection: DataGovernanceService.testDbConnection,
 }
 
 export default dataGovernanceService

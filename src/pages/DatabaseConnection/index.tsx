@@ -1,3 +1,5 @@
+import { dataGovernanceService } from '@/services/dataGovernanceService'
+import type { DbConnection } from '@/types'
 import {
     CheckCircleOutlined,
     DatabaseOutlined,
@@ -23,67 +25,69 @@ import {
     Typography,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 const { Title } = Typography
 const { Option } = Select
 
-interface DatabaseConnection {
-    id: string
-    name: string
-    type: 'mysql' | 'postgresql' | 'oracle' | 'sqlserver'
-    host: string
-    port: number
-    database: string
-    username: string
-    status: 'connected' | 'disconnected' | 'error'
-    createTime: string
-    lastTestTime: string
-}
-
 const DatabaseConnection: React.FC = () => {
-    const [connections, setConnections] = useState<DatabaseConnection[]>([
-        {
-            id: '1',
-            name: 'HIS主数据库',
-            type: 'mysql',
-            host: '192.168.1.100',
-            port: 3306,
-            database: 'his_main',
-            username: 'his_user',
-            status: 'connected',
-            createTime: '2024-01-10 09:00:00',
-            lastTestTime: '2024-01-15 16:30:00',
-        },
-        {
-            id: '2',
-            name: 'LIS检验系统',
-            type: 'oracle',
-            host: '192.168.1.101',
-            port: 1521,
-            database: 'lis_db',
-            username: 'lis_user',
-            status: 'connected',
-            createTime: '2024-01-10 10:30:00',
-            lastTestTime: '2024-01-15 15:45:00',
-        },
-        {
-            id: '3',
-            name: 'PACS影像系统',
-            type: 'postgresql',
-            host: '192.168.1.102',
-            port: 5432,
-            database: 'pacs_db',
-            username: 'pacs_user',
-            status: 'error',
-            createTime: '2024-01-10 11:15:00',
-            lastTestTime: '2024-01-15 14:20:00',
-        },
-    ])
-
+    const [connections, setConnections] = useState<DbConnection[]>([])
     const [isModalVisible, setIsModalVisible] = useState(false)
-    const [editingConnection, setEditingConnection] = useState<DatabaseConnection | null>(null)
+    const [editingConnection, setEditingConnection] = useState<DbConnection | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [tableLoading, setTableLoading] = useState(false)
+    const [statusStats, setStatusStats] = useState({
+        totalConnections: 0,
+        connectedCount: 0,
+        abnormalCount: 0,
+    })
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+    })
     const [form] = Form.useForm()
+
+    // 页面初始化时获取数据库连接列表
+    useEffect(() => {
+        fetchDbConnections()
+    }, [])
+
+    // 获取数据库连接列表
+    const fetchDbConnections = async (pageNo = 1, pageSize = 10) => {
+        try {
+            setTableLoading(true)
+            const result = await dataGovernanceService.getDbConnectionPage({
+                pageNo,
+                pageSize,
+            })
+
+            if (result.code === 200) {
+                // 直接使用API返回的数据，不再进行格式转换
+                setConnections(result.data.list || [])
+                setPagination({
+                    current: result.data.pageNo || pageNo,
+                    pageSize: result.data.pageSize || pageSize,
+                    total: result.data.total || 0,
+                })
+                // 设置统计数据
+                setStatusStats(
+                    result.data.statusStats || {
+                        totalConnections: 0,
+                        connectedCount: 0,
+                        abnormalCount: 0,
+                    }
+                )
+            } else {
+                message.error(result.msg || '获取数据库连接列表失败')
+            }
+        } catch (error) {
+            console.error('获取数据库连接列表失败:', error)
+            message.error(error instanceof Error ? error.message : '获取数据库连接列表失败')
+        } finally {
+            setTableLoading(false)
+        }
+    }
 
     // 数据库类型配置
     const dbTypeOptions = [
@@ -98,7 +102,7 @@ const DatabaseConnection: React.FC = () => {
         const statusConfig = {
             connected: { color: 'success', icon: <CheckCircleOutlined />, text: '已连接' },
             disconnected: { color: 'default', icon: <ExclamationCircleOutlined />, text: '未连接' },
-            error: { color: 'error', icon: <ExclamationCircleOutlined />, text: '连接错误' },
+            error: { color: 'error', icon: <ExclamationCircleOutlined />, text: '连接异常' },
         }
 
         const config = statusConfig[status as keyof typeof statusConfig]
@@ -110,17 +114,23 @@ const DatabaseConnection: React.FC = () => {
     }
 
     // 表格列配置
-    const columns: ColumnsType<DatabaseConnection> = [
+    const columns: ColumnsType<DbConnection> = [
         {
             title: '连接名称',
-            dataIndex: 'name',
-            key: 'name',
+            dataIndex: 'connectionName',
+            key: 'connectionName',
+            width: 150,
+        },
+        {
+            title: '数据库名称',
+            dataIndex: 'dbName',
+            key: 'dbName',
             width: 150,
         },
         {
             title: '数据库类型',
-            dataIndex: 'type',
-            key: 'type',
+            dataIndex: 'dbType',
+            key: 'dbType',
             width: 120,
             render: (type: string) => {
                 const typeConfig = dbTypeOptions.find(opt => opt.value === type)
@@ -129,39 +139,41 @@ const DatabaseConnection: React.FC = () => {
         },
         {
             title: '主机地址',
-            dataIndex: 'host',
-            key: 'host',
+            dataIndex: 'dbHost',
+            key: 'dbHost',
             width: 150,
         },
         {
             title: '端口',
-            dataIndex: 'port',
-            key: 'port',
+            dataIndex: 'dbPort',
+            key: 'dbPort',
             width: 80,
         },
         {
-            title: '数据库名',
-            dataIndex: 'database',
-            key: 'database',
-            width: 120,
-        },
-        {
             title: '用户名',
-            dataIndex: 'username',
-            key: 'username',
+            dataIndex: 'dbUsername',
+            key: 'dbUsername',
             width: 100,
         },
         {
             title: '状态',
-            dataIndex: 'status',
-            key: 'status',
+            dataIndex: 'dbStatus',
+            key: 'dbStatus',
             width: 100,
-            render: renderStatusTag,
+            render: (status: number) => {
+                const statusMap = new Map([
+                    [1, 'connected'],
+                    [2, 'error'],
+                    [0, 'disconnected'],
+                ])
+                const statusText = statusMap.get(status) || 'disconnected'
+                return renderStatusTag(statusText)
+            },
         },
         {
-            title: '最后测试时间',
-            dataIndex: 'lastTestTime',
-            key: 'lastTestTime',
+            title: '创建时间',
+            dataIndex: 'createTime',
+            key: 'createTime',
             width: 180,
         },
         {
@@ -208,77 +220,209 @@ const DatabaseConnection: React.FC = () => {
     }
 
     // 处理编辑连接
-    const handleEdit = (connection: DatabaseConnection) => {
+    const handleEdit = (connection: DbConnection) => {
         setEditingConnection(connection)
-        form.setFieldsValue(connection)
+        // 映射数据库字段到表单字段
+        form.setFieldsValue({
+            connectionName: connection.connectionName,
+            name: connection.dbName,
+            type: connection.dbType,
+            host: connection.dbHost,
+            port: connection.dbPort,
+            database: connection.dbName,
+            username: connection.dbUsername,
+            password: connection.dbPassword,
+            remark: connection.remark,
+        })
         setIsModalVisible(true)
     }
 
     // 处理删除连接
-    const handleDelete = (id: string) => {
-        setConnections(connections.filter(conn => conn.id !== id))
-        message.success('数据库连接已删除')
+    const handleDelete = async (id: string) => {
+        try {
+            // 获取当前用户信息，这里假设从某个地方获取当前用户
+            const currentUser = 'admin' // TODO: 从用户上下文或状态管理中获取真实的当前用户
+
+            const result = await dataGovernanceService.deleteDbConnection(id, currentUser)
+
+            if (result.code === 200) {
+                // 从本地状态中移除已删除的连接
+                setConnections(connections.filter(conn => conn.id !== id))
+                message.success('数据库连接已删除')
+
+                // 重新获取列表以确保数据同步
+                await fetchDbConnections(pagination.current, pagination.pageSize)
+            } else {
+                message.error(result.message || '删除数据库连接失败')
+            }
+        } catch (error) {
+            console.error('删除数据库连接失败:', error)
+            message.error(error instanceof Error ? error.message : '删除数据库连接失败')
+        }
     }
 
     // 处理测试连接
     const handleTestConnection = async (id: string) => {
-        message.loading({ content: '正在测试连接...', key: 'test' })
+        try {
+            message.loading({ content: '正在测试连接...', key: 'test' })
 
-        // 模拟测试连接
-        setTimeout(() => {
-            const success = Math.random() > 0.3 // 70% 成功率
+            // 调用真实的测试连接接口
+            const result = await dataGovernanceService.testDbConnection(id)
 
+            message.destroy('test')
+
+            if (result.code === 200 && result.success) {
+                // 测试成功，更新连接状态
+                setConnections(prev =>
+                    prev.map(conn =>
+                        conn.id === id
+                            ? {
+                                  ...conn,
+                                  dbStatus: 1, // 设置为连接成功状态
+                                  updateTime: new Date().toISOString(),
+                              }
+                            : conn
+                    )
+                )
+
+                message.success('连接测试成功！数据库连接正常')
+                
+                // 刷新列表以获取最新状态
+                await fetchDbConnections(pagination.current, pagination.pageSize)
+            } else {
+                // 测试失败，更新连接状态
+                setConnections(prev =>
+                    prev.map(conn =>
+                        conn.id === id
+                            ? {
+                                  ...conn,
+                                  dbStatus: 0, // 设置为连接失败状态
+                                  updateTime: new Date().toISOString(),
+                              }
+                            : conn
+                    )
+                )
+
+                message.error(result.msg || '连接测试失败，请检查数据库配置')
+                
+                // 刷新列表以获取最新状态
+                await fetchDbConnections(pagination.current, pagination.pageSize)
+            }
+        } catch (error) {
+            message.destroy('test')
+            console.error('测试数据库连接失败:', error)
+            
+            // 发生异常时也更新状态为失败
             setConnections(prev =>
                 prev.map(conn =>
                     conn.id === id
                         ? {
                               ...conn,
-                              status: success ? 'connected' : 'error',
-                              lastTestTime: new Date().toLocaleString('zh-CN'),
+                              dbStatus: 0, // 设置为连接失败状态
+                              updateTime: new Date().toISOString(),
                           }
                         : conn
                 )
             )
 
-            message.destroy('test')
-            if (success) {
-                message.success('连接测试成功')
-            } else {
-                message.error('连接测试失败，请检查配置')
-            }
-        }, 2000)
+            message.error(
+                error instanceof Error 
+                    ? `连接测试失败: ${error.message}` 
+                    : '连接测试失败，请检查网络连接或数据库配置'
+            )
+            
+            // 刷新列表以获取最新状态
+            await fetchDbConnections(pagination.current, pagination.pageSize)
+        }
     }
 
     // 处理表单提交
     const handleSubmit = async () => {
         try {
+            setLoading(true)
             const values = await form.validateFields()
 
             if (editingConnection) {
-                // 编辑模式
-                setConnections(prev =>
-                    prev.map(conn =>
-                        conn.id === editingConnection.id ? { ...conn, ...values } : conn
-                    )
-                )
-                message.success('数据库连接已更新')
-            } else {
-                // 新增模式
-                const newConnection: DatabaseConnection = {
-                    ...values,
-                    id: Date.now().toString(),
-                    status: 'disconnected' as const,
-                    createTime: new Date().toLocaleString('zh-CN'),
-                    lastTestTime: '-',
+                // 编辑模式 - 调用 updateDbConnection 接口
+                const connectionData = {
+                    connectionName: values.connectionName,
+                    dbType: values.type,
+                    dbHost: values.host,
+                    dbPort: values.port.toString(),
+                    dbName: values.database,
+                    dbUsername: values.username,
+                    dbPassword: values.password,
+                    dbStatus: 1, // 默认启用状态
+                    remark: values.remark || '',
+                    updateUser: 'current_user', // 这里应该从用户上下文获取
                 }
-                setConnections(prev => [...prev, newConnection])
-                message.success('数据库连接已添加')
+                try {
+                    const result = await dataGovernanceService.updateDbConnection(
+                        editingConnection.id,
+                        connectionData
+                    )
+
+                    if (result.code === 200) {
+                        // 更新本地状态
+                        setConnections(prev =>
+                            prev.map(conn =>
+                                conn.id === editingConnection.id ? { ...conn, ...values } : conn
+                            )
+                        )
+                        message.success('数据库连接已更新')
+
+                        // 重新获取列表以确保数据同步
+                        await fetchDbConnections(pagination.current, pagination.pageSize)
+                    } else {
+                        message.error(result.message || '更新数据库连接失败')
+                    }
+                } catch (apiError) {
+                    console.error('API调用失败:', apiError)
+                    message.error(
+                        apiError instanceof Error ? apiError.message : '更新数据库连接失败'
+                    )
+                }
+            } else {
+                // 新增模式 - 调用 addDbConnection 接口
+                const connectionData = {
+                    connectionName: values.connectionName,
+                    dbType: values.type,
+                    dbHost: values.host,
+                    dbPort: values.port.toString(),
+                    dbName: values.database,
+                    dbUsername: values.username,
+                    dbPassword: values.password,
+                    dbStatus: 1, // 默认启用状态
+                    remark: values.remark || '',
+                    createUser: 'current_user', // 这里应该从用户上下文获取
+                }
+
+                try {
+                    const result = await dataGovernanceService.addDbConnection(connectionData)
+
+                    if (result.success) {
+                        message.success('数据库连接已成功添加')
+
+                        // 重新获取列表以确保数据同步
+                        await fetchDbConnections(pagination.current, pagination.pageSize)
+                    } else {
+                        message.error(result.message || '添加数据库连接失败')
+                    }
+                } catch (apiError) {
+                    console.error('API调用失败:', apiError)
+                    message.error(
+                        apiError instanceof Error ? apiError.message : '添加数据库连接失败'
+                    )
+                }
             }
 
             setIsModalVisible(false)
             form.resetFields()
         } catch (error) {
             console.error('表单验证失败:', error)
+            message.error('表单验证失败，请检查输入信息')
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -294,7 +438,7 @@ const DatabaseConnection: React.FC = () => {
         <div>
             <Title level={2} style={{ marginBottom: 24 }}>
                 <DatabaseOutlined style={{ marginRight: 8 }} />
-                数据库连接管理
+                数据源管理
             </Title>
 
             {/* 统计信息 */}
@@ -303,7 +447,7 @@ const DatabaseConnection: React.FC = () => {
                     <Card>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1890ff' }}>
-                                {connections.length}
+                                {statusStats.totalConnections}
                             </div>
                             <div style={{ color: '#666' }}>总连接数</div>
                         </div>
@@ -313,7 +457,7 @@ const DatabaseConnection: React.FC = () => {
                     <Card>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>
-                                {connections.filter(conn => conn.status === 'connected').length}
+                                {statusStats.connectedCount}
                             </div>
                             <div style={{ color: '#666' }}>已连接</div>
                         </div>
@@ -323,7 +467,7 @@ const DatabaseConnection: React.FC = () => {
                     <Card>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ff4d4f' }}>
-                                {connections.filter(conn => conn.status === 'error').length}
+                                {statusStats.abnormalCount}
                             </div>
                             <div style={{ color: '#666' }}>连接异常</div>
                         </div>
@@ -344,11 +488,20 @@ const DatabaseConnection: React.FC = () => {
                     columns={columns}
                     dataSource={connections}
                     rowKey='id'
+                    loading={tableLoading}
                     pagination={{
-                        pageSize: 10,
+                        current: pagination.current,
+                        pageSize: pagination.pageSize,
+                        total: pagination.total,
                         showSizeChanger: true,
                         showQuickJumper: true,
                         showTotal: total => `共 ${total} 条记录`,
+                        onChange: (page, size) => {
+                            fetchDbConnections(page, size)
+                        },
+                        onShowSizeChange: (current, size) => {
+                            fetchDbConnections(1, size)
+                        },
                     }}
                     scroll={{ x: 1200 }}
                 />
@@ -364,12 +517,13 @@ const DatabaseConnection: React.FC = () => {
                     form.resetFields()
                 }}
                 width={600}
+                confirmLoading={loading}
                 okText='确定'
                 cancelText='取消'
             >
                 <Form form={form} layout='vertical' initialValues={{ port: 3306 }}>
                     <Form.Item
-                        name='name'
+                        name='connectionName'
                         label='连接名称'
                         rules={[{ required: true, message: '请输入连接名称' }]}
                     >
@@ -442,6 +596,15 @@ const DatabaseConnection: React.FC = () => {
                             </Form.Item>
                         </Col>
                     </Row>
+
+                    <Form.Item name='remark' label='备注'>
+                        <Input.TextArea
+                            placeholder='请输入备注信息（可选）'
+                            rows={3}
+                            maxLength={200}
+                            showCount
+                        />
+                    </Form.Item>
                 </Form>
             </Modal>
         </div>

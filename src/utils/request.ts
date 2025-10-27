@@ -100,7 +100,7 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-    (response: AxiosResponse): AxiosResponse => {
+    (response: AxiosResponse): any => {
         const { config, data } = response
         const endTime = Date.now()
         const duration =
@@ -117,7 +117,8 @@ request.interceptors.response.use(
             data: data,
         })
 
-        return response
+        // 只返回响应数据，不返回完整的response对象
+        return data
     },
     (error: AxiosError) => {
         const { config, response } = error
@@ -252,10 +253,12 @@ export const api = {
 
     // 下载文件
     download: (url: string, filename?: string, config?: RequestConfig): Promise<void> => {
-        return request
+        // 对于下载文件，我们需要直接使用axios实例而不是经过拦截器处理的request
+        return axios
             .get(url, {
                 ...config,
                 responseType: 'blob',
+                baseURL: getEnv('VITE_APP_API_BASE_URL', '/api'),
             })
             .then((response: AxiosResponse<Blob>) => {
                 const blob = new Blob([response.data])

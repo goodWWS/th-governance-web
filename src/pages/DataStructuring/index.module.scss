@@ -1,0 +1,634 @@
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.dataStructuring {
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.sidebar {
+  width: 280px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.sidebarHeader {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.sidebarTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebarIcon {
+  width: 20px;
+  height: 20px;
+  color: #667eea;
+}
+
+.menuList {
+  flex: 1;
+  padding: 16px 0;
+  overflow-y: auto;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #4a5568;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  font-weight: 500;
+  
+  &:hover {
+    background: rgba(102, 126, 234, 0.08);
+    color: #667eea;
+    border-left-color: rgba(102, 126, 234, 0.3);
+  }
+  
+  &.active {
+    background: rgba(102, 126, 234, 0.12);
+    color: #667eea;
+    border-left-color: #667eea;
+    font-weight: 600;
+  }
+}
+
+.menuIcon {
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
+  opacity: 0.8;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.contentHeader {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 20px 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.contentTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.contentSubtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.contentBody {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.inputSection {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 24px;
+}
+
+.inputHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.inputTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.inputControls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.formatSelect {
+  min-width: 120px;
+}
+
+.languageSelect {
+  min-width: 100px;
+}
+
+.inputArea {
+  position: relative;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 300px;
+  padding: 20px;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  background: #fafbfc;
+  color: #1a1a1a;
+  resize: vertical;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #ffffff;
+  }
+  
+  &::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+  }
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  }
+}
+
+.secondaryButton {
+  background: rgba(255, 255, 255, 0.9);
+  color: #4a5568;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  padding: 10px 30px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(102, 126, 234, 0.05);
+    border-color: #667eea;
+    color: #667eea;
+  }
+}
+
+.resultSection {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 24px;
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.resultTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.resultActions {
+  display: flex;
+  gap: 12px;
+}
+
+.iconButton {
+  background: rgba(102, 126, 234, 0.1);
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #667eea;
+  
+  &:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: scale(1.05);
+  }
+}
+
+.resultContent {
+  background: #f8fafc;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1a1a1a;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  opacity: 0.5;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #6b7280;
+}
+
+.emptyDescription {
+  font-size: 14px;
+  margin: 0;
+  color: #9ca3af;
+}
+
+.loadingSpinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorMessage {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  color: #dc2626;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+.successMessage {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  color: #16a34a;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .dataStructuring {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .menuList {
+    display: flex;
+    overflow-x: auto;
+    padding: 8px 0;
+  }
+  
+  .menuItem {
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    
+    &:hover,
+    &.active {
+      border-left: none;
+      border-bottom-color: #667eea;
+    }
+  }
+  
+  .contentBody {
+    padding: 16px;
+  }
+  
+  .inputSection,
+  .resultSection {
+    padding: 20px;
+  }
+  
+  .inputHeader,
+  .resultHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .inputControls,
+  .resultActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+}
+
+// 深色模式支持
+@media (prefers-color-scheme: dark) {
+  .dataStructuring {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  }
+  
+  .sidebar {
+    background: rgba(30, 30, 30, 0.95);
+    border-right-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .sidebarHeader {
+    background: rgba(20, 20, 20, 0.8);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .sidebarTitle {
+    color: #ffffff;
+  }
+  
+  .menuItem {
+    color: #cbd5e0;
+    
+    &:hover {
+      background: rgba(102, 126, 234, 0.15);
+      color: #a78bfa;
+    }
+    
+    &.active {
+      background: rgba(102, 126, 234, 0.2);
+      color: #a78bfa;
+    }
+  }
+  
+  .contentHeader {
+    background: rgba(30, 30, 30, 0.95);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .contentTitle {
+    color: #ffffff;
+  }
+  
+  .contentSubtitle {
+    color: #9ca3af;
+  }
+  
+  .contentBody {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  .inputSection,
+  .resultSection {
+    background: rgba(30, 30, 30, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .inputTitle,
+  .resultTitle {
+    color: #ffffff;
+  }
+  
+  .textarea {
+    background: #1a1a1a;
+    color: #ffffff;
+    border-color: rgba(102, 126, 234, 0.3);
+    
+    &:focus {
+      background: #0f0f0f;
+    }
+    
+    &::placeholder {
+      color: #6b7280;
+    }
+  }
+  
+  .resultContent {
+    background: #1a1a1a;
+    color: #ffffff;
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+  
+  .secondaryButton {
+    background: rgba(30, 30, 30, 0.9);
+    color: #cbd5e0;
+    border-color: rgba(102, 126, 234, 0.3);
+    
+    &:hover {
+      background: rgba(102, 126, 234, 0.1);
+      color: #a78bfa;
+    }
+  }
+  
+  .iconButton {
+    background: rgba(102, 126, 234, 0.2);
+    color: #a78bfa;
+    
+    &:hover {
+      background: rgba(102, 126, 234, 0.3);
+    }
+  }
+  
+  .emptyTitle {
+    color: #9ca3af;
+  }
+  
+  .emptyDescription {
+    color: #6b7280;
+  }
+}
+
+// 高对比度模式
+@media (prefers-contrast: high) {
+  .dataStructuring {
+    background: #000000;
+  }
+  
+  .sidebar {
+    background: #ffffff;
+    border-right: 2px solid #000000;
+  }
+  
+  .menuItem {
+    border-left-width: 4px;
+    
+    &:hover,
+    &.active {
+      background: #000000;
+      color: #ffffff;
+      border-left-color: #ffffff;
+    }
+  }
+  
+  .inputSection,
+  .resultSection {
+    background: #ffffff;
+    border: 2px solid #000000;
+  }
+  
+  .textarea,
+  .resultContent {
+    background: #ffffff;
+    border: 2px solid #000000;
+    color: #000000;
+  }
+  
+  .primaryButton {
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #000000;
+  }
+  
+  .secondaryButton {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+}
+
+// 减少动画模式
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .primaryButton:hover {
+    transform: none;
+  }
+  
+  .iconButton:hover {
+    transform: none;
+  }
+}
+
+// 打印样式
+@media print {
+  .dataStructuring {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .sidebar {
+    display: none;
+  }
+  
+  .mainContent {
+    width: 100%;
+  }
+  
+  .contentHeader {
+    background: white !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid #000000;
+  }
+  
+  .inputSection,
+  .resultSection {
+    background: white !important;
+    box-shadow: none !important;
+    border: 1px solid #000000;
+    break-inside: avoid;
+  }
+  
+  .actionButtons {
+    display: none;
+  }
+  
+  .resultActions {
+    display: none;
+  }
+}
