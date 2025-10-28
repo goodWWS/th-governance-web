@@ -100,7 +100,7 @@ const TabBar: React.FC<TabBarProps> = ({ className, maxTabs = 10, onTabChange, o
                 return newTabs
             })
         },
-        [maxTabs]
+        [maxTabs, routeTabMap]
     )
 
     /**

@@ -29,7 +29,7 @@ export interface ExecutionRecord {
     errorMessage?: string
     duration?: string
     steps?: ExecutionStepRecord[]
-    config?: Record<string, any>
+    config?: Record<string, unknown>
 }
 
 export interface ExecutionStepRecord {
@@ -54,11 +54,9 @@ export interface ExecutionRecordTableProps {
 const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
     records,
     loading = false,
-    onRefresh,
     onViewDetail,
 }) => {
     const navigate = useNavigate()
-    const [selectedRecord, setSelectedRecord] = useState<ExecutionRecord | null>(null)
     const [detailModalVisible, setDetailModalVisible] = useState(false)
 
     // 状态渲染

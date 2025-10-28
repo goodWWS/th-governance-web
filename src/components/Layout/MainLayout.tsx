@@ -5,7 +5,7 @@ import Breadcrumb from '../Breadcrumb'
 import TabBar from '../TabBar'
 import Sidebar from './Sidebar'
 
-const { Header, Content } = Layout
+const { Content } = Layout
 
 const MainLayout: React.FC = () => {
     const [collapsed, setCollapsed] = useState(false)
@@ -20,7 +20,7 @@ const MainLayout: React.FC = () => {
     return (
         <Layout style={{ minHeight: '100vh', position: 'relative' }}>
             <Sidebar collapsed={collapsed} onToggle={handleToggle} />
-            
+
             <Layout style={{ marginLeft: collapsed ? 80 : 256, transition: 'margin-left 0.2s' }}>
                 <Content
                     style={{
@@ -34,7 +34,7 @@ const MainLayout: React.FC = () => {
                     }}
                 >
                     {/* 面包屑导航容器 */}
-                    <div 
+                    <div
                         style={{
                             padding: '16px 16px 14px',
                             borderBottom: '1px solid #f0f0f0',
@@ -48,8 +48,8 @@ const MainLayout: React.FC = () => {
                         <Breadcrumb />
                     </div>
                     <div style={{ padding: '0 16px', marginTop: 12, marginBottom: 8 }}>
-                         <TabBar />
-                     </div>
+                        <TabBar />
+                    </div>
                     <div style={{ padding: 24, flex: 1 }}>
                         <Outlet />
                     </div>

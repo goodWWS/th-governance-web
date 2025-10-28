@@ -347,3 +347,100 @@ export interface WorkflowConfigUpdateResponse {
     /** 响应数据 */
     data?: boolean
 }
+
+// ==================== 执行历史日志相关类型定义 ====================
+
+/** 执行历史日志项 */
+export interface ExecutionLogItem {
+    /** 日志ID */
+    log_id: number
+    /** 批次ID */
+    batch_id: number
+    /** 步骤编号 */
+    step_no: number
+    /** 步骤状态 (0: 成功, 1: 失败, 2: 进行中) */
+    step_status: number
+    /** 步骤名称 */
+    step_name: string
+    /** 详情信息 (JSON字符串) */
+    details: string
+    /** 创建时间 */
+    create_time: string
+    /** 结束时间 */
+    end_time: string
+}
+
+/** 执行历史日志分页响应 */
+export interface ExecutionLogPageResponse {
+    /** 响应状态码 */
+    code: number
+    /** 响应消息 */
+    msg: string
+    /** 日志数据列表 */
+    data: ExecutionLogItem[]
+}
+
+/** 步骤状态枚举 */
+export const ExecutionStepStatus = {
+    SUCCESS: 0,
+    FAILED: 1,
+    RUNNING: 2,
+} as const
+
+export type ExecutionStepStatus = (typeof ExecutionStepStatus)[keyof typeof ExecutionStepStatus]
+
+/** 步骤状态标签映射 */
+export const ExecutionStepStatusLabels = {
+    [ExecutionStepStatus.SUCCESS]: '成功',
+    [ExecutionStepStatus.FAILED]: '失败',
+    [ExecutionStepStatus.RUNNING]: '进行中',
+} as const
+
+/** 步骤状态颜色映射 */
+export const ExecutionStepStatusColors = {
+    [ExecutionStepStatus.SUCCESS]: 'success',
+    [ExecutionStepStatus.FAILED]: 'error',
+    [ExecutionStepStatus.RUNNING]: 'processing',
+} as const
+
+// 详情字段解析后的类型定义
+
+/** 数据重复检查详情 */
+export interface DuplicateCheckDetails {
+    table: string
+    total: number
+    problems: Array<{
+        field: string
+        total_count: number
+        duplicate_groups: Array<{
+            ids: string[]
+            count: number
+            value: string
+        }>
+    }>
+}
+
+/** 特殊字符检查详情 */
+export interface SpecialCharCheckDetails {
+    table: string
+    total_count: number
+    problem_fields: Array<{
+        ids: string[]
+        count: number
+        field: string
+        problem_type: string
+    }>
+}
+
+/** 丢孤检查详情 */
+export interface OrphanCheckDetails {
+    table: string
+    masterTable: string
+    orphanCount: number
+    orphanDetails: Array<{
+        id: string
+        fields: Record<string, string>
+        reason: string
+    }>
+    relatedFields: string[]
+}

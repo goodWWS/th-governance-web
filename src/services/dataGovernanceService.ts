@@ -8,6 +8,7 @@ import type {
     DataGovernanceResult,
     DbConnectionPageParams,
     DbConnectionPageResponse,
+    ExecutionLogPageResponse,
     LogPageParams,
     LogPageResponse,
     WorkflowConfigResponse,
@@ -158,14 +159,12 @@ export class DataGovernanceService {
     }
 
     /**
-     * 11、日志列表
-     * @description 获取数据治理操作日志的分页列表
-     * @param params 分页查询参数
-     * @returns Promise<LogPageResponse>
+     * 获取执行历史日志列表
+     * @returns 执行历史日志全部数据
      */
-    static async getLogPage(params?: LogPageParams): Promise<LogPageResponse> {
+    static async getExecutionLogPage(): Promise<ExecutionLogPageResponse> {
         try {
-            return await api.get<LogPageResponse>('/data/governance/log/page', { params })
+            return await api.get<ExecutionLogPageResponse>('/data/governance/log/page')
         } catch (error) {
             throw new Error(
                 `获取日志列表失败: ${error instanceof Error ? error.message : '未知错误'}`
