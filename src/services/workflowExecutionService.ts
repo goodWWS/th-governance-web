@@ -43,10 +43,19 @@ export interface WorkflowExecution {
 }
 
 // 步骤执行进度回调
-export type StepProgressCallback = (stepId: string, progress: number, processedRecords: number, totalRecords: number) => void
+export type StepProgressCallback = (
+    stepId: string,
+    progress: number,
+    processedRecords: number,
+    totalRecords: number
+) => void
 
 // 步骤状态变更回调
-export type StepStatusCallback = (stepId: string, status: WorkflowStep['status'], step: WorkflowStep) => void
+export type StepStatusCallback = (
+    stepId: string,
+    status: WorkflowStep['status'],
+    step: WorkflowStep
+) => void
 
 // 工作流状态变更回调
 export type WorkflowStatusCallback = (execution: WorkflowExecution) => void
@@ -75,7 +84,19 @@ export class WorkflowExecutionService {
      */
     createExecution(
         id: string,
-        stepConfigs: Omit<WorkflowStep, 'status' | 'progress' | 'processedRecords' | 'totalRecords' | 'startTime' | 'endTime' | 'duration' | 'result' | 'errorMessage' | 'logs'>[]
+        stepConfigs: Omit<
+            WorkflowStep,
+            | 'status'
+            | 'progress'
+            | 'processedRecords'
+            | 'totalRecords'
+            | 'startTime'
+            | 'endTime'
+            | 'duration'
+            | 'result'
+            | 'errorMessage'
+            | 'logs'
+        >[]
     ): WorkflowExecution {
         const steps: WorkflowStep[] = stepConfigs.map(config => ({
             ...config,
@@ -83,17 +104,17 @@ export class WorkflowExecutionService {
             progress: 0,
             processedRecords: {
                 processed: 0,
-                total: this.getStepTotalRecords(config.id)
+                total: this.getStepTotalRecords(config.id),
             },
             totalRecords: this.getStepTotalRecords(config.id),
-            logs: []
+            logs: [],
         }))
 
         const execution: WorkflowExecution = {
             id,
             status: 'idle',
             steps,
-            currentStepIndex: 0
+            currentStepIndex: 0,
         }
 
         this.executions.set(id, execution)
@@ -113,7 +134,7 @@ export class WorkflowExecutionService {
             'emoi-assignment': 95000,
             'data-normalization': 920000,
             'orphan-removal': 15000,
-            'data-desensitization': 680000
+            'data-desensitization': 680000,
         }
 
         return recordCounts[stepId] || 100000
@@ -124,19 +145,30 @@ export class WorkflowExecutionService {
      */
     private getStepExecutionResult(stepId: string, processedRecords: number): string {
         const results: Record<string, (records: number) => string> = {
-            'data-cleaning': (records) => `数据清洗完成：清理了 ${records} 条记录，删除了 ${Math.floor(records * 0.05)} 条无效数据，修复了 ${Math.floor(records * 0.12)} 条格式错误`,
-            'data-deduplication': (records) => `数据去重完成：处理了 ${records} 条记录，发现并合并了 ${Math.floor(records * 0.15)} 条重复数据`,
-            'type-conversion': (records) => `类型转换完成：转换了 ${records} 条记录，成功率 99.8%，失败 ${Math.floor(records * 0.002)} 条记录已标记`,
-            'standard-mapping': (records) => `标准映射完成：映射了 ${records} 条记录，匹配率 95.6%，新增 ${Math.floor(records * 0.044)} 个标准编码`,
-            'empi-assignment': (records) => `EMPI分配完成：为 ${records} 条记录分配了主索引，新建 ${Math.floor(records * 0.3)} 个EMPI，关联 ${Math.floor(records * 0.7)} 个已有EMPI`,
-            'emoi-assignment': (records) => `EMOI分配完成：为 ${records} 条记录分配了机构索引，覆盖率 98.5%`,
-            'data-normalization': (records) => `数据标准化完成：标准化了 ${records} 条记录，统一了 ${Math.floor(records * 0.8)} 个数据格式`,
-            'orphan-removal': (records) => `孤儿数据清理完成：清理了 ${records} 条孤儿记录，释放存储空间 ${Math.floor(records * 0.5)}MB`,
-            'data-desensitization': (records) => `数据脱敏完成：脱敏了 ${records} 条记录，保护了姓名、身份证、电话等敏感信息`
+            'data-cleaning': records =>
+                `数据清洗完成：清理了 ${records} 条记录，删除了 ${Math.floor(records * 0.05)} 条无效数据，修复了 ${Math.floor(records * 0.12)} 条格式错误`,
+            'data-deduplication': records =>
+                `数据去重完成：处理了 ${records} 条记录，发现并合并了 ${Math.floor(records * 0.15)} 条重复数据`,
+            'type-conversion': records =>
+                `类型转换完成：转换了 ${records} 条记录，成功率 99.8%，失败 ${Math.floor(records * 0.002)} 条记录已标记`,
+            'standard-mapping': records =>
+                `标准映射完成：映射了 ${records} 条记录，匹配率 95.6%，新增 ${Math.floor(records * 0.044)} 个标准编码`,
+            'empi-assignment': records =>
+                `EMPI分配完成：为 ${records} 条记录分配了主索引，新建 ${Math.floor(records * 0.3)} 个EMPI，关联 ${Math.floor(records * 0.7)} 个已有EMPI`,
+            'emoi-assignment': records =>
+                `EMOI分配完成：为 ${records} 条记录分配了机构索引，覆盖率 98.5%`,
+            'data-normalization': records =>
+                `数据标准化完成：标准化了 ${records} 条记录，统一了 ${Math.floor(records * 0.8)} 个数据格式`,
+            'orphan-removal': records =>
+                `孤儿数据清理完成：清理了 ${records} 条孤儿记录，释放存储空间 ${Math.floor(records * 0.5)}MB`,
+            'data-desensitization': records =>
+                `数据脱敏完成：脱敏了 ${records} 条记录，保护了姓名、身份证、电话等敏感信息`,
         }
 
         const resultFunc = results[stepId]
-        return resultFunc ? resultFunc(processedRecords) : `${stepId} 执行完成，处理了 ${processedRecords} 条记录`
+        return resultFunc
+            ? resultFunc(processedRecords)
+            : `${stepId} 执行完成，处理了 ${processedRecords} 条记录`
     }
 
     /**
@@ -149,64 +181,64 @@ export class WorkflowExecutionService {
                 '检测到 15,234 条空值记录',
                 '检测到 8,567 条格式异常记录',
                 '开始清理无效数据...',
-                '清理完成，数据质量提升至 98.5%'
+                '清理完成，数据质量提升至 98.5%',
             ],
             'data-deduplication': [
                 '启动数据去重引擎...',
                 '基于姓名+身份证进行重复检测',
                 '发现 6,750 组重复数据',
                 '执行数据合并策略...',
-                '去重完成，数据唯一性达到 99.2%'
+                '去重完成，数据唯一性达到 99.2%',
             ],
             'type-conversion': [
                 '开始数据类型转换...',
                 '转换日期格式：YYYY-MM-DD',
                 '转换数值格式：保留2位小数',
                 '转换编码格式：UTF-8',
-                '类型转换完成，成功率 99.8%'
+                '类型转换完成，成功率 99.8%',
             ],
             'standard-mapping': [
                 '加载标准编码字典...',
                 '开始标准编码映射...',
                 '匹配ICD-10疾病编码',
                 '匹配药品标准编码',
-                '标准映射完成，覆盖率 95.6%'
+                '标准映射完成，覆盖率 95.6%',
             ],
             'empi-assignment': [
                 '启动EMPI分配引擎...',
                 '基于姓名+身份证+电话进行匹配',
                 '匹配已有EMPI记录',
                 '为新患者创建EMPI',
-                'EMPI分配完成，覆盖率 100%'
+                'EMPI分配完成，覆盖率 100%',
             ],
             'emoi-assignment': [
                 '启动EMOI分配引擎...',
                 '匹配医疗机构编码',
                 '验证机构有效性',
                 '分配机构索引',
-                'EMOI分配完成，覆盖率 98.5%'
+                'EMOI分配完成，覆盖率 98.5%',
             ],
             'data-normalization': [
                 '开始数据标准化处理...',
                 '统一地址格式',
                 '标准化联系方式',
                 '规范化医疗术语',
-                '数据标准化完成'
+                '数据标准化完成',
             ],
             'orphan-removal': [
                 '扫描孤儿数据...',
                 '检测到 15,000 条孤儿记录',
                 '验证数据关联性',
                 '清理无关联数据',
-                '孤儿数据清理完成'
+                '孤儿数据清理完成',
             ],
             'data-desensitization': [
                 '启动数据脱敏引擎...',
                 '识别敏感数据字段',
                 '应用脱敏规则',
                 '验证脱敏效果',
-                '数据脱敏完成，安全等级：高'
-            ]
+                '数据脱敏完成，安全等级：高',
+            ],
         }
 
         return logs[stepId] || ['步骤开始执行...', '处理中...', '步骤执行完成']
@@ -304,7 +336,7 @@ export class WorkflowExecutionService {
      */
     async executeStep(executionId: string, stepId: string): Promise<void> {
         let execution = this.executions.get(executionId)
-        
+
         // 如果在executions Map中找不到，检查是否为模拟历史记录
         if (!execution) {
             const knownMockIds = ['1', '2', '3', '4']
@@ -328,7 +360,7 @@ export class WorkflowExecutionService {
         }
 
         const stepIndex = execution.steps.findIndex(s => s.id === stepId)
-        
+
         try {
             // 更新步骤状态为执行中
             step.status = 'running'
@@ -336,7 +368,7 @@ export class WorkflowExecutionService {
             step.progress = 0
             step.processedRecords = {
                 processed: 0,
-                total: step.totalRecords
+                total: step.totalRecords,
             }
 
             // 更新工作流状态
@@ -349,7 +381,7 @@ export class WorkflowExecutionService {
 
             // 模拟步骤执行过程
             await this.simulateStepExecution(executionId, stepIndex)
-            
+
             // 执行完成
             step.status = 'completed'
             step.endTime = new Date()
@@ -357,7 +389,7 @@ export class WorkflowExecutionService {
             step.progress = 100
             step.processedRecords = {
                 processed: step.totalRecords,
-                total: step.totalRecords
+                total: step.totalRecords,
             }
             step.result = this.getStepExecutionResult(step.id, step.totalRecords)
 
@@ -366,7 +398,7 @@ export class WorkflowExecutionService {
 
             // 检查是否还有后续步骤需要执行
             const nextStepIndex = this.findNextEnabledStep(execution, stepIndex)
-            
+
             if (nextStepIndex === -1) {
                 // 所有步骤执行完成
                 execution.status = 'completed'
@@ -376,12 +408,12 @@ export class WorkflowExecutionService {
                 // 有后续步骤，继续执行
                 execution.currentStepIndex = nextStepIndex
                 const nextStep = execution.steps[nextStepIndex]
-                
+
                 if (!nextStep) {
                     console.error(`步骤索引 ${nextStepIndex} 对应的步骤不存在`)
                     return
                 }
-                
+
                 if (nextStep.isAutomatic) {
                     // 自动步骤，延迟后自动执行
                     setTimeout(() => {
@@ -395,7 +427,6 @@ export class WorkflowExecutionService {
                     this.notifyWorkflowStatus(executionId, execution)
                 }
             }
-
         } catch (error) {
             // 执行失败
             step.status = 'failed'
@@ -404,7 +435,7 @@ export class WorkflowExecutionService {
                 step.duration = step.endTime.getTime() - step.startTime.getTime()
             }
             step.errorMessage = error instanceof Error ? error.message : '未知错误'
-            
+
             // 工作流执行失败
             execution.status = 'failed'
             execution.endTime = new Date()
@@ -412,7 +443,7 @@ export class WorkflowExecutionService {
             // 触发状态更新回调
             this.notifyStepStatus(executionId, stepId, step.status, step)
             this.notifyWorkflowStatus(executionId, execution)
-            
+
             throw error
         }
     }
@@ -458,11 +489,11 @@ export class WorkflowExecutionService {
         }
 
         const stepIndex = execution.steps.findIndex(s => s.id === stepId)
-        
+
         try {
             // 恢复步骤执行状态
             step.status = 'running'
-            
+
             // 更新工作流状态
             execution.status = 'running'
             execution.currentStepIndex = stepIndex
@@ -473,7 +504,7 @@ export class WorkflowExecutionService {
 
             // 继续模拟步骤执行过程（从当前进度继续）
             await this.simulateStepExecution(executionId, stepIndex)
-            
+
             // 执行完成
             step.status = 'completed'
             step.endTime = new Date()
@@ -483,7 +514,7 @@ export class WorkflowExecutionService {
             step.progress = 100
             step.processedRecords = {
                 processed: step.totalRecords,
-                total: step.totalRecords
+                total: step.totalRecords,
             }
             step.result = this.getStepExecutionResult(step.id, step.totalRecords)
 
@@ -492,7 +523,7 @@ export class WorkflowExecutionService {
 
             // 检查是否还有后续步骤需要执行
             const nextStepIndex = this.findNextEnabledStep(execution, stepIndex)
-            
+
             if (nextStepIndex === -1) {
                 // 所有步骤执行完成
                 execution.status = 'completed'
@@ -502,12 +533,12 @@ export class WorkflowExecutionService {
                 // 有后续步骤，继续执行
                 execution.currentStepIndex = nextStepIndex
                 const nextStep = execution.steps[nextStepIndex]
-                
+
                 if (!nextStep) {
                     console.error(`步骤索引 ${nextStepIndex} 对应的步骤不存在`)
                     return
                 }
-                
+
                 if (nextStep.isAutomatic) {
                     // 自动步骤，延迟后自动执行
                     setTimeout(() => {
@@ -521,7 +552,6 @@ export class WorkflowExecutionService {
                     this.notifyWorkflowStatus(executionId, execution)
                 }
             }
-
         } catch (error) {
             // 执行失败
             step.status = 'failed'
@@ -530,7 +560,7 @@ export class WorkflowExecutionService {
                 step.duration = step.endTime.getTime() - step.startTime.getTime()
             }
             step.errorMessage = error instanceof Error ? error.message : '未知错误'
-            
+
             // 工作流执行失败
             execution.status = 'failed'
             execution.endTime = new Date()
@@ -538,7 +568,7 @@ export class WorkflowExecutionService {
             // 触发状态更新回调
             this.notifyStepStatus(executionId, stepId, step.status, step)
             this.notifyWorkflowStatus(executionId, execution)
-            
+
             throw error
         }
     }
@@ -564,7 +594,7 @@ export class WorkflowExecutionService {
         if (!execution) return
 
         const nextStepIndex = this.findNextEnabledStep(execution, execution.currentStepIndex - 1)
-        
+
         if (nextStepIndex === -1) {
             // 所有步骤执行完成
             execution.status = 'completed'
@@ -594,7 +624,7 @@ export class WorkflowExecutionService {
             step.progress = 0
             step.processedRecords = {
                 processed: 0,
-                total: step.totalRecords
+                total: step.totalRecords,
             }
             step.logs = this.getStepExecutionLogs(step.id)
 
@@ -618,9 +648,9 @@ export class WorkflowExecutionService {
             step.progress = 100
             step.processedRecords = {
                 processed: step.totalRecords,
-                total: step.totalRecords
+                total: step.totalRecords,
             }
-            
+
             if (step.startTime) {
                 step.duration = step.endTime.getTime() - step.startTime.getTime()
             }
@@ -641,12 +671,11 @@ export class WorkflowExecutionService {
                 execution.status = 'paused'
                 this.notifyWorkflowStatus(executionId, execution)
             }
-
         } catch (error) {
             // 步骤执行失败
             step.status = 'failed'
             step.endTime = new Date()
-            
+
             if (step.startTime) {
                 step.duration = step.endTime.getTime() - step.startTime.getTime()
             }
@@ -668,12 +697,12 @@ export class WorkflowExecutionService {
 
         const step = execution.steps[stepIndex]
         if (!step) return
-        
+
         const totalRecords = step.totalRecords
-        
+
         // 根据步骤类型设置不同的处理特性
         const stepCharacteristics = this.getStepProcessingCharacteristics(step.id)
-        
+
         let processed = 0
         let batchCount = 0
         const maxBatches = stepCharacteristics.totalBatches
@@ -686,20 +715,20 @@ export class WorkflowExecutionService {
 
             // 动态计算批次大小，模拟真实处理的波动
             const batchSize = this.calculateDynamicBatchSize(
-                step.id, 
-                batchCount, 
-                maxBatches, 
-                totalRecords, 
+                step.id,
+                batchCount,
+                maxBatches,
+                totalRecords,
                 stepCharacteristics
             )
-            
+
             const currentProcessed = Math.min(processed + batchSize, totalRecords)
             const progress = Math.floor((currentProcessed / totalRecords) * 100)
 
             // 更新步骤进度，使用正确的数据结构
             step.processedRecords = {
                 processed: currentProcessed,
-                total: totalRecords
+                total: totalRecords,
             }
             step.progress = progress
 
@@ -719,102 +748,107 @@ export class WorkflowExecutionService {
      * 获取步骤处理特性
      */
     private getStepProcessingCharacteristics(stepId: string) {
-        const characteristics: Record<string, {
-            totalBatches: number
-            baseDelay: number
-            variability: number
-            processingPattern: 'linear' | 'fast-start' | 'slow-start' | 'variable'
-            complexity: number
-        }> = {
+        const characteristics: Record<
+            string,
+            {
+                totalBatches: number
+                baseDelay: number
+                variability: number
+                processingPattern: 'linear' | 'fast-start' | 'slow-start' | 'variable'
+                complexity: number
+            }
+        > = {
             'data-cleaning': {
                 totalBatches: 25,
                 baseDelay: 200,
                 variability: 0.4,
                 processingPattern: 'slow-start',
-                complexity: 0.8
+                complexity: 0.8,
             },
             'data-deduplication': {
                 totalBatches: 15,
                 baseDelay: 300,
                 variability: 0.6,
                 processingPattern: 'variable',
-                complexity: 0.9
+                complexity: 0.9,
             },
             'type-conversion': {
                 totalBatches: 20,
                 baseDelay: 150,
                 variability: 0.3,
                 processingPattern: 'linear',
-                complexity: 0.5
+                complexity: 0.5,
             },
             'standard-mapping': {
                 totalBatches: 30,
                 baseDelay: 400,
                 variability: 0.7,
                 processingPattern: 'variable',
-                complexity: 1.0
+                complexity: 1.0,
             },
             'empi-assignment': {
                 totalBatches: 18,
                 baseDelay: 250,
                 variability: 0.5,
                 processingPattern: 'fast-start',
-                complexity: 0.7
+                complexity: 0.7,
             },
             'emoi-assignment': {
                 totalBatches: 12,
                 baseDelay: 180,
                 variability: 0.4,
                 processingPattern: 'linear',
-                complexity: 0.6
+                complexity: 0.6,
             },
             'data-normalization': {
                 totalBatches: 22,
                 baseDelay: 220,
                 variability: 0.5,
                 processingPattern: 'slow-start',
-                complexity: 0.6
+                complexity: 0.6,
             },
             'orphan-removal': {
                 totalBatches: 8,
                 baseDelay: 100,
                 variability: 0.3,
                 processingPattern: 'fast-start',
-                complexity: 0.4
+                complexity: 0.4,
             },
             'data-desensitization': {
                 totalBatches: 16,
                 baseDelay: 350,
                 variability: 0.6,
                 processingPattern: 'variable',
-                complexity: 0.8
-            }
+                complexity: 0.8,
+            },
         }
 
-        return characteristics[stepId] || {
-            totalBatches: 20,
-            baseDelay: 200,
-            variability: 0.5,
-            processingPattern: 'linear' as const,
-            complexity: 0.6
-        }
+        return (
+            characteristics[stepId] || {
+                totalBatches: 20,
+                baseDelay: 200,
+                variability: 0.5,
+                processingPattern: 'linear' as const,
+                complexity: 0.6,
+            }
+        )
     }
 
     /**
      * 计算动态批次大小
      */
     private calculateDynamicBatchSize(
-        _stepId: string, 
-        batchCount: number, 
-        maxBatches: number, 
+        _stepId: string,
+        batchCount: number,
+        maxBatches: number,
         totalRecords: number,
         characteristics: ReturnType<typeof this.getStepProcessingCharacteristics>
     ): number {
         const baseBatchSize = Math.floor(totalRecords / maxBatches)
         const progress = batchCount / maxBatches
-        
+
         let multiplier = 1
-        
+
         switch (characteristics.processingPattern) {
             case 'fast-start':
                 // 开始快，后面慢
@@ -834,10 +868,10 @@ export class WorkflowExecutionService {
                 multiplier = 0.9 + 0.2 * Math.random()
                 break
         }
-        
+
         // 添加随机变化
         const randomFactor = 1 + (Math.random() - 0.5) * characteristics.variability
-        
+
         return Math.max(
             Math.floor(baseBatchSize * multiplier * randomFactor),
             Math.floor(totalRecords * 0.01) // 最小批次大小为总数的1%
@@ -848,14 +882,14 @@ export class WorkflowExecutionService {
      * 计算处理延迟
      */
     private calculateProcessingDelay(
-        _stepId: string, 
-        _batchCount: number, 
+        _stepId: string,
+        _batchCount: number,
         characteristics: ReturnType<typeof this.getStepProcessingCharacteristics>
     ): number {
         const baseDelay = characteristics.baseDelay
         const complexityFactor = 1 + characteristics.complexity * 0.5
         const randomFactor = 0.7 + Math.random() * 0.6
-        
+
         return Math.floor(baseDelay * complexityFactor * randomFactor)
     }
 
@@ -864,15 +898,78 @@ export class WorkflowExecutionService {
      */
     private generateMockExecutionForHistoryRecord(id: string): WorkflowExecution {
         const stepConfigs = [
-            { id: '1', taskId: '1', title: '数据源连接检查', description: '检查数据源连接状态和权限', enabled: true, isAutomatic: true },
-            { id: '2', taskId: '2', title: '数据质量评估', description: '评估数据质量，识别异常数据', enabled: true, isAutomatic: true },
-            { id: '3', taskId: '3', title: '重复数据检测', description: '检测并标记重复的数据记录', enabled: true, isAutomatic: true },
-            { id: '4', taskId: '4', title: '数据标准化', description: '按照预定义规则标准化数据格式', enabled: true, isAutomatic: true },
-            { id: '5', taskId: '5', title: '敏感数据识别', description: '识别和标记敏感数据字段', enabled: true, isAutomatic: true },
-            { id: '6', taskId: '6', title: '数据分类标签', description: '为数据添加分类和标签', enabled: true, isAutomatic: true },
-            { id: '7', taskId: '7', title: '数据血缘分析', description: '分析数据的来源和流向关系', enabled: true, isAutomatic: true },
-            { id: '8', taskId: '8', title: '孤立数据清理', description: '清理无关联的孤立数据记录', enabled: true, isAutomatic: false },
-            { id: '9', taskId: '9', title: '执行结果汇总', description: '汇总整个工作流的执行结果', enabled: true, isAutomatic: true }
+            {
+                id: '1',
+                taskId: '1',
+                title: '数据源连接检查',
+                description: '检查数据源连接状态和权限',
+                enabled: true,
+                isAutomatic: true,
+            },
+            {
+                id: '2',
+                taskId: '2',
+                title: '数据质量评估',
+                description: '评估数据质量，识别异常数据',
+                enabled: true,
+                isAutomatic: true,
+            },
+            {
+                id: '3',
+                taskId: '3',
+                title: '重复数据检测',
+                description: '检测并标记重复的数据记录',
+                enabled: true,
+                isAutomatic: true,
+            },
+            {
+                id: '4',
+                taskId: '4',
+                title: '数据标准化',
+                description: '按照预定义规则标准化数据格式',
+                enabled: true,
+                isAutomatic: true,
+            },
+            {
+                id: '5',
+                taskId: '5',
+                title: '敏感数据识别',
+                description: '识别和标记敏感数据字段',
+                enabled: true,
+                isAutomatic: true,
+            },
+            {
+                id: '6',
+                taskId: '6',
+                title: '数据分类标签',
+                description: '为数据添加分类和标签',
+                enabled: true,
+                isAutomatic: true,
+            },
+            {
+                id: '7',
+                taskId: '7',
+                title: '数据血缘分析',
+                description: '分析数据的来源和流向关系',
+                enabled: true,
+                isAutomatic: true,
+            },
+            {
+                id: '8',
+                taskId: '8',
+                title: '孤立数据清理',
+                description: '清理无关联的孤立数据记录',
+                enabled: true,
+                isAutomatic: false,
+            },
+            {
+                id: '9',
+                taskId: '9',
+                title: '执行结果汇总',
+                description: '汇总整个工作流的执行结果',
+                enabled: true,
+                isAutomatic: true,
+            },
         ]
 
         const mockResults = [
@@ -884,35 +981,39 @@ export class WorkflowExecutionService {
             '数据分类完成，添加 12 个分类标签，分类准确率 96.7%',
             '数据血缘分析完成，建立 1,456 个血缘关系，关系图谱已生成',
             '孤立数据清理进行中，已处理 15,234 条记录，剩余 8,766 条待处理',
-            '执行结果汇总完成，生成详细报告和统计图表'
+            '执行结果汇总完成，生成详细报告和统计图表',
         ]
 
         // 根据ID确定执行状态和步骤状态
         let executionStatus: 'running' | 'paused' | 'completed' | 'failed'
         let steps: WorkflowStep[]
-        
+
         if (id === '4') {
-             // ID为4的是暂停状态的工作流
+            // ID为4的是暂停状态的工作流
             executionStatus = 'paused'
             const baseTime = new Date()
             baseTime.setHours(baseTime.getHours() - 1) // 1小时前开始
-            
+
             steps = stepConfigs.map((config, index) => {
                 const stepStartTime = new Date(baseTime.getTime() + index * 8 * 60 * 1000) // 每步间隔8分钟
                 const totalRecords = Math.floor(20000 + Math.random() * 10000) // 20k-30k记录
-                
+
                 if (index < 7) {
                     // 前7步已完成
-                    const stepEndTime = new Date(stepStartTime.getTime() + (5 + Math.random() * 10) * 60 * 1000)
-                    const processedRecords = Math.floor(totalRecords * (0.95 + Math.random() * 0.05))
-                    
+                    const stepEndTime = new Date(
+                        stepStartTime.getTime() + (5 + Math.random() * 10) * 60 * 1000
+                    )
+                    const processedRecords = Math.floor(
+                        totalRecords * (0.95 + Math.random() * 0.05)
+                    )
+
                     return {
                         ...config,
                         status: 'completed' as const,
                         progress: 100,
                         processedRecords: {
                             processed: processedRecords,
-                            total: totalRecords
+                            total: totalRecords,
                         },
                         totalRecords,
                         startTime: stepStartTime,
@@ -921,20 +1022,20 @@ export class WorkflowExecutionService {
                         result: mockResults[index],
                         logs: [
                             `${stepStartTime.toLocaleTimeString()} - 开始执行${config.title}`,
-                            `${stepEndTime.toLocaleTimeString()} - ${config.title}执行完成`
-                        ]
+                            `${stepEndTime.toLocaleTimeString()} - ${config.title}执行完成`,
+                        ],
                     }
                 } else if (index === 7) {
                     // 第8步（孤立数据清理）暂停中
                     const processedRecords = Math.floor(totalRecords * 0.63) // 63%进度
-                    
+
                     return {
                         ...config,
                         status: 'paused' as const,
                         progress: 63,
                         processedRecords: {
                             processed: processedRecords,
-                            total: totalRecords
+                            total: totalRecords,
                         },
                         totalRecords,
                         startTime: stepStartTime,
@@ -944,25 +1045,25 @@ export class WorkflowExecutionService {
                         logs: [
                             `${stepStartTime.toLocaleTimeString()} - 开始执行${config.title}`,
                             `${new Date(stepStartTime.getTime() + 15 * 60 * 1000).toLocaleTimeString()} - 处理进度 63%，已处理 ${processedRecords.toLocaleString()} 条记录`,
-                            `${new Date(stepStartTime.getTime() + 20 * 60 * 1000).toLocaleTimeString()} - 执行暂停，等待用户确认`
-                        ]
+                            `${new Date(stepStartTime.getTime() + 20 * 60 * 1000).toLocaleTimeString()} - 执行暂停，等待用户确认`,
+                        ],
                     }
                 } else {
                     // 后续步骤待执行
                     return {
                         ...config,
-                        status: 'idle' as const,
+                        status: 'pending' as const,
                         progress: 0,
                         processedRecords: {
                             processed: 0,
-                            total: totalRecords
+                            total: totalRecords,
                         },
                         totalRecords,
                         startTime: undefined,
                         endTime: undefined,
                         duration: undefined,
                         result: undefined,
-                        logs: []
+                        logs: [],
                     }
                 }
             })
@@ -971,20 +1072,22 @@ export class WorkflowExecutionService {
             executionStatus = 'completed'
             const baseTime = new Date()
             baseTime.setHours(baseTime.getHours() - 3) // 3小时前开始
-            
+
             steps = stepConfigs.map((config, index) => {
                 const stepStartTime = new Date(baseTime.getTime() + index * 10 * 60 * 1000)
-                const stepEndTime = new Date(stepStartTime.getTime() + (6 + Math.random() * 12) * 60 * 1000)
+                const stepEndTime = new Date(
+                    stepStartTime.getTime() + (6 + Math.random() * 12) * 60 * 1000
+                )
                 const totalRecords = Math.floor(18000 + Math.random() * 12000)
                 const processedRecords = Math.floor(totalRecords * (0.96 + Math.random() * 0.04))
-                
+
                 return {
                     ...config,
                     status: 'completed' as const,
                     progress: 100,
                     processedRecords: {
                         processed: processedRecords,
-                        total: totalRecords
+                        total: totalRecords,
                     },
                     totalRecords,
                     startTime: stepStartTime,
@@ -993,8 +1096,8 @@ export class WorkflowExecutionService {
                     result: mockResults[index],
                     logs: [
                         `${stepStartTime.toLocaleTimeString()} - 开始执行${config.title}`,
-                        `${stepEndTime.toLocaleTimeString()} - ${config.title}执行完成`
-                    ]
+                        `${stepEndTime.toLocaleTimeString()} - ${config.title}执行完成`,
+                    ],
                 }
             })
         }
@@ -1004,12 +1107,12 @@ export class WorkflowExecutionService {
             status: executionStatus,
             steps,
             currentStepIndex: executionStatus === 'paused' ? 7 : steps.length - 1,
-            startTime: steps[0].startTime!,
-            endTime: executionStatus === 'completed' ? steps[steps.length - 1].endTime : undefined
+            startTime: steps[0]?.startTime,
+            endTime: executionStatus === 'completed' ? steps[steps.length - 1]?.endTime : undefined,
         }
 
         // 不存储到内存中，避免影响getAllExecutions的结果
-         return execution
+        return execution
     }
 
     /**
@@ -1020,78 +1123,81 @@ export class WorkflowExecutionService {
     generateMockExecution(id: string): WorkflowExecution {
         // 完整的工作流步骤配置（包含所有9个步骤）
         const allStepConfigs = [
-            { 
+            {
                 id: 'data-cleaning',
                 taskId: '1',
-                title: '数据清洗', 
-                description: '脏数据主要是数据值域内包含了一些无效字符、特殊字符、过渡态的拼接符等。脏数据处理是通过清洗函数等工程手段，在固定环节调用，将数据装载到ODS数据中心的过程。',
+                title: '数据清洗',
+                description:
+                    '脏数据主要是数据值域内包含了一些无效字符、特殊字符、过渡态的拼接符等。脏数据处理是通过清洗函数等工程手段，在固定环节调用，将数据装载到ODS数据中心的过程。',
                 enabled: true, // 默认启用
-                isAutomatic: true
+                isAutomatic: true,
             },
-            { 
+            {
                 id: 'data-deduplication',
                 taskId: '2',
-                title: '数据去重', 
+                title: '数据去重',
                 description: 'PK完全相同的某一条数据，或者某部分数据。',
                 enabled: true, // 默认启用
-                isAutomatic: true
+                isAutomatic: true,
             },
-            { 
+            {
                 id: 'type-conversion',
                 taskId: '3',
-                title: '类型转换', 
+                title: '类型转换',
                 description: '将string类型转化为模型中约束的类型的过程。',
                 enabled: true, // 默认启用
-                isAutomatic: true
+                isAutomatic: true,
             },
-            { 
+            {
                 id: 'standard-mapping',
                 taskId: '4',
-                title: '标准字典对照', 
+                title: '标准字典对照',
                 description: '将多源数据字典统一为标准字典的过程。',
                 enabled: true, // 默认启用
-                isAutomatic: false // 对应WorkflowConfig中的autoFlow: false
+                isAutomatic: false, // 对应WorkflowConfig中的autoFlow: false
             },
-            { 
+            {
                 id: 'empi-assignment',
                 taskId: '5',
-                title: 'EMPI发放', 
+                title: 'EMPI发放',
                 description: '为同一患者发放唯一主索引的过程。',
                 enabled: true, // 默认启用
-                isAutomatic: true
+                isAutomatic: true,
             },
-            { 
+            {
                 id: 'emoi-assignment',
                 taskId: '6',
-                title: 'EMOI发放', 
+                title: 'EMOI发放',
                 description: '为检查检验发放就诊唯一主索引的过程。',
                 enabled: true, // 默认启用
-                isAutomatic: true
+                isAutomatic: true,
             },
-            { 
+            {
                 id: 'data-normalization',
                 taskId: '7',
-                title: '数据归一', 
-                description: '数据格式标准化的一种，基于国家规定，将所需数据进行标准归一，定义所有数据标准格式和标准值。',
+                title: '数据归一',
+                description:
+                    '数据格式标准化的一种，基于国家规定，将所需数据进行标准归一，定义所有数据标准格式和标准值。',
                 enabled: true, // 默认启用
-                isAutomatic: true
+                isAutomatic: true,
             },
-            { 
+            {
                 id: 'orphan-removal',
                 taskId: '8',
-                title: '丢孤儿', 
-                description: '数据中无法与主表有任何关联的数据，可能是系统上线前测试或违规操作产生，无使用价值。',
+                title: '丢孤儿',
+                description:
+                    '数据中无法与主表有任何关联的数据，可能是系统上线前测试或违规操作产生，无使用价值。',
                 enabled: true, // 现在默认启用，实际应该从WorkflowConfig读取
-                isAutomatic: false
+                isAutomatic: false,
             },
-            { 
+            {
                 id: 'data-desensitization',
                 taskId: '9',
-                title: '数据脱敏', 
+                title: '数据脱敏',
                 description: '出于数据安全考虑，对数据中的关键字段进行脱敏处理。',
                 enabled: true, // 默认启用
-                isAutomatic: false // 对应WorkflowConfig中的autoFlow: false
-            }
+                isAutomatic: false, // 对应WorkflowConfig中的autoFlow: false
+            },
         ]
 
         // 只包含启用的步骤
@@ -1107,7 +1213,7 @@ export class WorkflowExecutionService {
             '处理了 12,345 次就诊记录，EMOI分配成功率 98.9%',
             '归一化处理了 45,678 条记录，数据标准化完成度 97.8%',
             '检测到 456 条孤儿数据，已清理无关联记录，数据关联性提升 8.3%',
-            '脱敏处理了 3,456 个敏感字段，安全等级提升至A级标准'
+            '脱敏处理了 3,456 个敏感字段，安全等级提升至A级标准',
         ]
 
         // 生成随机的执行时间
@@ -1116,13 +1222,17 @@ export class WorkflowExecutionService {
 
         const steps: WorkflowStep[] = enabledSteps.map((config, index) => {
             const stepStartTime = new Date(baseTime.getTime() + index * 12 * 60 * 1000) // 每步间隔12分钟
-            const stepEndTime = new Date(stepStartTime.getTime() + (8 + Math.random() * 15) * 60 * 1000) // 执行8-23分钟
+            const stepEndTime = new Date(
+                stepStartTime.getTime() + (8 + Math.random() * 15) * 60 * 1000
+            ) // 执行8-23分钟
             const totalRecords = Math.floor(15000 + Math.random() * 35000) // 15k-50k记录
             const processedRecords = Math.floor(totalRecords * (0.96 + Math.random() * 0.04)) // 96%-100%处理率
 
             // 根据taskId获取对应的结果描述
             const resultIndex = parseInt(config.taskId) - 1
-            const result = mockResults[resultIndex] || `${config.title}执行完成，处理了 ${processedRecords.toLocaleString()} 条记录`
+            const result =
+                mockResults[resultIndex] ||
+                `${config.title}执行完成，处理了 ${processedRecords.toLocaleString()} 条记录`
 
             return {
                 ...config,
@@ -1130,7 +1240,7 @@ export class WorkflowExecutionService {
                 progress: 100,
                 processedRecords: {
                     processed: processedRecords,
-                    total: totalRecords
+                    total: totalRecords,
                 },
                 totalRecords,
                 startTime: stepStartTime,
@@ -1142,8 +1252,8 @@ export class WorkflowExecutionService {
                     `${stepStartTime.toLocaleTimeString()} - 初始化处理环境，加载配置参数`,
                     `${new Date(stepStartTime.getTime() + 3 * 60 * 1000).toLocaleTimeString()} - 开始处理数据，预计处理 ${totalRecords.toLocaleString()} 条记录`,
                     `${new Date(stepEndTime.getTime() - 2 * 60 * 1000).toLocaleTimeString()} - 数据处理完成，成功处理 ${processedRecords.toLocaleString()} 条记录`,
-                    `${stepEndTime.toLocaleTimeString()} - ${config.title}执行完成，耗时 ${Math.round((stepEndTime.getTime() - stepStartTime.getTime()) / 60000)} 分钟`
-                ]
+                    `${stepEndTime.toLocaleTimeString()} - ${config.title}执行完成，耗时 ${Math.round((stepEndTime.getTime() - stepStartTime.getTime()) / 60000)} 分钟`,
+                ],
             }
         })
 
@@ -1152,8 +1262,8 @@ export class WorkflowExecutionService {
             status: 'completed',
             steps,
             currentStepIndex: steps.length - 1,
-            startTime: steps[0].startTime,
-            endTime: steps[steps.length - 1].endTime
+            startTime: steps[0]?.startTime,
+            endTime: steps[steps.length - 1]?.endTime,
         }
 
         // 将模拟数据存储到内存中
@@ -1194,14 +1304,24 @@ export class WorkflowExecutionService {
     /**
      * 通知步骤进度更新
      */
-    private notifyStepProgress(executionId: string, stepId: string, progress: number, processedRecords: { processed: number; total: number }): void {
+    private notifyStepProgress(
+        executionId: string,
+        stepId: string,
+        progress: number,
+        processedRecords: { processed: number; total: number }
+    ): void {
         const callbacks = this.stepProgressCallbacks.get(executionId)
         if (callbacks) {
             // 使用 setTimeout 确保回调异步执行，避免阻塞主线程
             setTimeout(() => {
                 callbacks.forEach(callback => {
                     try {
-                        callback(stepId, progress, processedRecords.processed, processedRecords.total)
+                        callback(
+                            stepId,
+                            progress,
+                            processedRecords.processed,
+                            processedRecords.total
+                        )
                     } catch (error) {
                         console.error('步骤进度回调执行失败:', error)
                     }
@@ -1213,7 +1333,12 @@ export class WorkflowExecutionService {
     /**
      * 通知步骤状态变更
      */
-    private notifyStepStatus(executionId: string, stepId: string, status: WorkflowStep['status'], step: WorkflowStep): void {
+    private notifyStepStatus(
+        executionId: string,
+        stepId: string,
+        status: WorkflowStep['status'],
+        step: WorkflowStep
+    ): void {
         const callbacks = this.stepStatusCallbacks.get(executionId)
         if (callbacks) {
             // 使用 setTimeout 确保回调异步执行，避免阻塞主线程
@@ -1254,7 +1379,7 @@ export class WorkflowExecutionService {
      */
     getExecution(id: string): WorkflowExecution | undefined {
         let execution = this.executions.get(id)
-        
+
         // 如果找不到执行记录，检查是否为已知的模拟历史记录ID
         if (!execution) {
             // 检查是否为ExecutionHistory中的模拟数据ID
@@ -1269,7 +1394,7 @@ export class WorkflowExecutionService {
                 execution = this.generateMockExecution(id)
             }
         }
-        
+
         return execution
     }
 
@@ -1279,7 +1404,7 @@ export class WorkflowExecutionService {
      */
     getAllExecutions(): WorkflowExecution[] {
         const executions = Array.from(this.executions.values())
-        
+
         // 按开始时间倒序排列（最新的在前）
         return executions.sort((a, b) => {
             const timeA = a.startTime?.getTime() || 0
@@ -1295,8 +1420,11 @@ export class WorkflowExecutionService {
         const totalSteps = execution.steps.length
         const completedSteps = execution.steps.filter(step => step.status === 'completed').length
         const totalRecords = execution.steps.reduce((sum, step) => sum + step.totalRecords, 0)
-        const processedRecords = execution.steps.reduce((sum, step) => sum + step.processedRecords.processed, 0)
-        
+        const processedRecords = execution.steps.reduce(
+            (sum, step) => sum + step.processedRecords.processed,
+            0
+        )
+
         // 计算整体进度
         let progress = 0
         if (execution.status === 'completed') {
@@ -1314,7 +1442,7 @@ export class WorkflowExecutionService {
                 day: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
-                second: '2-digit'
+                second: '2-digit',
             })
         }
 
@@ -1347,8 +1475,8 @@ export class WorkflowExecutionService {
             errorMessage,
             config: {
                 steps: execution.steps.map(step => step.title),
-                enabledSteps: execution.steps.filter(step => step.enabled).map(step => step.title)
-            }
+                enabledSteps: execution.steps.filter(step => step.enabled).map(step => step.title),
+            },
         }
     }
 

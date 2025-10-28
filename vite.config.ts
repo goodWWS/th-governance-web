@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
     const isProduction = mode === 'production'
 
     return {
+        base: '/dataflow/',
         plugins: [
             react(),
             // Gzip 压缩
@@ -57,20 +58,24 @@ export default defineConfig(({ mode }) => {
                 '/api': {
                     target: 'http://192.168.110.34:8888',
                     changeOrigin: true,
-                    rewrite: (path) => path.replace(/^\/api/, ''),
+                    rewrite: path => path.replace(/^\/api/, ''),
                     configure: (proxy, _options) => {
                         proxy.on('error', (err, _req, _res) => {
-                            console.log('proxy error', err);
-                        });
+                            console.log('proxy error', err)
+                        })
                         proxy.on('proxyReq', (_proxyReq, req, _res) => {
-                            console.log('Sending Request to the Target:', req.method, req.url);
-                        });
+                            console.log('Sending Request to the Target:', req.method, req.url)
+                        })
                         proxy.on('proxyRes', (proxyRes, req, _res) => {
-                            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
-                        });
+                            console.log(
+                                'Received Response from the Target:',
+                                proxyRes.statusCode,
+                                req.url
+                            )
+                        })
                     },
-                }
-            }
+                },
+            },
         },
         build: {
             target: 'es2015',

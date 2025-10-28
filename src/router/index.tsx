@@ -13,69 +13,74 @@ import ComprehensiveQualityControl from '../pages/DataQualityControl/Comprehensi
 import CoreDataQualityControl from '../pages/DataQualityControl/CoreDataQualityControl'
 import TextQualityControl from '../pages/DataQualityControl/TextQualityControl'
 
-export const router = createBrowserRouter([
+export const router = createBrowserRouter(
+    [
+        {
+            path: '/',
+            element: <MainLayout />,
+            children: [
+                {
+                    index: true,
+                    element: <Dashboard />,
+                },
+                {
+                    path: 'dashboard',
+                    element: <Dashboard />,
+                },
+                {
+                    path: 'database-connection',
+                    element: <DatabaseConnection />,
+                },
+                {
+                    path: 'data-governance',
+                    element: <DataGovernance />,
+                },
+                {
+                    path: 'data-governance/workflow-config',
+                    element: <WorkflowConfig />,
+                },
+                {
+                    path: 'data-governance/execution-history',
+                    element: <ExecutionHistory />,
+                },
+                {
+                    path: 'data-governance/execution/:id',
+                    element: <ExecutionDetail />,
+                },
+                {
+                    path: 'data-quality-control',
+                    element: <DataQualityControl />,
+                },
+                {
+                    path: 'data-quality-control/text',
+                    element: <TextQualityControl />,
+                },
+                {
+                    path: 'data-quality-control/comprehensive',
+                    element: <ComprehensiveQualityControl />,
+                },
+                {
+                    path: 'data-quality-control/completeness',
+                    element: <CompletenessQualityControl />,
+                },
+                {
+                    path: 'data-quality-control/basic-medical-logic',
+                    element: <BasicMedicalLogicQualityControl />,
+                },
+                {
+                    path: 'data-quality-control/core-data',
+                    element: <CoreDataQualityControl />,
+                },
+                // {
+                //     path: 'style-demo',
+                //     element: <StyleDemo />,
+                // },
+            ],
+        },
+    ],
     {
-        path: '/',
-        element: <MainLayout />,
-        children: [
-            {
-                index: true,
-                element: <Dashboard />,
-            },
-            {
-                path: 'dashboard',
-                element: <Dashboard />,
-            },
-            {
-                path: 'database-connection',
-                element: <DatabaseConnection />,
-            },
-            {
-                path: 'data-governance',
-                element: <DataGovernance />,
-            },
-            {
-                path: 'data-governance/workflow-config',
-                element: <WorkflowConfig />,
-            },
-            {
-                path: 'data-governance/execution-history',
-                element: <ExecutionHistory />,
-            },
-            {
-                path: 'data-governance/execution/:id',
-                element: <ExecutionDetail />,
-            },
-            {
-                path: 'data-quality-control',
-                element: <DataQualityControl />,
-            },
-            {
-                path: 'data-quality-control/text',
-                element: <TextQualityControl />,
-            },
-            {
-                path: 'data-quality-control/comprehensive',
-                element: <ComprehensiveQualityControl />,
-            },
-            {
-                path: 'data-quality-control/completeness',
-                element: <CompletenessQualityControl />,
-            },
-            {
-                path: 'data-quality-control/basic-medical-logic',
-                element: <BasicMedicalLogicQualityControl />,
-            },
-            {
-                path: 'data-quality-control/core-data',
-                element: <CoreDataQualityControl />,
-            },
-            // {
-            //     path: 'style-demo',
-            //     element: <StyleDemo />,
-            // },
-        ],
-    },
-])
+        basename: '/dataflow',
+    }
+)
 
 export default router
