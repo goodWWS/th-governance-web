@@ -10,6 +10,9 @@ import type {
     DbConnectionPageResponse,
     LogPageParams,
     LogPageResponse,
+    WorkflowConfigResponse,
+    WorkflowConfigUpdateItem,
+    WorkflowConfigUpdateResponse,
 } from '@/types'
 import { api } from '@/utils/request'
 
@@ -277,19 +280,51 @@ export class DataGovernanceService {
 
     /**
      * 测试数据库连接
-     * @description 测试数据库连接是否可用
      * @param id 数据库连接ID
      * @returns Promise<any>
      */
     static async testDbConnection(id: string): Promise<any> {
         try {
-            if (!id) {
-                throw new Error('数据库连接ID不能为空')
-            }
-            return await api.post<any>(`/data/governance/db-connection/mock-test/${id}`)
+            return await api.post<any>(`/data/governance/db/connection/test/${id}`)
         } catch (error) {
             throw new Error(
                 `测试数据库连接失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
+
+    /**
+     * 获取工作流配置列表
+     * @description 获取所有工作流步骤的配置信息
+     * @returns Promise<WorkflowConfigResponse>
+     */
+    static async getWorkflowConfig(): Promise<WorkflowConfigResponse> {
+        try {
+            return await api.get<WorkflowConfigResponse>('/data/governance/task/config/list')
+        } catch (error) {
+            throw new Error(
+                `获取工作流配置失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
+
+    /**
+     * 批量更新工作流配置
+     * @description 批量更新工作流步骤的启用状态和自动流转设置
+     * @param configs 要更新的配置项列表
+     * @returns Promise<WorkflowConfigUpdateResponse>
+     */
+    static async updateWorkflowConfig(
+        configs: WorkflowConfigUpdateItem[]
+    ): Promise<WorkflowConfigUpdateResponse> {
+        try {
+            return await api.post<WorkflowConfigUpdateResponse>(
+                '/data/governance/task/config/update',
+                configs
+            )
+        } catch (error) {
+            throw new Error(
+                `更新工作流配置失败: ${error instanceof Error ? error.message : '未知错误'}`
             )
         }
     }
@@ -322,6 +357,10 @@ export const dataGovernanceService = {
     deleteDbConnection: DataGovernanceService.deleteDbConnection,
     updateDbConnection: DataGovernanceService.updateDbConnection,
     testDbConnection: DataGovernanceService.testDbConnection,
+
+    // 工作流配置相关
+    getWorkflowConfig: DataGovernanceService.getWorkflowConfig,
+    updateWorkflowConfig: DataGovernanceService.updateWorkflowConfig,
 }
 
 export default dataGovernanceService

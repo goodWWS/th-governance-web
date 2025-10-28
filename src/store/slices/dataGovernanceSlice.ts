@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import type { RootState } from '../index'
+import type { WorkflowNode } from '@/types'
+import { dataGovernanceService } from '@/services/dataGovernanceService'
 
 // 数据治理任务状态类型
 export type TaskStatus = 'idle' | 'running' | 'completed' | 'error' | 'paused'
@@ -48,6 +50,8 @@ interface DataGovernanceState {
     tasks: GovernanceTask[]
     connections: DatabaseConnection[]
     statistics: StatisticData
+    workflowConfig: WorkflowNode[]
+    workflowLoading: boolean
     loading: boolean
     error: string | null
 }
@@ -183,9 +187,42 @@ const initialState: DataGovernanceState = {
         duplicateRecords: 45000,
         errorRecords: 25000,
     },
+    workflowConfig: [],
+    workflowLoading: false,
     loading: false,
     error: null,
 }
+
+// 异步操作：获取工作流配置
+export const fetchWorkflowConfig = createAsyncThunk(
+    'dataGovernance/fetchWorkflowConfig',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await dataGovernanceService.getWorkflowConfig()
+            return response.data
+        } catch (error: any) {
+            return rejectWithValue(error.message || '获取工作流配置失败')
+        }
+    }
+)
+
+// 异步操作：更新工作流配置
+export const updateWorkflowConfig = createAsyncThunk(
+    'dataGovernance/updateWorkflowConfig',
+    async (
+        updates: Array<{ id: number; enabled?: boolean; isAuto?: boolean }>,
+        { rejectWithValue, dispatch }
+    ) => {
+        try {
+            await dataGovernanceService.updateWorkflowConfig(updates)
+            // 更新成功后重新获取数据
+            dispatch(fetchWorkflowConfig())
+            return updates
+        } catch (error: any) {
+            return rejectWithValue(error.message || '更新工作流配置失败')
+        }
+    }
+)
 
 // 异步操作：启动任务
 export const startTask = createAsyncThunk(
@@ -194,12 +231,12 @@ export const startTask = createAsyncThunk(
         try {
             // 模拟API调用
             await new Promise(resolve => setTimeout(resolve, 1000))
-            
+
             // 获取任务的总记录数
             const state = getState() as RootState
             const task = state.dataGovernance.tasks.find(t => t.id === taskId)
             const totalRecords = task?.totalRecords || 0
-            
+
             // 启动进度模拟
             const simulateProgress = () => {
                 let progress = 0
@@ -209,31 +246,37 @@ export const startTask = createAsyncThunk(
                         progress = 100
                         clearInterval(interval)
                         // 任务完成
-                        dispatch(updateTaskProgress({
-                            taskId,
-                            progress: 100,
-                            processedRecords: totalRecords // 完成时处理记录数等于总记录数
-                        }))
+                        dispatch(
+                            updateTaskProgress({
+                                taskId,
+                                progress: 100,
+                                processedRecords: totalRecords, // 完成时处理记录数等于总记录数
+                            })
+                        )
                         // 标记任务完成
-                        dispatch(completeTask({
-                            taskId,
-                            endTime: new Date().toLocaleString('zh-CN')
-                        }))
+                        dispatch(
+                            completeTask({
+                                taskId,
+                                endTime: new Date().toLocaleString('zh-CN'),
+                            })
+                        )
                     } else {
                         // 根据进度计算已处理记录数
                         const processedRecords = Math.floor((progress / 100) * totalRecords)
-                        dispatch(updateTaskProgress({
-                            taskId,
-                            progress: Math.floor(progress),
-                            processedRecords
-                        }))
+                        dispatch(
+                            updateTaskProgress({
+                                taskId,
+                                progress: Math.floor(progress),
+                                processedRecords,
+                            })
+                        )
                     }
                 }, 2000) // 每2秒更新一次
             }
-            
+
             // 延迟启动进度模拟
             setTimeout(simulateProgress, 1000)
-            
+
             return {
                 taskId,
                 startTime: new Date().toLocaleString('zh-CN'),
@@ -291,6 +334,32 @@ const dataGovernanceSlice = createSlice({
     name: 'dataGovernance',
     initialState,
     reducers: {
+        // 更新工作流配置（本地状态）
+        updateWorkflowConfigLocal: (
+            state,
+            action: PayloadAction<{ id: number; enabled?: boolean; isAuto?: boolean }>
+        ) => {
+            const { id, enabled, isAuto } = action.payload
+            const node = state.workflowConfig.find(n => n.id === id)
+            if (node) {
+                if (enabled !== undefined) {
+                    node.enabled = enabled
+                    // 如果禁用步骤，同时禁用自动流转
+                    if (!enabled) {
+                        node.isAuto = false
+                    }
+                }
+                if (isAuto !== undefined) {
+                    node.isAuto = isAuto
+                }
+            }
+        },
+
+        // 设置工作流配置
+        setWorkflowConfig: (state, action: PayloadAction<WorkflowNode[]>) => {
+            state.workflowConfig = action.payload
+        },
+
         // 更新任务配置
         updateTaskConfig: (
             state,
@@ -363,10 +432,7 @@ const dataGovernanceSlice = createSlice({
         },
 
         // 完成任务
-        completeTask: (
-            state,
-            action: PayloadAction<{ taskId: string; endTime: string }>
-        ) => {
+        completeTask: (state, action: PayloadAction<{ taskId: string; endTime: string }>) => {
             const { taskId, endTime } = action.payload
             const task = state.tasks.find(t => t.id === taskId)
             if (task) {
@@ -378,6 +444,33 @@ const dataGovernanceSlice = createSlice({
     },
     extraReducers: builder => {
         builder
+            // 获取工作流配置
+            .addCase(fetchWorkflowConfig.pending, state => {
+                state.workflowLoading = true
+                state.error = null
+            })
+            .addCase(fetchWorkflowConfig.fulfilled, (state, action) => {
+                state.workflowLoading = false
+                state.workflowConfig = action.payload
+            })
+            .addCase(fetchWorkflowConfig.rejected, (state, action) => {
+                state.workflowLoading = false
+                state.error = action.payload as string
+            })
+
+            // 更新工作流配置
+            .addCase(updateWorkflowConfig.pending, state => {
+                state.workflowLoading = true
+                state.error = null
+            })
+            .addCase(updateWorkflowConfig.fulfilled, state => {
+                state.workflowLoading = false
+            })
+            .addCase(updateWorkflowConfig.rejected, (state, action) => {
+                state.workflowLoading = false
+                state.error = action.payload as string
+            })
+
             // 启动任务
             .addCase(startTask.pending, state => {
                 state.loading = true
@@ -433,6 +526,8 @@ const dataGovernanceSlice = createSlice({
 
 // 导出 actions
 export const {
+    updateWorkflowConfigLocal,
+    setWorkflowConfig,
     updateTaskConfig,
     updateTaskProgress,
     addConnection,

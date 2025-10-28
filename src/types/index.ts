@@ -272,3 +272,78 @@ export interface DbConnectionPageResponse {
     msg: string
     data: DbConnectionPageData
 }
+
+// 工作流配置相关类型定义
+export interface WorkflowNode {
+    /** 节点ID */
+    id: number
+    /** 节点名称 */
+    nodeName: string
+    /** 节点类型 */
+    nodeType:
+        | 'dataAccess'
+        | 'dataValidate'
+        | 'dataClean'
+        | 'dataTransform'
+        | 'dataFilter'
+        | 'dataMerge'
+        | 'dataMask'
+        | 'dataRecheck'
+        | 'dataLoad'
+    /** 节点步骤序号 */
+    nodeStep: number
+    /** 是否启用 */
+    enabled: boolean
+    /** 是否自动执行 */
+    isAuto: boolean
+    /** 节点描述 */
+    descript: string
+}
+
+export interface WorkflowConfigResponse {
+    /** 响应状态码 */
+    code: number
+    /** 响应消息 */
+    msg: string
+    /** 工作流节点配置数据 */
+    data: WorkflowNode[]
+}
+
+// 工作流节点类型枚举
+export const WorkflowNodeType = {
+    DATA_ACCESS: 'dataAccess',
+    DATA_VALIDATE: 'dataValidate',
+    DATA_CLEAN: 'dataClean',
+    DATA_TRANSFORM: 'dataTransform',
+    DATA_FILTER: 'dataFilter',
+    DATA_MERGE: 'dataMerge',
+    DATA_MASK: 'dataMask',
+    DATA_RECHECK: 'dataRecheck',
+    DATA_LOAD: 'dataLoad',
+} as const
+
+export type WorkflowNodeType = (typeof WorkflowNodeType)[keyof typeof WorkflowNodeType]
+
+// 工作流配置更新相关类型
+export interface WorkflowConfigUpdateItem {
+    /** 工作流节点ID */
+    id: number
+    /** 是否启用 */
+    enabled: boolean
+    /** 是否自动流转 */
+    is_auto: boolean
+}
+
+export interface WorkflowConfigUpdateRequest {
+    /** 批量更新的配置项列表 */
+    configs: WorkflowConfigUpdateItem[]
+}
+
+export interface WorkflowConfigUpdateResponse {
+    /** 响应状态码 */
+    code: number
+    /** 响应消息 */
+    msg: string
+    /** 响应数据 */
+    data?: boolean
+}
