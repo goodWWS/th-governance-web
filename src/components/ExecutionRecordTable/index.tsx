@@ -68,6 +68,7 @@ const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             running: { color: 'processing', icon: <LoadingOutlined spin />, text: '执行中' },
             completed: { color: 'success', icon: <CheckCircleOutlined />, text: '已完成' },
             error: { color: 'error', icon: <ExclamationCircleOutlined />, text: '执行失败' },
+            failed: { color: 'error', icon: <ExclamationCircleOutlined />, text: '执行失败' },
             paused: { color: 'warning', icon: <PauseCircleOutlined />, text: '已暂停' },
         }
 
@@ -91,6 +92,7 @@ const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             running: { color: 'processing', icon: <LoadingOutlined spin />, text: '执行中' },
             completed: { color: 'success', icon: <CheckCircleOutlined />, text: '已完成' },
             error: { color: 'error', icon: <ExclamationCircleOutlined />, text: '执行失败' },
+            failed: { color: 'error', icon: <ExclamationCircleOutlined />, text: '执行失败' },
             paused: { color: 'warning', icon: <PauseCircleOutlined />, text: '已暂停' },
         }
 
@@ -123,11 +125,19 @@ const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             key: 'progress',
             width: 150,
             render: (_, record) => {
-                if (record.progress !== undefined) {
-                    // 使用progress字段
+                // 计算实际进度百分比
+                const calculateProgress = () => {
+                    if (record.totalRecords === 0) return 0
+                    return Math.round((record.processedRecords / record.totalRecords) * 100)
+                }
+
+                const actualProgress = record.progress !== undefined ? record.progress : calculateProgress()
+
+                if (record.progress !== undefined || (record.processedRecords >= 0 && record.totalRecords > 0)) {
+                    // 使用progress字段或根据记录数计算进度
                     return (
                         <div>
-                            <div style={{ marginBottom: 4 }}>进度: {record.progress}%</div>
+                            <div style={{ marginBottom: 4 }}>进度: {actualProgress}%</div>
                             <div style={{ fontSize: 12, color: '#8c8c8c' }}>
                                 {record.processedRecords.toLocaleString()}/
                                 {record.totalRecords.toLocaleString()}

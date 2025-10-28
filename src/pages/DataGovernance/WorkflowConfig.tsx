@@ -11,8 +11,6 @@ import {
 } from 'antd'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppDispatch } from '../../store/hooks'
-import { startTask } from '../../store/slices/dataGovernanceSlice'
 import { 
   PlayCircleOutlined, 
   SettingOutlined,
@@ -26,6 +24,7 @@ import {
   EyeInvisibleOutlined,
   DeleteOutlined
 } from '@ant-design/icons'
+import { workflowExecutionService, type WorkflowStep } from '../../services/workflowExecutionService'
 
 const { Title, Text } = Typography
 
@@ -35,7 +34,6 @@ const { Title, Text } = Typography
  */
 const WorkflowConfig: React.FC = () => {
     const navigate = useNavigate()
-    const dispatch = useAppDispatch()
     const [loading, setLoading] = useState(false)
     const [isRunning, setIsRunning] = useState(false)
 
@@ -47,7 +45,7 @@ const WorkflowConfig: React.FC = () => {
             title: '数据清洗',
             description: '脏数据主要是数据值域内包含了一些无效字符、特殊字符、过渡态的拼接符等。脏数据处理是通过清洗函数等工程手段，在固定环节调用，将数据装载到ODS数据中心的过程。',
             enabled: true,
-            autoFlow: false,
+            autoFlow: true, // 修改为自动流转
             icon: <ClearOutlined />
         },
         {
@@ -71,28 +69,28 @@ const WorkflowConfig: React.FC = () => {
         {
             id: 'standard-mapping',
             taskId: '4', // 对应Redux中的任务ID
-            title: '标准对照',
-            description: '对多源数据依据标准字典对照，及对数据清洗成标准字典的一系列过程。',
-            enabled: false,
-            autoFlow: false,
+            title: '标准字典对照',
+            description: '将多源数据字典统一为标准字典的过程。',
+            enabled: true,
+            autoFlow: false, // 保持手动确认，模拟需要人工审核的步骤
             icon: <BookOutlined />
         },
         {
-            id: 'empi-distribution',
+            id: 'empi-assignment',
             taskId: '5', // 对应Redux中的任务ID
-            title: 'EMPI定义发放',
-            description: '将同一个区域医院中同一个患者的多个患者号进行标记识别，合并患者，统一发布患者唯一主索引。',
+            title: 'EMPI发放',
+            description: '为同一患者发放唯一主索引的过程。',
             enabled: true,
             autoFlow: true,
             icon: <UserOutlined />
         },
         {
-            id: 'emoi-distribution',
+            id: 'emoi-assignment',
             taskId: '6', // 对应Redux中的任务ID
-            title: 'EMOI定义发放',
-            description: '将同一个区域同一个患者的多次就诊号进行标记识别，根据就诊时间标明检查检验所属就诊时间，统一发布检查检验就诊唯一主索引。',
+            title: 'EMOI发放',
+            description: '为检查检验发放就诊唯一主索引的过程。',
             enabled: true,
-            autoFlow: false,
+            autoFlow: true,
             icon: <MedicineBoxOutlined />
         },
         {
@@ -109,7 +107,7 @@ const WorkflowConfig: React.FC = () => {
             taskId: '8', // 对应Redux中的任务ID
             title: '丢孤儿',
             description: '数据中无法与主表有任何关联的数据，可能是系统上线前测试或违规操作产生，无使用价值。',
-            enabled: false,
+            enabled: true, // 修改为启用状态
             autoFlow: false,
             icon: <DeleteOutlined />
         },
@@ -119,51 +117,46 @@ const WorkflowConfig: React.FC = () => {
             title: '数据脱敏',
             description: '出于数据安全考虑，对数据中的关键字段进行脱敏处理。',
             enabled: true,
-            autoFlow: true,
+            autoFlow: false, // 修改为手动确认，模拟安全审核步骤
             icon: <EyeInvisibleOutlined />
         }
     ])
 
-    /**
-     * 启动工作流
-     */
     const handleStartWorkflow = async () => {
         try {
-            setLoading(true)
-            
-            // 检查是否有启用的步骤
+            // 获取启用的步骤
             const enabledSteps = steps.filter(step => step.enabled)
+            
             if (enabledSteps.length === 0) {
                 message.warning('请至少启用一个工作流步骤')
                 return
             }
+
+            // 转换为工作流执行服务需要的格式
+            const stepConfigs = enabledSteps.map(step => ({
+                id: step.id,
+                taskId: step.taskId,
+                title: step.title,
+                description: step.description,
+                enabled: step.enabled,
+                isAutomatic: step.autoFlow
+            }))
+
+            // 创建工作流执行实例
+            const executionId = `execution_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            const execution = workflowExecutionService.createExecution(executionId, stepConfigs)
             
-            // 模拟启动工作流
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            // 启动工作流
+            await workflowExecutionService.startExecution(executionId)
             
-            // 启动第一个启用的任务（使用Redux中的真实任务ID）
-            const firstEnabledStep = enabledSteps[0]
-            const taskId = firstEnabledStep.taskId // 使用映射的任务ID
-            
-            // 通过Redux启动任务
-            await dispatch(startTask(taskId))
-            
+            message.success('工作流已启动')
             setIsRunning(true)
-            message.success('工作流启动成功！正在跳转到详情页面...')
             
-            console.log('启用的工作流步骤:', enabledSteps)
-            console.log('启动的任务ID:', taskId)
-            
-            // 延迟跳转，让用户看到成功消息
-            setTimeout(() => {
-                navigate(`/data-governance/execution/${taskId}`)
-            }, 1500)
-            
+            // 导航到执行详情页面
+            navigate(`/data-governance/execution/${executionId}`)
         } catch (error) {
             console.error('启动工作流失败:', error)
-            message.error('启动工作流失败，请检查配置')
-        } finally {
-            setLoading(false)
+            message.error('启动工作流失败')
         }
     }
 
@@ -179,6 +172,14 @@ const WorkflowConfig: React.FC = () => {
                 autoFlow: enabled ? step.autoFlow : false
             } : step
         ))
+        
+        // 添加交互反馈
+        const stepName = steps.find(step => step.id === stepId)?.title
+        if (enabled) {
+            message.success(`已启用 ${stepName} 步骤`)
+        } else {
+            message.info(`已禁用 ${stepName} 步骤`)
+        }
     }
 
     /**
@@ -188,6 +189,14 @@ const WorkflowConfig: React.FC = () => {
         setSteps(prev => prev.map(step => 
             step.id === stepId ? { ...step, autoFlow } : step
         ))
+        
+        // 添加交互反馈
+        const stepName = steps.find(step => step.id === stepId)?.title
+        if (autoFlow) {
+            message.success(`${stepName} 已开启自动流转`)
+        } else {
+            message.info(`${stepName} 已关闭自动流转`)
+        }
     }
 
     return (

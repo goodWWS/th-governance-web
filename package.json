@@ -29,6 +29,7 @@
         ]
     },
     "dependencies": {
+        "@ant-design/charts": "^2.6.6",
         "@ant-design/icons": "^6.1.0",
         "@reduxjs/toolkit": "^2.9.1",
         "antd": "^5.27.6",
