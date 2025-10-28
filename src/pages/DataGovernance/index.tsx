@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ExecutionRecordTable from '../../components/ExecutionRecordTable'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { startTask, stopTask } from '../../store/slices/dataGovernanceSlice'
+import { startTask } from '../../store/slices/dataGovernanceSlice'
 
 const { Title } = Typography
 
@@ -34,23 +34,6 @@ const DataGovernance: React.FC = () => {
             }
         } catch (error) {
             message.error('工作流执行失败')
-        }
-    }
-
-    // 停止工作流
-    const stopWorkflow = async () => {
-        try {
-            // 停止正在运行的任务
-            const runningTask = tasks.find(task => task.status === 'running')
-            if (runningTask) {
-                await dispatch(stopTask(runningTask.id)).unwrap()
-                message.info('工作流已停止')
-                refreshRecords() // 刷新记录
-            } else {
-                message.warning('没有正在运行的任务')
-            }
-        } catch (error) {
-            message.error('停止工作流失败')
         }
     }
 
@@ -87,11 +70,6 @@ const DataGovernance: React.FC = () => {
                     >
                         {hasRunningTask ? '执行中...' : '执行工作流'}
                     </Button>
-                    {hasRunningTask && (
-                        <Button danger size='large' onClick={stopWorkflow}>
-                            停止执行
-                        </Button>
-                    )}
                     <Button icon={<ReloadOutlined />} onClick={refreshRecords} loading={loading}>
                         刷新记录
                     </Button>

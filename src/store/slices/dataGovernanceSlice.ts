@@ -258,20 +258,6 @@ export const pauseTask = createAsyncThunk(
     }
 )
 
-// 异步操作：停止任务
-export const stopTask = createAsyncThunk(
-    'dataGovernance/stopTask',
-    async (taskId: string, { rejectWithValue }) => {
-        try {
-            // 模拟API调用
-            await new Promise(resolve => setTimeout(resolve, 500))
-            return taskId
-        } catch (error) {
-            return rejectWithValue('停止任务失败')
-        }
-    }
-)
-
 // 异步操作：测试数据库连接
 export const testConnection = createAsyncThunk(
     'dataGovernance/testConnection',
@@ -417,19 +403,6 @@ const dataGovernanceSlice = createSlice({
                 const task = state.tasks.find(t => t.id === action.payload)
                 if (task) {
                     task.status = 'paused'
-                }
-            })
-
-            // 停止任务
-            .addCase(stopTask.fulfilled, (state, action) => {
-                const task = state.tasks.find(t => t.id === action.payload)
-                if (task) {
-                    task.status = 'idle'
-                    task.progress = 0
-                    task.processedRecords = 0
-                    task.startTime = undefined
-                    task.endTime = undefined
-                    task.errorMessage = undefined
                 }
             })
 

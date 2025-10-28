@@ -15,7 +15,6 @@ import { useAppDispatch } from '../../store/hooks'
 import { startTask } from '../../store/slices/dataGovernanceSlice'
 import { 
   PlayCircleOutlined, 
-  StopOutlined,
   SettingOutlined,
   ClearOutlined,
   CopyOutlined,
@@ -169,26 +168,6 @@ const WorkflowConfig: React.FC = () => {
     }
 
     /**
-     * 停止工作流
-     */
-    const handleStopWorkflow = async () => {
-        try {
-            setLoading(true)
-            
-            // 模拟停止工作流
-            await new Promise(resolve => setTimeout(resolve, 500))
-            
-            setIsRunning(false)
-            message.success('工作流已停止')
-        } catch (error) {
-            console.error('停止工作流失败:', error)
-            message.error('停止工作流失败')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    /**
      * 处理步骤启用状态变更
      */
     const handleStepEnabledChange = (stepId: string, enabled: boolean) => {
@@ -237,15 +216,6 @@ const WorkflowConfig: React.FC = () => {
                         onClick={handleStartWorkflow}
                     >
                         启动工作流
-                    </Button>
-                    <Button
-                        danger
-                        icon={<StopOutlined />}
-                        loading={loading && isRunning}
-                        disabled={!isRunning}
-                        onClick={handleStopWorkflow}
-                    >
-                        停止工作流
                     </Button>
                 </Space>
             </div>
