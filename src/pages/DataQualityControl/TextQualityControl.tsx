@@ -49,11 +49,13 @@ const TextQualityControl: React.FC = () => {
         name: 'file',
         multiple: false,
         accept: '.txt,.doc,.docx,.pdf',
-        beforeUpload: (file) => {
-            const isValidType = file.type === 'text/plain' || 
-                               file.type === 'application/msword' || 
-                               file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-                               file.type === 'application/pdf'
+        beforeUpload: file => {
+            const isValidType =
+                file.type === 'text/plain' ||
+                file.type === 'application/msword' ||
+                file.type ===
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                file.type === 'application/pdf'
             if (!isValidType) {
                 message.error('只支持 TXT、DOC、DOCX、PDF 格式的文件！')
                 return false
@@ -65,7 +67,7 @@ const TextQualityControl: React.FC = () => {
             }
             return false // 阻止自动上传
         },
-        onChange: (info) => {
+        onChange: info => {
             const { status } = info.file
             if (status === 'done') {
                 message.success(`${info.file.name} 文件上传成功`)
@@ -76,12 +78,12 @@ const TextQualityControl: React.FC = () => {
     }
 
     // 执行质控检查
-    const handleQualityCheck = async (values: any) => {
+    const handleQualityCheck = async (_values: any) => {
         setLoading(true)
         try {
             // 模拟质控检查过程
             await new Promise(resolve => setTimeout(resolve, 2000))
-            
+
             // 模拟质控结果
             const mockResults: QualityResult[] = [
                 {
@@ -106,7 +108,7 @@ const TextQualityControl: React.FC = () => {
                     suggestion: '医生签名字段不能为空，需要完善',
                 },
             ]
-            
+
             setQualityResults(mockResults)
             message.success('文本质控检查完成！')
         } catch (error) {
@@ -143,9 +145,7 @@ const TextQualityControl: React.FC = () => {
                 }
                 const config = severityConfig[severity as keyof typeof severityConfig]
                 return (
-                    <span style={{ color: config.color, fontWeight: 'bold' }}>
-                        {config.text}
-                    </span>
+                    <span style={{ color: config.color, fontWeight: 'bold' }}>{config.text}</span>
                 )
             },
         },
@@ -185,12 +185,15 @@ const TextQualityControl: React.FC = () => {
             <Row gutter={[16, 16]}>
                 {/* 左侧：质控配置 */}
                 <Col xs={24} lg={10}>
-                    <Card title={<><TableOutlined style={{ marginRight: 8 }} />质控配置</>}>
-                        <Form
-                            form={form}
-                            layout='vertical'
-                            onFinish={handleQualityCheck}
-                        >
+                    <Card
+                        title={
+                            <>
+                                <TableOutlined style={{ marginRight: 8 }} />
+                                质控配置
+                            </>
+                        }
+                    >
+                        <Form form={form} layout='vertical' onFinish={handleQualityCheck}>
                             <Form.Item
                                 label='选择数据表'
                                 name='targetTable'
@@ -248,13 +251,18 @@ const TextQualityControl: React.FC = () => {
 
                 {/* 右侧：质控结果 */}
                 <Col xs={24} lg={14}>
-                    <Card 
-                        title={<><FileTextOutlined style={{ marginRight: 8 }} />质控结果</>}
-                        extra={qualityResults.length > 0 && (
-                            <Text type='secondary'>
-                                共发现 {qualityResults.length} 个问题
-                            </Text>
-                        )}
+                    <Card
+                        title={
+                            <>
+                                <FileTextOutlined style={{ marginRight: 8 }} />
+                                质控结果
+                            </>
+                        }
+                        extra={
+                            qualityResults.length > 0 && (
+                                <Text type='secondary'>共发现 {qualityResults.length} 个问题</Text>
+                            )
+                        }
                     >
                         {qualityResults.length > 0 ? (
                             <Table

@@ -3,73 +3,74 @@ import { Alert, Button, Card, Progress, Spin, Steps, Tag, Typography, Modal, Spa
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
+import { logger } from '../../utils/logger'
 
 const { Title, Text } = Typography
 const { Step } = Steps
 
 // 定义九个执行步骤
 const EXECUTION_STEPS = [
-    { 
-        title: '数据清洗', 
+    {
+        title: '数据清洗',
         description: '清理无效字符，确保数据质量',
         isAutomatic: true,
-        resultSummary: '清理了 1,234 条无效记录，修复了 567 个格式错误'
+        resultSummary: '清理了 1,234 条无效记录，修复了 567 个格式错误',
     },
-    { 
-        title: '数据去重', 
+    {
+        title: '数据去重',
         description: '移除重复数据，防止数据失真',
         isAutomatic: true,
-        resultSummary: '检测到 892 条重复记录，已成功去重'
+        resultSummary: '检测到 892 条重复记录，已成功去重',
     },
-    { 
-        title: '类型转换', 
+    {
+        title: '类型转换',
         description: '将字符串类型转换为数据模型定义的标准类型',
         isAutomatic: true,
-        resultSummary: '转换了 15,678 个字段，成功率 99.8%'
+        resultSummary: '转换了 15,678 个字段，成功率 99.8%',
     },
-    { 
-        title: '标准字典对照', 
+    {
+        title: '标准字典对照',
         description: '将多源数据字典统一为标准字典',
         isAutomatic: false,
-        resultSummary: '匹配了 2,345 个字典项，需人工确认 23 项'
+        resultSummary: '匹配了 2,345 个字典项，需人工确认 23 项',
     },
-    { 
-        title: 'EMPI发放', 
+    {
+        title: 'EMPI发放',
         description: '为同一患者发放唯一主索引',
         isAutomatic: true,
-        resultSummary: '为 8,901 名患者分配了唯一标识'
+        resultSummary: '为 8,901 名患者分配了唯一标识',
     },
-    { 
-        title: 'EMOI发放', 
+    {
+        title: 'EMOI发放',
         description: '为检查检验发放就诊唯一主索引',
         isAutomatic: true,
-        resultSummary: '处理了 12,345 次就诊记录'
+        resultSummary: '处理了 12,345 次就诊记录',
     },
-    { 
-        title: '数据归一', 
+    {
+        title: '数据归一',
         description: '统一数据格式和标准值',
         isAutomatic: true,
-        resultSummary: '标准化了 45,678 条记录'
+        resultSummary: '标准化了 45,678 条记录',
     },
-    { 
-        title: '孤儿数据处理', 
+    {
+        title: '孤儿数据处理',
         description: '清理无法关联主表的无效数据',
         isAutomatic: false,
-        resultSummary: '发现 156 条孤儿数据，已标记待处理'
+        resultSummary: '发现 156 条孤儿数据，已标记待处理',
     },
-    { 
-        title: '数据脱敏', 
+    {
+        title: '数据脱敏',
         description: '保护敏感数据安全',
         isAutomatic: true,
-        resultSummary: '脱敏处理了 3,456 个敏感字段'
+        resultSummary: '脱敏处理了 3,456 个敏感字段',
     },
 ]
 
 const ExecutionDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const dispatch = useAppDispatch()
-    
+    const _dispatch = useAppDispatch()
+
     // 状态管理
     const [resultModalVisible, setResultModalVisible] = useState(false)
     const [selectedStepResult, setSelectedStepResult] = useState<{
@@ -84,12 +85,12 @@ const ExecutionDetail: React.FC = () => {
     // 获取当前执行步骤
     const getCurrentStep = () => {
         if (!executionDetail) return 0
-        
+
         // 根据任务状态和进度计算当前步骤
         if (executionDetail.status === 'idle') return 0
         if (executionDetail.status === 'error') return Math.floor(executionDetail.progress / 11.11) // 100/9 ≈ 11.11
         if (executionDetail.status === 'completed') return 9
-        
+
         // 运行中状态，根据进度计算
         return Math.floor(executionDetail.progress / 11.11)
     }
@@ -97,7 +98,7 @@ const ExecutionDetail: React.FC = () => {
     // 获取步骤状态
     const getStepStatus = (stepIndex: number) => {
         const currentStep = getCurrentStep()
-        
+
         if (executionDetail?.status === 'error' && stepIndex === currentStep) {
             return 'error'
         }
@@ -112,7 +113,7 @@ const ExecutionDetail: React.FC = () => {
 
     useEffect(() => {
         // 这里可以添加获取详情的逻辑
-        console.log('获取执行详情', id)
+        logger.debug('获取执行详情', id)
     }, [id])
 
     // 返回上一页
@@ -133,7 +134,7 @@ const ExecutionDetail: React.FC = () => {
         setSelectedStepResult({
             title: step.title,
             resultSummary: step.resultSummary,
-            stepIndex
+            stepIndex,
         })
         setResultModalVisible(true)
     }
@@ -210,7 +211,11 @@ const ExecutionDetail: React.FC = () => {
                         执行详情
                     </Title>
                 </div>
-                <Button icon={<ReloadOutlined />} onClick={() => console.log('刷新详情')} loading={loading}>
+                <Button
+                    icon={<ReloadOutlined />}
+                    onClick={() => logger.debug('刷新详情')}
+                    loading={loading}
+                >
                     刷新
                 </Button>
             </div>
@@ -277,10 +282,10 @@ const ExecutionDetail: React.FC = () => {
                 >
                     {EXECUTION_STEPS.map((step, index) => {
                         const stepStatus = getStepStatus(index)
-                        const currentStep = getCurrentStep()
+                        const _currentStep = getCurrentStep()
                         const isCompleted = stepStatus === 'finish' || stepStatus === 'error'
                         const canViewResult = isCompleted && executionDetail?.status !== 'idle'
-                        
+
                         return (
                             <Step
                                 key={index}
@@ -288,20 +293,26 @@ const ExecutionDetail: React.FC = () => {
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                         <span>{step.title}</span>
                                         <Space>
-                                            <Tag 
+                                            <Tag
                                                 color={step.isAutomatic ? 'blue' : 'orange'}
-                                                size="small"
+                                                size='small'
                                             >
                                                 {step.isAutomatic ? '自动执行' : '手动执行'}
                                             </Tag>
                                             {stepStatus === 'finish' && (
-                                                <Tag color="success" size="small">已完成</Tag>
+                                                <Tag color='success' size='small'>
+                                                    已完成
+                                                </Tag>
                                             )}
                                             {stepStatus === 'error' && (
-                                                <Tag color="error" size="small">执行失败</Tag>
+                                                <Tag color='error' size='small'>
+                                                    执行失败
+                                                </Tag>
                                             )}
                                             {stepStatus === 'process' && (
-                                                <Tag color="processing" size="small">执行中</Tag>
+                                                <Tag color='processing' size='small'>
+                                                    执行中
+                                                </Tag>
                                             )}
                                         </Space>
                                     </div>
@@ -311,8 +322,8 @@ const ExecutionDetail: React.FC = () => {
                                         <div style={{ marginBottom: 8 }}>{step.description}</div>
                                         {canViewResult && (
                                             <Button
-                                                type="link"
-                                                size="small"
+                                                type='link'
+                                                size='small'
                                                 icon={<EyeOutlined />}
                                                 onClick={() => handleViewResult(index)}
                                                 style={{ padding: 0, height: 'auto' }}
@@ -327,28 +338,46 @@ const ExecutionDetail: React.FC = () => {
                         )
                     })}
                 </Steps>
-                
+
                 {/* 整体进度条 */}
                 <div style={{ marginTop: 24 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: 8,
+                        }}
+                    >
                         <Text strong>整体进度</Text>
                         <Text>{executionDetail?.progress || 0}%</Text>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '12px', color: '#8c8c8c' }}>
-                        <Text>已处理记录数: {executionDetail?.processedRecords?.toLocaleString() || 0}</Text>
-                        <Text>总记录数: {executionDetail?.totalRecords?.toLocaleString() || 0}</Text>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: 8,
+                            fontSize: '12px',
+                            color: '#8c8c8c',
+                        }}
+                    >
+                        <Text>
+                            已处理记录数: {executionDetail?.processedRecords?.toLocaleString() || 0}
+                        </Text>
+                        <Text>
+                            总记录数: {executionDetail?.totalRecords?.toLocaleString() || 0}
+                        </Text>
                     </div>
                     <Progress
                         percent={executionDetail?.progress || 0}
                         status={
-                            executionDetail?.status === 'error' 
-                                ? 'exception' 
-                                : executionDetail?.status === 'completed' 
-                                ? 'success' 
-                                : 'active'
+                            executionDetail?.status === 'error'
+                                ? 'exception'
+                                : executionDetail?.status === 'completed'
+                                  ? 'success'
+                                  : 'active'
                         }
                         strokeColor={
-                            executionDetail?.status === 'running' 
+                            executionDetail?.status === 'running'
                                 ? { from: '#108ee9', to: '#87d068' }
                                 : undefined
                         }
@@ -380,9 +409,9 @@ const ExecutionDetail: React.FC = () => {
                 open={resultModalVisible}
                 onCancel={handleCloseResultModal}
                 footer={[
-                    <Button key="close" onClick={handleCloseResultModal}>
+                    <Button key='close' onClick={handleCloseResultModal}>
                         关闭
-                    </Button>
+                    </Button>,
                 ]}
                 width={600}
             >
@@ -394,19 +423,29 @@ const ExecutionDetail: React.FC = () => {
                         </div>
                         <div style={{ marginBottom: 16 }}>
                             <Text strong>执行类型：</Text>
-                            <Tag color={EXECUTION_STEPS[selectedStepResult.stepIndex]?.isAutomatic ? 'blue' : 'orange'}>
-                                {EXECUTION_STEPS[selectedStepResult.stepIndex]?.isAutomatic ? '自动执行' : '手动执行'}
+                            <Tag
+                                color={
+                                    EXECUTION_STEPS[selectedStepResult.stepIndex]?.isAutomatic
+                                        ? 'blue'
+                                        : 'orange'
+                                }
+                            >
+                                {EXECUTION_STEPS[selectedStepResult.stepIndex]?.isAutomatic
+                                    ? '自动执行'
+                                    : '手动执行'}
                             </Tag>
                         </div>
                         <div>
                             <Text strong>执行结果：</Text>
-                            <div style={{ 
-                                marginTop: 8, 
-                                padding: 12, 
-                                background: '#f5f5f5', 
-                                borderRadius: 4,
-                                border: '1px solid #d9d9d9'
-                            }}>
+                            <div
+                                style={{
+                                    marginTop: 8,
+                                    padding: 12,
+                                    background: '#f5f5f5',
+                                    borderRadius: 4,
+                                    border: '1px solid #d9d9d9',
+                                }}
+                            >
                                 <Text>{selectedStepResult.resultSummary}</Text>
                             </div>
                         </div>

@@ -6,45 +6,46 @@ import ExecutionRecordTable from '../../components/ExecutionRecordTable'
 import { dataGovernanceService } from '../../services/dataGovernanceService'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { startTask } from '../../store/slices/dataGovernanceSlice'
+import { logger } from '../../utils/logger'
 
 const { Title } = Typography
 
 const DataGovernance: React.FC = () => {
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
-    const { tasks, loading, error } = useAppSelector(state => state.dataGovernance)
+    const { tasks, loading, error: _error } = useAppSelector(state => state.dataGovernance)
     const [startingWorkflow, setStartingWorkflow] = useState(false)
 
     // 获取执行记录
     const refreshRecords = () => {
         // 这里可以添加刷新逻辑
-        console.log('刷新执行记录')
+        logger.debug('刷新执行记录')
     }
 
     // 启动工作流
     const startWorkflow = useCallback(async () => {
         try {
-            console.log('开始启动工作流...')
+            logger.debug('开始启动工作流...')
             setStartingWorkflow(true)
 
             // 调用启动工作流API
-            console.log('调用 dataGovernanceService.startWorkflow()')
+            logger.debug('调用 dataGovernanceService.startWorkflow()')
             const response = await dataGovernanceService.startWorkflow()
-            console.log('启动工作流响应:', response)
+            logger.debug('启动工作流响应:', response)
 
             if (response.code === 200) {
                 const batchId = response.data
-                console.log('获取到批次ID:', batchId)
+                logger.debug('获取到批次ID:', batchId)
                 message.success('工作流启动成功！')
 
                 // 跳转到工作流详情页面
                 navigate(`/data-governance/workflow/${batchId}`)
             } else {
-                console.error('启动工作流失败:', response)
+                logger.error('启动工作流失败:', response)
                 message.error(response.msg || '工作流启动失败')
             }
         } catch (error) {
-            console.error('启动工作流异常:', error)
+            logger.error('启动工作流异常:', error)
             message.error('工作流启动失败，请稍后重试')
         } finally {
             setStartingWorkflow(false)
@@ -52,7 +53,7 @@ const DataGovernance: React.FC = () => {
     }, [navigate])
 
     // 执行工作流（保留原有逻辑作为备用）
-    const executeWorkflow = async () => {
+    const _executeWorkflow = async () => {
         try {
             // 启动第一个任务作为示例
             const firstIdleTask = tasks.find(task => task.status === 'idle')
@@ -70,7 +71,7 @@ const DataGovernance: React.FC = () => {
     }
 
     // 检查是否有任务正在运行
-    const hasRunningTask = tasks.some(task => task.status === 'running')
+    const _hasRunningTask = tasks.some(task => task.status === 'running')
 
     // 初始化加载执行记录
     useEffect(() => {

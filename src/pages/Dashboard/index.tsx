@@ -31,7 +31,7 @@ interface StatisticData {
 }
 
 const Dashboard: React.FC = () => {
-    const [statisticData, setStatisticData] = useState<StatisticData>({
+    const [statisticData, _setStatisticData] = useState<StatisticData>({
         totalTables: 40,
         processedTables: 32,
         totalRecords: 1250000,
@@ -40,7 +40,7 @@ const Dashboard: React.FC = () => {
         errorRecords: 25000,
     })
 
-    const [taskData, setTaskData] = useState<TaskRecord[]>([
+    const [taskData, _setTaskData] = useState<TaskRecord[]>([
         {
             key: '1',
             taskName: '数据清洗',

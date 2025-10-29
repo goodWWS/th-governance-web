@@ -1,11 +1,11 @@
-import { 
-    AreaChartOutlined, 
-    CheckCircleOutlined, 
-    ExclamationCircleOutlined, 
-    HeartOutlined, 
+import {
+    AreaChartOutlined,
+    CheckCircleOutlined,
+    ExclamationCircleOutlined,
+    HeartOutlined,
     SearchOutlined,
     TrophyOutlined,
-    WarningOutlined 
+    WarningOutlined,
 } from '@ant-design/icons'
 import {
     Alert,
@@ -87,12 +87,12 @@ const CoreDataQualityControl: React.FC = () => {
     ]
 
     // 执行核心数据质控
-    const handleCoreDataCheck = async (values: any) => {
+    const handleCoreDataCheck = async (_values: any) => {
         setLoading(true)
         try {
             // 模拟检查过程
             await new Promise(resolve => setTimeout(resolve, 3500))
-            
+
             // 模拟核心数据质量指标
             const mockMetrics: CoreDataMetric[] = [
                 {
@@ -162,7 +162,7 @@ const CoreDataQualityControl: React.FC = () => {
                     status: 'poor',
                 },
             ]
-            
+
             // 模拟对比分析结果
             const mockComparisons: ComparisonResult[] = [
                 {
@@ -216,10 +216,10 @@ const CoreDataQualityControl: React.FC = () => {
                     meetsBenchmark: true,
                 },
             ]
-            
+
             setCoreMetrics(mockMetrics)
             setComparisonResults(mockComparisons)
-            
+
             // 计算整体统计
             const totalDataTypes = mockMetrics.length
             const avgQualityScore = Math.round(
@@ -228,9 +228,10 @@ const CoreDataQualityControl: React.FC = () => {
             const excellentCount = mockMetrics.filter(m => m.status === 'excellent').length
             const poorCount = mockMetrics.filter(m => m.status === 'poor').length
             const benchmarkMeetRate = Math.round(
-                (mockComparisons.filter(c => c.meetsBenchmark).length / mockComparisons.length) * 100
+                (mockComparisons.filter(c => c.meetsBenchmark).length / mockComparisons.length) *
+                    100
             )
-            
+
             setOverallStats({
                 totalDataTypes,
                 avgQualityScore,
@@ -238,7 +239,7 @@ const CoreDataQualityControl: React.FC = () => {
                 poorCount,
                 benchmarkMeetRate,
             })
-            
+
             message.success('核心数据质控分析完成！')
         } catch (error) {
             message.error('核心数据质控分析失败，请重试')
@@ -254,9 +255,7 @@ const CoreDataQualityControl: React.FC = () => {
             dataIndex: 'dataType',
             key: 'dataType',
             width: 120,
-            render: (text: string) => (
-                <Text strong>{text}</Text>
-            ),
+            render: (text: string) => <Text strong>{text}</Text>,
         },
         {
             title: '描述',
@@ -264,7 +263,9 @@ const CoreDataQualityControl: React.FC = () => {
             key: 'description',
             width: 200,
             render: (text: string) => (
-                <Text type="secondary" style={{ fontSize: 12 }}>{text}</Text>
+                <Text type='secondary' style={{ fontSize: 12 }}>
+                    {text}
+                </Text>
             ),
         },
         {
@@ -291,7 +292,7 @@ const CoreDataQualityControl: React.FC = () => {
             render: (score: number, record) => (
                 <Space>
                     <Progress
-                        type="circle"
+                        type='circle'
                         size={40}
                         percent={score}
                         status={score >= 90 ? 'success' : score >= 70 ? 'active' : 'exception'}
@@ -335,7 +336,7 @@ const CoreDataQualityControl: React.FC = () => {
                         </div>
                     ))}
                     {issues.length > 2 && (
-                        <Text type="secondary" style={{ fontSize: 11 }}>
+                        <Text type='secondary' style={{ fontSize: 11 }}>
                             ...还有 {issues.length - 2} 个问题
                         </Text>
                     )}
@@ -372,10 +373,14 @@ const CoreDataQualityControl: React.FC = () => {
             width: 100,
             render: (_, record) => {
                 const { changeRate, changeType } = record
-                const color = changeType === 'increase' ? '#52c41a' : 
-                             changeType === 'decrease' ? '#ff4d4f' : '#1890ff'
-                const icon = changeType === 'increase' ? '↗' : 
-                            changeType === 'decrease' ? '↘' : '→'
+                const color =
+                    changeType === 'increase'
+                        ? '#52c41a'
+                        : changeType === 'decrease'
+                          ? '#ff4d4f'
+                          : '#1890ff'
+                const icon =
+                    changeType === 'increase' ? '↗' : changeType === 'decrease' ? '↘' : '→'
                 return (
                     <span style={{ color }}>
                         {icon} {Math.abs(changeRate)}%
@@ -449,9 +454,13 @@ const CoreDataQualityControl: React.FC = () => {
                                 title='平均质量得分'
                                 value={overallStats.avgQualityScore}
                                 suffix='分'
-                                valueStyle={{ 
-                                    color: overallStats.avgQualityScore >= 90 ? '#52c41a' : 
-                                           overallStats.avgQualityScore >= 70 ? '#1890ff' : '#ff4d4f' 
+                                valueStyle={{
+                                    color:
+                                        overallStats.avgQualityScore >= 90
+                                            ? '#52c41a'
+                                            : overallStats.avgQualityScore >= 70
+                                              ? '#1890ff'
+                                              : '#ff4d4f',
                                 }}
                                 prefix={<TrophyOutlined />}
                             />
@@ -474,8 +483,11 @@ const CoreDataQualityControl: React.FC = () => {
                                 title='基准达标率'
                                 value={overallStats.benchmarkMeetRate}
                                 suffix='%'
-                                valueStyle={{ 
-                                    color: overallStats.benchmarkMeetRate >= 80 ? '#52c41a' : '#ff4d4f' 
+                                valueStyle={{
+                                    color:
+                                        overallStats.benchmarkMeetRate >= 80
+                                            ? '#52c41a'
+                                            : '#ff4d4f',
                                 }}
                                 prefix={<TrophyOutlined />}
                             />
@@ -487,12 +499,15 @@ const CoreDataQualityControl: React.FC = () => {
             <Row gutter={[16, 16]}>
                 {/* 左侧：分析配置 */}
                 <Col xs={24} lg={8}>
-                    <Card title={<><HeartOutlined style={{ marginRight: 8 }} />分析配置</>}>
-                        <Form
-                            form={form}
-                            layout='vertical'
-                            onFinish={handleCoreDataCheck}
-                        >
+                    <Card
+                        title={
+                            <>
+                                <HeartOutlined style={{ marginRight: 8 }} />
+                                分析配置
+                            </>
+                        }
+                    >
+                        <Form form={form} layout='vertical' onFinish={handleCoreDataCheck}>
                             <Form.Item
                                 label='数据类型'
                                 name='dataType'
@@ -525,10 +540,7 @@ const CoreDataQualityControl: React.FC = () => {
                                 <RangePicker
                                     size='large'
                                     style={{ width: '100%' }}
-                                    defaultValue={[
-                                        dayjs().subtract(30, 'day'),
-                                        dayjs()
-                                    ]}
+                                    defaultValue={[dayjs().subtract(30, 'day'), dayjs()]}
                                 />
                             </Form.Item>
 
@@ -551,8 +563,13 @@ const CoreDataQualityControl: React.FC = () => {
                 {/* 右侧：分析结果 */}
                 <Col xs={24} lg={16}>
                     {/* 核心数据质量指标 */}
-                    <Card 
-                        title={<><AreaChartOutlined style={{ marginRight: 8 }} />核心数据质量指标</>}
+                    <Card
+                        title={
+                            <>
+                                <AreaChartOutlined style={{ marginRight: 8 }} />
+                                核心数据质量指标
+                            </>
+                        }
                         style={{ marginBottom: 16 }}
                     >
                         {coreMetrics.length > 0 ? (
@@ -576,7 +593,14 @@ const CoreDataQualityControl: React.FC = () => {
 
                     {/* 对比分析结果 */}
                     {comparisonResults.length > 0 && (
-                        <Card title={<><TrophyOutlined style={{ marginRight: 8 }} />对比分析结果</>}>
+                        <Card
+                            title={
+                                <>
+                                    <TrophyOutlined style={{ marginRight: 8 }} />
+                                    对比分析结果
+                                </>
+                            }
+                        >
                             <Table
                                 columns={comparisonColumns}
                                 dataSource={comparisonResults}

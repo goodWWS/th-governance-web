@@ -10,7 +10,10 @@ import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
     SafetyCertificateOutlined,
+    SafetyOutlined,
     SettingOutlined,
+    TeamOutlined,
+    UserOutlined,
 } from '@ant-design/icons'
 import { Button, Layout, Menu, MenuProps } from 'antd'
 import React, { useState } from 'react'
@@ -90,6 +93,28 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                 },
             ],
         },
+        {
+            key: 'system-settings',
+            icon: <SettingOutlined />,
+            label: '系统设置',
+            children: [
+                {
+                    key: '/system-settings/users',
+                    icon: <UserOutlined />,
+                    label: '用户设置',
+                },
+                {
+                    key: '/system-settings/roles',
+                    icon: <TeamOutlined />,
+                    label: '角色设置',
+                },
+                {
+                    key: '/system-settings/permissions',
+                    icon: <SafetyOutlined />,
+                    label: '权限设置',
+                },
+            ],
+        },
         // {
         //     key: '/style-demo',
         //     icon: <BgColorsOutlined />,
@@ -117,6 +142,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                 location.pathname.startsWith('/data-governance')
             ) {
                 return ['data-governance']
+            }
+            // 如果是系统设置相关路径，展开系统设置菜单
+            if (location.pathname.startsWith('/system-settings')) {
+                return ['system-settings']
             }
         }
         return []
@@ -181,11 +210,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                             color: '#1890ff',
                             transition: 'all 0.2s ease',
                         }}
-                        onMouseEnter={(e) => {
+                        onMouseEnter={e => {
                             e.currentTarget.style.backgroundColor = '#e6f7ff'
                             e.currentTarget.style.transform = 'scale(1.1)'
                         }}
-                        onMouseLeave={(e) => {
+                        onMouseLeave={e => {
                             e.currentTarget.style.backgroundColor = 'transparent'
                             e.currentTarget.style.transform = 'scale(1)'
                         }}
@@ -215,12 +244,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                             zIndex: 1000,
                             transition: 'all 0.2s ease',
                         }}
-                        onMouseEnter={(e) => {
+                        onMouseEnter={e => {
                             e.currentTarget.style.backgroundColor = '#e6f7ff'
                             e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
                             e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'
                         }}
-                        onMouseLeave={(e) => {
+                        onMouseLeave={e => {
                             e.currentTarget.style.backgroundColor = '#fff'
                             e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
                             e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)'

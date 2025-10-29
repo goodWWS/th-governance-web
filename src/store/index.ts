@@ -2,6 +2,9 @@ import { configureStore } from '@reduxjs/toolkit'
 import counterReducer from './slices/counterSlice'
 import userReducer from './slices/userSlice'
 import dataGovernanceReducer from './slices/dataGovernanceSlice'
+import systemUserReducer from './slices/systemUserSlice'
+import systemRoleReducer from './slices/systemRoleSlice'
+import systemPermissionReducer from './slices/systemPermissionSlice'
 
 // 配置 Redux store
 // 扩展 Window 接口以支持 Redux DevTools
@@ -16,6 +19,9 @@ export const store = configureStore({
         counter: counterReducer,
         user: userReducer,
         dataGovernance: dataGovernanceReducer,
+        systemUser: systemUserReducer,
+        systemRole: systemRoleReducer,
+        systemPermission: systemPermissionReducer,
     },
     // 开发环境启用 Redux DevTools
     devTools: typeof window !== 'undefined' && window.__REDUX_DEVTOOLS_EXTENSION__,

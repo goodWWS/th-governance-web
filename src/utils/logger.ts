@@ -40,55 +40,64 @@ class Logger {
     }
 
     debug(message: string, ...args: unknown[]): void {
-        if (this.shouldLog(LogLevel.DEBUG)) {
+        if (this.shouldLog(LogLevel.DEBUG) && isDevelopment()) {
+            // eslint-disable-next-line no-console
             console.log(...this.formatMessage('🐛 DEBUG', message, ...args))
         }
     }
 
     info(message: string, ...args: unknown[]): void {
-        if (this.shouldLog(LogLevel.INFO)) {
+        if (this.shouldLog(LogLevel.INFO) && isDevelopment()) {
+            // eslint-disable-next-line no-console
             console.info(...this.formatMessage('ℹ️ INFO', message, ...args))
         }
     }
 
     warn(message: string, ...args: unknown[]): void {
         if (this.shouldLog(LogLevel.WARN)) {
+            // eslint-disable-next-line no-console
             console.warn(...this.formatMessage('⚠️ WARN', message, ...args))
         }
     }
 
     error(message: string, error?: Error, ...args: unknown[]): void {
         if (this.shouldLog(LogLevel.ERROR)) {
-            console.error(...this.formatMessage('❌ ERROR', message, error, ...args))
+            // eslint-disable-next-line no-console
+            console.error(...this.formatMessage('❌ ERROR', message, ...args), error)
         }
     }
 
     group(label: string): void {
         if (isDevelopment()) {
+            // eslint-disable-next-line no-console
             console.group(label)
         }
     }
 
     groupEnd(): void {
         if (isDevelopment()) {
+            // eslint-disable-next-line no-console
             console.groupEnd()
         }
     }
 
     table(data: unknown): void {
         if (isDevelopment()) {
+            // eslint-disable-next-line no-console
             console.table(data)
         }
     }
 
     time(label: string): void {
         if (isDevelopment()) {
+            // eslint-disable-next-line no-console
             console.time(label)
         }
     }
 
     timeEnd(label: string): void {
         if (isDevelopment()) {
+            // eslint-disable-next-line no-console
             console.timeEnd(label)
         }
     }

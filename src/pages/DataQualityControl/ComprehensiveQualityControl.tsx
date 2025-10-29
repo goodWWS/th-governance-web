@@ -1,10 +1,10 @@
-import { 
-    BarChartOutlined, 
-    CheckCircleOutlined, 
-    ExclamationCircleOutlined, 
-    FileExcelOutlined, 
-    InboxOutlined, 
-    UploadOutlined 
+import {
+    BarChartOutlined,
+    CheckCircleOutlined,
+    ExclamationCircleOutlined,
+    FileExcelOutlined,
+    InboxOutlined,
+    UploadOutlined,
 } from '@ant-design/icons'
 import {
     Alert,
@@ -15,7 +15,6 @@ import {
     Progress,
     Row,
     Select,
-    Space,
     Statistic,
     Table,
     Typography,
@@ -26,7 +25,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { UploadProps } from 'antd/es/upload'
 import React, { useState } from 'react'
 
-const { Title, Text } = Typography
+const { Title, _Text } = Typography
 const { Dragger } = Upload
 
 interface QualityMetric {
@@ -67,9 +66,10 @@ const ComprehensiveQualityControl: React.FC = () => {
         name: 'file',
         multiple: false,
         accept: '.xlsx,.xls',
-        beforeUpload: (file) => {
-            const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                           file.type === 'application/vnd.ms-excel'
+        beforeUpload: file => {
+            const isExcel =
+                file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                file.type === 'application/vnd.ms-excel'
             if (!isExcel) {
                 message.error('只支持 Excel 格式的文件！')
                 return false
@@ -81,7 +81,7 @@ const ComprehensiveQualityControl: React.FC = () => {
             }
             return false // 阻止自动上传
         },
-        onChange: (info) => {
+        onChange: info => {
             const { status } = info.file
             if (status === 'done') {
                 message.success(`${info.file.name} 文件上传成功`)
@@ -135,12 +135,12 @@ const ComprehensiveQualityControl: React.FC = () => {
     }
 
     // 执行综合质控
-    const handleComprehensiveCheck = async (values: any) => {
+    const handleComprehensiveCheck = async (_values: any) => {
         setLoading(true)
         try {
             // 模拟质控检查过程
             await new Promise(resolve => setTimeout(resolve, 3000))
-            
+
             // 模拟质控指标结果
             const mockMetrics: QualityMetric[] = [
                 {
@@ -179,9 +179,11 @@ const ComprehensiveQualityControl: React.FC = () => {
                     description: '存在少量重复记录，需要清理',
                 },
             ]
-            
+
             setQualityMetrics(mockMetrics)
-            const avgScore = Math.round(mockMetrics.reduce((sum, item) => sum + item.score, 0) / mockMetrics.length)
+            const avgScore = Math.round(
+                mockMetrics.reduce((sum, item) => sum + item.score, 0) / mockMetrics.length
+            )
             setOverallScore(avgScore)
             message.success('综合质控检查完成！')
         } catch (error) {
@@ -205,9 +207,7 @@ const ComprehensiveQualityControl: React.FC = () => {
             key: 'score',
             width: 80,
             render: (score: number) => (
-                <span style={{ fontWeight: 'bold', fontSize: 16 }}>
-                    {score}
-                </span>
+                <span style={{ fontWeight: 'bold', fontSize: 16 }}>{score}</span>
             ),
         },
         {
@@ -219,7 +219,11 @@ const ComprehensiveQualityControl: React.FC = () => {
                 const statusConfig = {
                     excellent: { color: '#52c41a', text: '优秀', icon: <CheckCircleOutlined /> },
                     good: { color: '#1890ff', text: '良好', icon: <CheckCircleOutlined /> },
-                    warning: { color: '#faad14', text: '警告', icon: <ExclamationCircleOutlined /> },
+                    warning: {
+                        color: '#faad14',
+                        text: '警告',
+                        icon: <ExclamationCircleOutlined />,
+                    },
                     poor: { color: '#ff4d4f', text: '较差', icon: <ExclamationCircleOutlined /> },
                 }
                 const config = statusConfig[status as keyof typeof statusConfig]
@@ -278,7 +282,7 @@ const ComprehensiveQualityControl: React.FC = () => {
             render: (rate: number) => (
                 <Progress
                     percent={rate}
-                    size="small"
+                    size='small'
                     status={rate >= 90 ? 'success' : rate >= 70 ? 'active' : 'exception'}
                 />
             ),
@@ -320,9 +324,13 @@ const ComprehensiveQualityControl: React.FC = () => {
                                 title='综合质控得分'
                                 value={overallScore}
                                 suffix='分'
-                                valueStyle={{ 
-                                    color: overallScore >= 90 ? '#52c41a' : 
-                                           overallScore >= 70 ? '#1890ff' : '#ff4d4f',
+                                valueStyle={{
+                                    color:
+                                        overallScore >= 90
+                                            ? '#52c41a'
+                                            : overallScore >= 70
+                                              ? '#1890ff'
+                                              : '#ff4d4f',
                                     fontSize: 32,
                                 }}
                                 prefix={<BarChartOutlined />}
@@ -356,12 +364,15 @@ const ComprehensiveQualityControl: React.FC = () => {
             <Row gutter={[16, 16]}>
                 {/* 左侧：质控配置 */}
                 <Col xs={24} lg={8}>
-                    <Card title={<><BarChartOutlined style={{ marginRight: 8 }} />质控配置</>}>
-                        <Form
-                            form={form}
-                            layout='vertical'
-                            onFinish={handleComprehensiveCheck}
-                        >
+                    <Card
+                        title={
+                            <>
+                                <BarChartOutlined style={{ marginRight: 8 }} />
+                                质控配置
+                            </>
+                        }
+                    >
+                        <Form form={form} layout='vertical' onFinish={handleComprehensiveCheck}>
                             <Form.Item
                                 label='选择数据源'
                                 name='dataSource'
@@ -390,8 +401,13 @@ const ComprehensiveQualityControl: React.FC = () => {
                     </Card>
 
                     {/* Excel结果上传 */}
-                    <Card 
-                        title={<><FileExcelOutlined style={{ marginRight: 8 }} />Excel结果上传</>}
+                    <Card
+                        title={
+                            <>
+                                <FileExcelOutlined style={{ marginRight: 8 }} />
+                                Excel结果上传
+                            </>
+                        }
                         style={{ marginTop: 16 }}
                     >
                         <Dragger {...uploadProps}>
@@ -409,8 +425,13 @@ const ComprehensiveQualityControl: React.FC = () => {
                 {/* 右侧：质控结果 */}
                 <Col xs={24} lg={16}>
                     {/* 质控指标 */}
-                    <Card 
-                        title={<><CheckCircleOutlined style={{ marginRight: 8 }} />质控指标</>}
+                    <Card
+                        title={
+                            <>
+                                <CheckCircleOutlined style={{ marginRight: 8 }} />
+                                质控指标
+                            </>
+                        }
                         style={{ marginBottom: 16 }}
                     >
                         {qualityMetrics.length > 0 ? (
@@ -433,7 +454,14 @@ const ComprehensiveQualityControl: React.FC = () => {
 
                     {/* Excel解析结果 */}
                     {qualityReports.length > 0 && (
-                        <Card title={<><FileExcelOutlined style={{ marginRight: 8 }} />Excel解析结果</>}>
+                        <Card
+                            title={
+                                <>
+                                    <FileExcelOutlined style={{ marginRight: 8 }} />
+                                    Excel解析结果
+                                </>
+                            }
+                        >
                             <Table
                                 columns={reportsColumns}
                                 dataSource={qualityReports}

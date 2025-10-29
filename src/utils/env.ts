@@ -41,13 +41,21 @@ export const getAppConfig = () => {
 export const printEnvInfo = () => {
     if (isDevelopment()) {
         const config = getAppConfig()
+        // eslint-disable-next-line no-console
         console.group('🚀 应用环境信息')
+        // eslint-disable-next-line no-console
         console.log('📦 应用名称:', config.title)
+        // eslint-disable-next-line no-console
         console.log('🏷️ 版本号:', config.version)
+        // eslint-disable-next-line no-console
         console.log('🌍 环境:', config.env)
+        // eslint-disable-next-line no-console
         console.log('🔗 API地址:', config.apiBaseUrl)
+        // eslint-disable-next-line no-console
         console.log('⏱️ 超时时间:', config.apiTimeout + 'ms')
+        // eslint-disable-next-line no-console
         console.log('🛠️ 开发工具:', config.enableDevtools ? '开启' : '关闭')
+        // eslint-disable-next-line no-console
         console.groupEnd()
     }
 }

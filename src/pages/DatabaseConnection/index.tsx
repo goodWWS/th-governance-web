@@ -26,6 +26,7 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import React, { useEffect, useState } from 'react'
+import { logger } from '@/utils/logger'
 
 const { Title } = Typography
 const { Option } = Select
@@ -82,7 +83,7 @@ const DatabaseConnection: React.FC = () => {
                 message.error(result.msg || '获取数据库连接列表失败')
             }
         } catch (error) {
-            console.error('获取数据库连接列表失败:', error)
+            logger.error('获取数据库连接列表失败:', error)
             message.error(error instanceof Error ? error.message : '获取数据库连接列表失败')
         } finally {
             setTableLoading(false)
@@ -256,7 +257,7 @@ const DatabaseConnection: React.FC = () => {
                 message.error(result.message || '删除数据库连接失败')
             }
         } catch (error) {
-            console.error('删除数据库连接失败:', error)
+            logger.error('删除数据库连接失败:', error)
             message.error(error instanceof Error ? error.message : '删除数据库连接失败')
         }
     }
@@ -286,7 +287,7 @@ const DatabaseConnection: React.FC = () => {
                 )
 
                 message.success('连接测试成功！数据库连接正常')
-                
+
                 // 刷新列表以获取最新状态
                 await fetchDbConnections(pagination.current, pagination.pageSize)
             } else {
@@ -304,14 +305,14 @@ const DatabaseConnection: React.FC = () => {
                 )
 
                 message.error(result.msg || '连接测试失败，请检查数据库配置')
-                
+
                 // 刷新列表以获取最新状态
                 await fetchDbConnections(pagination.current, pagination.pageSize)
             }
         } catch (error) {
             message.destroy('test')
-            console.error('测试数据库连接失败:', error)
-            
+            logger.error('测试数据库连接失败:', error)
+
             // 发生异常时也更新状态为失败
             setConnections(prev =>
                 prev.map(conn =>
@@ -326,11 +327,11 @@ const DatabaseConnection: React.FC = () => {
             )
 
             message.error(
-                error instanceof Error 
-                    ? `连接测试失败: ${error.message}` 
+                error instanceof Error
+                    ? `连接测试失败: ${error.message}`
                     : '连接测试失败，请检查网络连接或数据库配置'
             )
-            
+
             // 刷新列表以获取最新状态
             await fetchDbConnections(pagination.current, pagination.pageSize)
         }
@@ -377,7 +378,7 @@ const DatabaseConnection: React.FC = () => {
                         message.error(result.message || '更新数据库连接失败')
                     }
                 } catch (apiError) {
-                    console.error('API调用失败:', apiError)
+                    logger.error('API调用失败:', apiError)
                     message.error(
                         apiError instanceof Error ? apiError.message : '更新数据库连接失败'
                     )
@@ -409,7 +410,7 @@ const DatabaseConnection: React.FC = () => {
                         message.error(result.message || '添加数据库连接失败')
                     }
                 } catch (apiError) {
-                    console.error('API调用失败:', apiError)
+                    logger.error('API调用失败:', apiError)
                     message.error(
                         apiError instanceof Error ? apiError.message : '添加数据库连接失败'
                     )
@@ -419,7 +420,7 @@ const DatabaseConnection: React.FC = () => {
             setIsModalVisible(false)
             form.resetFields()
         } catch (error) {
-            console.error('表单验证失败:', error)
+            logger.error('表单验证失败:', error)
             message.error('表单验证失败，请检查输入信息')
         } finally {
             setLoading(false)

@@ -36,6 +36,10 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className }) => {
         '/data-quality-control/completeness': { title: '完整性质控' },
         '/data-quality-control/basic-medical-logic': { title: '基础医疗逻辑质控' },
         '/data-quality-control/core-data': { title: '核心数据质控' },
+        '/system-settings': { title: '系统设置' },
+        '/system-settings/users': { title: '用户设置' },
+        '/system-settings/roles': { title: '角色设置' },
+        '/system-settings/permissions': { title: '权限设置' },
     }
 
     /**
@@ -44,32 +48,32 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className }) => {
     const generateBreadcrumbItems = (): BreadcrumbItem[] => {
         const pathSegments = location.pathname.split('/').filter(Boolean)
         const breadcrumbItems: BreadcrumbItem[] = [
-            { title: '首页', path: '/dashboard', icon: <HomeOutlined /> }
+            { title: '首页', path: '/dashboard', icon: <HomeOutlined /> },
         ]
 
         let currentPath = ''
         pathSegments.forEach((segment, index) => {
             currentPath += `/${segment}`
-            
+
             // 检查是否是动态路由参数（如 /data-governance/execution/123）
             const isLastSegment = index === pathSegments.length - 1
             const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'))
-            
+
             // 优先匹配完整路径
             let routeInfo = routeMap[currentPath]
-            
+
             // 如果没有找到完整路径匹配，且是最后一个段，尝试匹配父路径
             if (!routeInfo && isLastSegment && routeMap[parentPath]) {
                 routeInfo = routeMap[parentPath]
                 // 对于动态路由，使用父路径作为当前路径
                 currentPath = parentPath
             }
-            
+
             if (routeInfo) {
                 breadcrumbItems.push({
                     title: routeInfo.title,
                     path: isLastSegment ? undefined : currentPath,
-                    icon: routeInfo.icon
+                    icon: routeInfo.icon,
                 })
             }
         })
@@ -91,16 +95,12 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className }) => {
                 {item.title}
             </span>
         ),
-        key: index
+        key: index,
     }))
 
     return (
         <div className={`${styles.breadcrumbWrapper} ${className || ''}`}>
-            <AntBreadcrumb 
-                items={antdItems}
-                separator="/"
-                className={styles.breadcrumb}
-            />
+            <AntBreadcrumb items={antdItems} separator='/' className={styles.breadcrumb} />
         </div>
     )
 }

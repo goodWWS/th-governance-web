@@ -13,6 +13,10 @@ import CompletenessQualityControl from '../pages/DataQualityControl/Completeness
 import ComprehensiveQualityControl from '../pages/DataQualityControl/ComprehensiveQualityControl'
 import CoreDataQualityControl from '../pages/DataQualityControl/CoreDataQualityControl'
 import TextQualityControl from '../pages/DataQualityControl/TextQualityControl'
+import SystemSettings from '../pages/SystemSettings'
+import UserSettings from '../pages/SystemSettings/UserSettings'
+import RoleSettings from '../pages/SystemSettings/RoleSettings'
+import PermissionSettings from '../pages/SystemSettings/PermissionSettings'
 
 export const router = createBrowserRouter([
     {
@@ -74,6 +78,28 @@ export const router = createBrowserRouter([
             {
                 path: 'data-quality-control/core-data',
                 element: <CoreDataQualityControl />,
+            },
+            {
+                path: 'system-settings',
+                element: <SystemSettings />,
+                children: [
+                    {
+                        index: true,
+                        element: <UserSettings />,
+                    },
+                    {
+                        path: 'users',
+                        element: <UserSettings />,
+                    },
+                    {
+                        path: 'roles',
+                        element: <RoleSettings />,
+                    },
+                    {
+                        path: 'permissions',
+                        element: <PermissionSettings />,
+                    },
+                ],
             },
             // {
             //     path: 'style-demo',

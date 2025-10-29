@@ -85,7 +85,7 @@ const BasicMedicalLogicQualityControl: React.FC = () => {
     ]
 
     // 执行医疗逻辑检查
-    const handleLogicCheck = async (values: any) => {
+    const handleLogicCheck = async (_values: any) => {
         setLoading(true)
         try {
             // 模拟检查过程

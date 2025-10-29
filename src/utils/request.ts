@@ -100,7 +100,7 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-    (response: AxiosResponse): any => {
+    (response: AxiosResponse): AxiosResponse => {
         const { config, data } = response
         const endTime = Date.now()
         const duration =

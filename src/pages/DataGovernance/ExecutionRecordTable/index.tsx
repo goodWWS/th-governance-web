@@ -12,8 +12,9 @@ import { Button, Card, Descriptions, Divider, Modal, Space, Table, Tag, Typograp
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import dayjs from 'dayjs'
 import React, { useMemo, useState } from 'react'
+import { logger } from '@/utils/logger'
 
-const { Text, Paragraph } = Typography
+const { Text, _Paragraph } = Typography
 
 /**
  * 执行记录表格组件属性
@@ -90,7 +91,7 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
         try {
             return JSON.parse(detailsStr)
         } catch (error) {
-            console.error('解析详情失败:', error)
+            logger.error('解析详情失败:', error)
             return null
         }
     }

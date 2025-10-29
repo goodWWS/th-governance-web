@@ -3,6 +3,7 @@ import { Alert, Button, Card, Progress, Spin, Steps, Tag, Typography, Modal, Spa
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
+import { logger } from '@/utils/logger'
 
 const { Title, Text } = Typography
 const { Step } = Steps
@@ -68,11 +69,11 @@ const EXECUTION_STEPS = [
 const WorkflowDetail: React.FC = () => {
     const { batchId } = useParams<{ batchId: string }>()
     const navigate = useNavigate()
-    const dispatch = useAppDispatch()
+    const _dispatch = useAppDispatch()
 
     // 状态管理
     const [resultModalVisible, setResultModalVisible] = useState(false)
-    const [selectedStepResult, setSelectedStepResult] = useState<{
+    const [selectedStepResult, _setSelectedStepResult] = useState<{
         title: string
         resultSummary: string
         stepIndex: number
@@ -116,7 +117,7 @@ const WorkflowDetail: React.FC = () => {
 
     useEffect(() => {
         // 这里可以添加获取详情的逻辑
-        console.log('获取执行详情', batchId)
+        logger.debug('获取执行详情', batchId)
     }, [batchId])
 
     // 返回上一页
@@ -219,7 +220,7 @@ const WorkflowDetail: React.FC = () => {
                 </div>
                 <Button
                     icon={<ReloadOutlined />}
-                    onClick={() => console.log('刷新详情')}
+                    onClick={() => logger.debug('刷新详情')}
                     loading={loading}
                 >
                     刷新
@@ -288,7 +289,7 @@ const WorkflowDetail: React.FC = () => {
                 >
                     {EXECUTION_STEPS.map((step, index) => {
                         const stepStatus = getStepStatus(index)
-                        const currentStep = getCurrentStep()
+                        const _currentStep = getCurrentStep()
                         const isCompleted = stepStatus === 'finish' || stepStatus === 'error'
                         const canViewResult = isCompleted && displayDetail?.status !== 'idle'
 

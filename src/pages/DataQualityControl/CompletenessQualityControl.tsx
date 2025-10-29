@@ -1,10 +1,10 @@
-import { 
-    CheckCircleOutlined, 
-    DatabaseOutlined, 
-    ExclamationCircleOutlined, 
-    PieChartOutlined, 
+import {
+    CheckCircleOutlined,
+    DatabaseOutlined,
+    ExclamationCircleOutlined,
+    PieChartOutlined,
     SearchOutlined,
-    TableOutlined 
+    TableOutlined,
 } from '@ant-design/icons'
 import {
     Alert,
@@ -82,12 +82,12 @@ const CompletenessQualityControl: React.FC = () => {
     ]
 
     // 执行完整性检查
-    const handleCompletenessCheck = async (values: any) => {
+    const handleCompletenessCheck = async (_values: any) => {
         setLoading(true)
         try {
             // 模拟完整性检查过程
             await new Promise(resolve => setTimeout(resolve, 2500))
-            
+
             // 模拟表级完整性结果
             const mockTableData: TableCompleteness[] = [
                 {
@@ -136,9 +136,9 @@ const CompletenessQualityControl: React.FC = () => {
                     status: 'poor',
                 },
             ]
-            
+
             setTableCompleteness(mockTableData)
-            
+
             // 计算整体统计
             const totalTables = mockTableData.length
             const avgCompleteness = Math.round(
@@ -146,14 +146,14 @@ const CompletenessQualityControl: React.FC = () => {
             )
             const excellentTables = mockTableData.filter(item => item.status === 'excellent').length
             const poorTables = mockTableData.filter(item => item.status === 'poor').length
-            
+
             setOverallStats({
                 totalTables,
                 avgCompleteness,
                 excellentTables,
                 poorTables,
             })
-            
+
             message.success('完整性检查完成！')
         } catch (error) {
             message.error('完整性检查失败，请重试')
@@ -165,7 +165,7 @@ const CompletenessQualityControl: React.FC = () => {
     // 查看表字段详情
     const handleViewTableDetail = (tableName: string) => {
         setSelectedTable(tableName)
-        
+
         // 模拟字段级完整性数据
         const mockFieldData: FieldCompleteness[] = [
             {
@@ -224,7 +224,7 @@ const CompletenessQualityControl: React.FC = () => {
                 isRequired: false,
             },
         ]
-        
+
         setFieldCompleteness(mockFieldData)
     }
 
@@ -236,7 +236,9 @@ const CompletenessQualityControl: React.FC = () => {
             key: 'tableName',
             width: 150,
             render: (text: string) => (
-                <Text code style={{ fontSize: 12 }}>{text}</Text>
+                <Text code style={{ fontSize: 12 }}>
+                    {text}
+                </Text>
             ),
         },
         {
@@ -260,7 +262,7 @@ const CompletenessQualityControl: React.FC = () => {
             render: (rate: number) => (
                 <Progress
                     percent={rate}
-                    size="small"
+                    size='small'
                     status={rate >= 90 ? 'success' : rate >= 70 ? 'active' : 'exception'}
                 />
             ),
@@ -287,8 +289,8 @@ const CompletenessQualityControl: React.FC = () => {
             width: 100,
             render: (_, record) => (
                 <Button
-                    type="link"
-                    size="small"
+                    type='link'
+                    size='small'
                     icon={<SearchOutlined />}
                     onClick={() => handleViewTableDetail(record.tableName)}
                 >
@@ -307,10 +309,10 @@ const CompletenessQualityControl: React.FC = () => {
             width: 120,
             render: (text: string, record) => (
                 <Space>
-                    <Text code style={{ fontSize: 12 }}>{text}</Text>
-                    {record.isRequired && (
-                        <span style={{ color: '#ff4d4f', fontSize: 12 }}>*</span>
-                    )}
+                    <Text code style={{ fontSize: 12 }}>
+                        {text}
+                    </Text>
+                    {record.isRequired && <span style={{ color: '#ff4d4f', fontSize: 12 }}>*</span>}
                 </Space>
             ),
         },
@@ -326,7 +328,9 @@ const CompletenessQualityControl: React.FC = () => {
             key: 'dataType',
             width: 100,
             render: (text: string) => (
-                <Text type="secondary" style={{ fontSize: 12 }}>{text}</Text>
+                <Text type='secondary' style={{ fontSize: 12 }}>
+                    {text}
+                </Text>
             ),
         },
         {
@@ -362,11 +366,19 @@ const CompletenessQualityControl: React.FC = () => {
             render: (rate: number, record) => (
                 <Progress
                     percent={rate}
-                    size="small"
+                    size='small'
                     status={
-                        record.isRequired 
-                            ? (rate >= 95 ? 'success' : rate >= 80 ? 'active' : 'exception')
-                            : (rate >= 80 ? 'success' : rate >= 60 ? 'active' : 'exception')
+                        record.isRequired
+                            ? rate >= 95
+                                ? 'success'
+                                : rate >= 80
+                                  ? 'active'
+                                  : 'exception'
+                            : rate >= 80
+                              ? 'success'
+                              : rate >= 60
+                                ? 'active'
+                                : 'exception'
                     }
                 />
             ),
@@ -418,9 +430,13 @@ const CompletenessQualityControl: React.FC = () => {
                                 title='平均完整性'
                                 value={overallStats.avgCompleteness}
                                 suffix='%'
-                                valueStyle={{ 
-                                    color: overallStats.avgCompleteness >= 90 ? '#52c41a' : 
-                                           overallStats.avgCompleteness >= 70 ? '#1890ff' : '#ff4d4f' 
+                                valueStyle={{
+                                    color:
+                                        overallStats.avgCompleteness >= 90
+                                            ? '#52c41a'
+                                            : overallStats.avgCompleteness >= 70
+                                              ? '#1890ff'
+                                              : '#ff4d4f',
                                 }}
                                 prefix={<PieChartOutlined />}
                             />
@@ -454,12 +470,15 @@ const CompletenessQualityControl: React.FC = () => {
             <Row gutter={[16, 16]}>
                 {/* 左侧：检查配置 */}
                 <Col xs={24} lg={8}>
-                    <Card title={<><DatabaseOutlined style={{ marginRight: 8 }} />检查配置</>}>
-                        <Form
-                            form={form}
-                            layout='vertical'
-                            onFinish={handleCompletenessCheck}
-                        >
+                    <Card
+                        title={
+                            <>
+                                <DatabaseOutlined style={{ marginRight: 8 }} />
+                                检查配置
+                            </>
+                        }
+                    >
+                        <Form form={form} layout='vertical' onFinish={handleCompletenessCheck}>
                             <Form.Item
                                 label='选择数据库'
                                 name='database'
@@ -484,14 +503,8 @@ const CompletenessQualityControl: React.FC = () => {
                                 />
                             </Form.Item>
 
-                            <Form.Item
-                                label='表名过滤'
-                                name='tableFilter'
-                            >
-                                <Input
-                                    placeholder='输入表名关键字（可选）'
-                                    size='large'
-                                />
+                            <Form.Item label='表名过滤' name='tableFilter'>
+                                <Input placeholder='输入表名关键字（可选）' size='large' />
                             </Form.Item>
 
                             <Form.Item>
@@ -513,8 +526,13 @@ const CompletenessQualityControl: React.FC = () => {
                 {/* 右侧：检查结果 */}
                 <Col xs={24} lg={16}>
                     {/* 表级完整性结果 */}
-                    <Card 
-                        title={<><TableOutlined style={{ marginRight: 8 }} />表级完整性</>}
+                    <Card
+                        title={
+                            <>
+                                <TableOutlined style={{ marginRight: 8 }} />
+                                表级完整性
+                            </>
+                        }
                         style={{ marginBottom: 16 }}
                     >
                         {tableCompleteness.length > 0 ? (
@@ -529,16 +547,14 @@ const CompletenessQualityControl: React.FC = () => {
                             <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
                                 <PieChartOutlined style={{ fontSize: 48, marginBottom: 16 }} />
                                 <div>暂无检查结果</div>
-                                <div style={{ fontSize: 12, marginTop: 8 }}>
-                                    请先执行完整性检查
-                                </div>
+                                <div style={{ fontSize: 12, marginTop: 8 }}>请先执行完整性检查</div>
                             </div>
                         )}
                     </Card>
 
                     {/* 字段级完整性结果 */}
                     {fieldCompleteness.length > 0 && (
-                        <Card 
+                        <Card
                             title={
                                 <>
                                     <DatabaseOutlined style={{ marginRight: 8 }} />

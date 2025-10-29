@@ -15,15 +15,16 @@ import { useNavigate } from 'react-router-dom'
 import { useDebounceCallback } from '../../hooks/useDebounce'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import {
-    startTask,
+    startTask as _startTask,
     fetchWorkflowConfig,
     updateWorkflowConfig,
     updateWorkflowConfigLocal,
 } from '../../store/slices/dataGovernanceSlice'
 import type { WorkflowConfigUpdateItem } from '../../types'
 import { dataGovernanceService } from '../../services/dataGovernanceService'
+import { logger } from '../../utils/logger'
 
-const { Title, Text } = Typography
+const { Title, _Text } = Typography
 
 // 节点类型到图标的映射
 const nodeTypeIconMap = {
@@ -50,7 +51,7 @@ const WorkflowConfig: React.FC = () => {
     const {
         workflowConfig: steps,
         workflowLoading,
-        error,
+        error: _error,
     } = useAppSelector(state => state.dataGovernance)
 
     const [loading, setLoading] = useState(false)
@@ -62,7 +63,7 @@ const WorkflowConfig: React.FC = () => {
     /**
      * 初始化加载工作流配置
      */
-    const loadWorkflowConfig = useCallback(async () => {
+    const _loadWorkflowConfig = useCallback(async () => {
         try {
             setInitialLoading(true)
             const response = await dataGovernanceService.getWorkflowConfig()
@@ -75,7 +76,7 @@ const WorkflowConfig: React.FC = () => {
                 message.error(response.msg || '获取工作流配置失败')
             }
         } catch (error) {
-            console.error('加载工作流配置失败:', error)
+            logger.error('加载工作流配置失败:', error)
             message.error('加载工作流配置失败，请刷新页面重试')
         } finally {
             setInitialLoading(false)
@@ -103,7 +104,7 @@ const WorkflowConfig: React.FC = () => {
             // 清空待更新列表
             pendingUpdatesRef.current.clear()
         } catch (error: any) {
-            console.error('更新工作流配置失败:', error)
+            logger.error('更新工作流配置失败:', error)
             message.error(error || '更新工作流配置失败，请稍后重试')
         }
     }, [dispatch])
@@ -176,7 +177,7 @@ const WorkflowConfig: React.FC = () => {
     const handleStartWorkflow = async () => {
         try {
             setLoading(true)
-            console.log('工作流配置页面 - 开始启动工作流...')
+            logger.debug('工作流配置页面 - 开始启动工作流...')
 
             // 检查是否有启用的步骤
             const enabledSteps = steps.filter(step => step.enabled)
@@ -185,17 +186,17 @@ const WorkflowConfig: React.FC = () => {
                 return
             }
 
-            console.log('启用的工作流步骤:', enabledSteps)
+            logger.debug('启用的工作流步骤:', enabledSteps)
 
             // 调用真实的启动工作流API
-            console.log('调用 dataGovernanceService.startWorkflow()')
+            logger.debug('调用 dataGovernanceService.startWorkflow()')
             const response = await dataGovernanceService.startWorkflow()
-            console.log('启动工作流响应:', response)
+            logger.debug('启动工作流响应:', response)
 
             // 根据实际接口响应格式处理
             if (response.code === 200 && response.data) {
                 const batchId = response.data
-                console.log('获取到批次ID:', batchId)
+                logger.debug('获取到批次ID:', batchId)
 
                 setIsRunning(true)
                 message.success('工作流启动成功！正在跳转到详情页面...')
@@ -205,11 +206,11 @@ const WorkflowConfig: React.FC = () => {
                     navigate(`/data-governance/workflow/${batchId}`)
                 }, 1500)
             } else {
-                console.error('启动工作流失败:', response)
+                logger.error('启动工作流失败:', response)
                 message.error(response.msg || '启动工作流失败，请重试')
             }
         } catch (error) {
-            console.error('启动工作流异常:', error)
+            logger.error('启动工作流异常:', error)
             message.error('启动工作流失败，请检查网络连接')
         } finally {
             setLoading(false)
@@ -287,7 +288,7 @@ const WorkflowConfig: React.FC = () => {
 
             {/* 工作流步骤卡片 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {steps.map((step, index) => (
+                {steps.map((step, _index) => (
                     <Card
                         key={step.id}
                         style={{

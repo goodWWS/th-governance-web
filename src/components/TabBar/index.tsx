@@ -29,42 +29,57 @@ const TabBar: React.FC<TabBarProps> = ({ className, maxTabs = 10, onTabChange, o
     const [activeKey, setActiveKey] = useState<string>('')
     const [tabs, setTabs] = useState<TabItem[]>([])
 
-    // 路由标签映射
-    const routeTabMap: Record<string, Omit<TabItem, 'key' | 'path'>> = {
-        '/dashboard': {
-            label: '仪表盘',
-            icon: <HomeOutlined />,
-            closable: false,
-        },
-        '/database-connection': {
-            label: '数据源管理',
-            closable: true,
-        },
-        '/data-governance': {
-            label: '数据治理',
-            closable: true,
-        },
-        '/data-quality-control/text': {
-            label: '文本质控',
-            closable: true,
-        },
-        '/data-quality-control/comprehensive': {
-            label: '综合质控',
-            closable: true,
-        },
-        '/data-quality-control/completeness': {
-            label: '完整性质控',
-            closable: true,
-        },
-        '/data-quality-control/basic-medical-logic': {
-            label: '基础医疗逻辑质控',
-            closable: true,
-        },
-        '/data-quality-control/core-data': {
-            label: '核心数据质控',
-            closable: true,
-        },
-    }
+    // 路由标签映射 - 使用useMemo优化
+    const routeTabMap = React.useMemo(
+        () => ({
+            '/dashboard': {
+                label: '仪表盘',
+                icon: <HomeOutlined />,
+                closable: false,
+            },
+            '/database-connection': {
+                label: '数据源管理',
+                closable: true,
+            },
+            '/data-governance': {
+                label: '数据治理',
+                closable: true,
+            },
+            '/data-quality-control/text': {
+                label: '文本质控',
+                closable: true,
+            },
+            '/data-quality-control/comprehensive': {
+                label: '综合质控',
+                closable: true,
+            },
+            '/data-quality-control/completeness': {
+                label: '完整性质控',
+                closable: true,
+            },
+            '/data-quality-control/basic-medical-logic': {
+                label: '基础医疗逻辑质控',
+                closable: true,
+            },
+            '/data-quality-control/core-data': {
+                label: '核心数据质控',
+                closable: true,
+            },
+            '/system-settings/users': {
+                label: '用户设置',
+                closable: true,
+            },
+            '/system-settings/roles': {
+                label: '角色设置',
+                closable: true,
+            },
+            '/system-settings/permissions': {
+                label: '权限设置',
+                closable: true,
+            },
+        }),
+        []
+    )
 
     /**
      * 添加新标签页

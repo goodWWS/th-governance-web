@@ -9,7 +9,7 @@ export const useNavigation = () => {
 
     // 编程式导航
     const navigateTo = useCallback(
-        (path: string, options?: { replace?: boolean; state?: any }) => {
+        (path: string, options?: { replace?: boolean; state?: unknown }) => {
             navigate(path, {
                 replace: options?.replace || false,
                 state: options?.state,
@@ -30,7 +30,7 @@ export const useNavigation = () => {
 
     // 重定向（替换当前历史记录）
     const redirect = useCallback(
-        (path: string, state?: any) => {
+        (path: string, state?: unknown) => {
             navigate(path, { replace: true, state })
         },
         [navigate]

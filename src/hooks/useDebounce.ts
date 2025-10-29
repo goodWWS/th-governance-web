@@ -18,7 +18,7 @@ export const useDebounce = <T>(value: T, delay: number): T => {
 }
 
 // 防抖回调hook
-export const useDebounceCallback = <T extends (...args: any[]) => any>(
+export const useDebounceCallback = <T extends (...args: unknown[]) => unknown>(
     callback: T,
     delay: number
 ): T => {

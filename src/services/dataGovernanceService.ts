@@ -16,6 +16,7 @@ import type {
     WorkflowDetailResponse,
 } from '@/types'
 import { api } from '@/utils/request'
+import { logger } from '@/utils/logger'
 
 /**
  * 数据治理服务类
@@ -335,14 +336,14 @@ export class DataGovernanceService {
      */
     static async startWorkflow(): Promise<StartWorkflowResponse> {
         try {
-            console.log('发送启动工作流请求到: /data/governance/task/process/start')
+            logger.debug('发送启动工作流请求到: /data/governance/task/process/start')
             const response = await api.post<StartWorkflowResponse>(
                 '/data/governance/task/process/start'
             )
-            console.log('启动工作流API响应:', response)
+            logger.debug('启动工作流API响应:', response)
             return response
         } catch (error) {
-            console.error('启动工作流API调用失败:', error)
+            logger.error('启动工作流API调用失败:', error)
             throw new Error(
                 `启动工作流失败: ${error instanceof Error ? error.message : '未知错误'}`
             )
@@ -357,14 +358,14 @@ export class DataGovernanceService {
      */
     static async getWorkflowDetail(batchId: string): Promise<WorkflowDetailResponse> {
         try {
-            console.log(`发送获取工作流详情请求到: /data/governance/log/${batchId}`)
+            logger.debug(`发送获取工作流详情请求到: /data/governance/log/${batchId}`)
             const response = await api.get<WorkflowDetailResponse>(
                 `/data/governance/log/${batchId}`
             )
-            console.log('获取工作流详情API响应:', response)
+            logger.debug('获取工作流详情API响应:', response)
             return response
         } catch (error) {
-            console.error('获取工作流详情API调用失败:', error)
+            logger.error('获取工作流详情API调用失败:', error)
             throw new Error(
                 `获取工作流详情失败: ${error instanceof Error ? error.message : '未知错误'}`
             )

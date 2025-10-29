@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect } from 'react'
+import { logger } from '../utils/logger'
 
 interface ErrorState {
     error: Error | null
@@ -21,7 +22,7 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
     })
 
     const handleError = useCallback((error: Error) => {
-        console.error('Async error caught:', error)
+        logger.error('Async error caught:', error)
 
         // 错误上报
         const errorReport = {
@@ -33,7 +34,7 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
             type: 'async',
         }
 
-        console.log('Async error report:', errorReport)
+        logger.debug('Async error report:', errorReport)
 
         setErrorState({
             error,
@@ -101,7 +102,7 @@ export const useNetworkErrorHandler = () => {
             setNetworkError('网络请求失败，请稍后重试')
         }
 
-        console.error('Network error:', error)
+        logger.error('Network error:', error)
     }, [])
 
     const clearNetworkError = useCallback(() => {
