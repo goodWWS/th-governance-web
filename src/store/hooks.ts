@@ -1,5 +1,5 @@
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux'
-import type { RootState, AppDispatch } from './index'
+import type { AppDispatch, RootState } from './index'
 
 // 类型安全的 useDispatch hook
 export const useAppDispatch = () => useDispatch<AppDispatch>()

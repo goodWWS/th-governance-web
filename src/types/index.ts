@@ -98,6 +98,32 @@ export interface HttpResponse<T = unknown> {
     timestamp?: number
 }
 
+// 工作流启动响应类型
+export interface StartWorkflowResponse {
+    code: number
+    msg: string
+    data: number // 批次ID
+}
+
+// 工作流详情响应类型
+export interface WorkflowDetailResponse {
+    code: number
+    msg: string
+    data: WorkflowDetailData
+}
+
+// 工作流详情数据类型
+export interface WorkflowDetailData {
+    log_id: number
+    batch_id: number
+    step_no: number
+    step_status: number
+    step_name: string
+    details: string // JSON字符串，包含具体的执行详情
+    create_time: string
+    end_time: string
+}
+
 export interface HttpError {
     code: number
     message: string

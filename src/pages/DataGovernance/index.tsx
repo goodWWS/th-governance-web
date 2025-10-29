@@ -1,8 +1,9 @@
 import { HistoryOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Space, Typography, message } from 'antd'
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ExecutionRecordTable from '../../components/ExecutionRecordTable'
+import { dataGovernanceService } from '../../services/dataGovernanceService'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { startTask } from '../../store/slices/dataGovernanceSlice'
 
@@ -12,6 +13,7 @@ const DataGovernance: React.FC = () => {
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
     const { tasks, loading, error } = useAppSelector(state => state.dataGovernance)
+    const [startingWorkflow, setStartingWorkflow] = useState(false)
 
     // 获取执行记录
     const refreshRecords = () => {
@@ -19,7 +21,37 @@ const DataGovernance: React.FC = () => {
         console.log('刷新执行记录')
     }
 
-    // 执行工作流
+    // 启动工作流
+    const startWorkflow = useCallback(async () => {
+        try {
+            console.log('开始启动工作流...')
+            setStartingWorkflow(true)
+
+            // 调用启动工作流API
+            console.log('调用 dataGovernanceService.startWorkflow()')
+            const response = await dataGovernanceService.startWorkflow()
+            console.log('启动工作流响应:', response)
+
+            if (response.code === 200) {
+                const batchId = response.data
+                console.log('获取到批次ID:', batchId)
+                message.success('工作流启动成功！')
+
+                // 跳转到工作流详情页面
+                navigate(`/data-governance/workflow/${batchId}`)
+            } else {
+                console.error('启动工作流失败:', response)
+                message.error(response.msg || '工作流启动失败')
+            }
+        } catch (error) {
+            console.error('启动工作流异常:', error)
+            message.error('工作流启动失败，请稍后重试')
+        } finally {
+            setStartingWorkflow(false)
+        }
+    }, [navigate])
+
+    // 执行工作流（保留原有逻辑作为备用）
     const executeWorkflow = async () => {
         try {
             // 启动第一个任务作为示例
@@ -64,11 +96,10 @@ const DataGovernance: React.FC = () => {
                         type='primary'
                         size='large'
                         icon={<PlayCircleOutlined />}
-                        loading={hasRunningTask}
-                        disabled={hasRunningTask}
-                        onClick={executeWorkflow}
+                        loading={startingWorkflow}
+                        onClick={startWorkflow}
                     >
-                        {hasRunningTask ? '执行中...' : '执行工作流'}
+                        {startingWorkflow ? '启动中...' : '启动工作流'}
                     </Button>
                     <Button icon={<ReloadOutlined />} onClick={refreshRecords} loading={loading}>
                         刷新记录
@@ -78,7 +109,7 @@ const DataGovernance: React.FC = () => {
 
             <Alert
                 message='数据治理执行记录'
-                description='查看所有数据治理工作流的执行历史记录，点击单条记录可查看详细的执行步骤和进度信息。'
+                description='查看所有数据治理工作流的执行历史记录，点击单条记录可查看详细的执行步骤和进度信息。点击"启动工作流"开始新的数据治理流程。'
                 type='info'
                 showIcon
                 style={{ marginBottom: 24 }}

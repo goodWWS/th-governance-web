@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react'
-import { Button, Card, message, Space, Typography } from 'antd'
-import { ReloadOutlined, SettingOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import { ExecutionRecordTable } from './ExecutionRecordTable'
 import { DataGovernanceService } from '@/services/dataGovernanceService'
 import type { ExecutionLogItem } from '@/types'
+import { logger } from '@/utils/logger'
+import { ReloadOutlined, SettingOutlined } from '@ant-design/icons'
+import { Button, Card, message, Space, Typography } from 'antd'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ExecutionRecordTable } from './ExecutionRecordTable'
 
 const { Title, Paragraph } = Typography
 
@@ -33,7 +34,7 @@ export const ExecutionHistory: React.FC = () => {
                 message.error(response.msg || '获取执行历史失败')
             }
         } catch (error) {
-            console.error('获取执行历史失败:', error)
+            logger.error('获取执行历史失败', error as Error)
             message.error('获取执行历史失败，请稍后重试')
         } finally {
             setLoading(false)

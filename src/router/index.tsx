@@ -6,6 +6,7 @@ import DataGovernance from '../pages/DataGovernance'
 import ExecutionDetail from '../pages/DataGovernance/ExecutionDetail'
 import { ExecutionHistory } from '../pages/DataGovernance/ExecutionHistory'
 import WorkflowConfig from '../pages/DataGovernance/WorkflowConfig'
+import WorkflowDetail from '../pages/DataGovernance/WorkflowDetail'
 import DataQualityControl from '../pages/DataQualityControl'
 import BasicMedicalLogicQualityControl from '../pages/DataQualityControl/BasicMedicalLogicQualityControl'
 import CompletenessQualityControl from '../pages/DataQualityControl/CompletenessQualityControl'
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
             {
                 path: 'data-governance/execution/:id',
                 element: <ExecutionDetail />,
+            },
+            {
+                path: 'data-governance/workflow/:batchId',
+                element: <WorkflowDetail />,
             },
             {
                 path: 'data-quality-control',

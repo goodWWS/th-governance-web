@@ -21,6 +21,7 @@ import {
     updateWorkflowConfigLocal,
 } from '../../store/slices/dataGovernanceSlice'
 import type { WorkflowConfigUpdateItem } from '../../types'
+import { dataGovernanceService } from '../../services/dataGovernanceService'
 
 const { Title, Text } = Typography
 
@@ -175,6 +176,7 @@ const WorkflowConfig: React.FC = () => {
     const handleStartWorkflow = async () => {
         try {
             setLoading(true)
+            console.log('工作流配置页面 - 开始启动工作流...')
 
             // 检查是否有启用的步骤
             const enabledSteps = steps.filter(step => step.enabled)
@@ -183,29 +185,32 @@ const WorkflowConfig: React.FC = () => {
                 return
             }
 
-            // 模拟启动工作流
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            // 启动第一个启用的任务
-            const firstEnabledStep = enabledSteps[0]
-            const taskId = firstEnabledStep.id.toString()
-
-            // 通过Redux启动任务
-            await dispatch(startTask(taskId))
-
-            setIsRunning(true)
-            message.success('工作流启动成功！正在跳转到详情页面...')
-
             console.log('启用的工作流步骤:', enabledSteps)
-            console.log('启动的任务ID:', taskId)
 
-            // 延迟跳转，让用户看到成功消息
-            setTimeout(() => {
-                navigate(`/data-governance/execution/${taskId}`)
-            }, 1500)
+            // 调用真实的启动工作流API
+            console.log('调用 dataGovernanceService.startWorkflow()')
+            const response = await dataGovernanceService.startWorkflow()
+            console.log('启动工作流响应:', response)
+
+            // 根据实际接口响应格式处理
+            if (response.code === 200 && response.data) {
+                const batchId = response.data
+                console.log('获取到批次ID:', batchId)
+
+                setIsRunning(true)
+                message.success('工作流启动成功！正在跳转到详情页面...')
+
+                // 延迟跳转，让用户看到成功消息
+                setTimeout(() => {
+                    navigate(`/data-governance/workflow/${batchId}`)
+                }, 1500)
+            } else {
+                console.error('启动工作流失败:', response)
+                message.error(response.msg || '启动工作流失败，请重试')
+            }
         } catch (error) {
-            console.error('启动工作流失败:', error)
-            message.error('启动工作流失败，请检查配置')
+            console.error('启动工作流异常:', error)
+            message.error('启动工作流失败，请检查网络连接')
         } finally {
             setLoading(false)
         }

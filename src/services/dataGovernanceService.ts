@@ -9,11 +9,11 @@ import type {
     DbConnectionPageParams,
     DbConnectionPageResponse,
     ExecutionLogPageResponse,
-    LogPageParams,
-    LogPageResponse,
+    StartWorkflowResponse,
     WorkflowConfigResponse,
     WorkflowConfigUpdateItem,
     WorkflowConfigUpdateResponse,
+    WorkflowDetailResponse,
 } from '@/types'
 import { api } from '@/utils/request'
 
@@ -327,6 +327,49 @@ export class DataGovernanceService {
             )
         }
     }
+
+    /**
+     * 启动工作流
+     * @description 启动数据治理工作流，返回批次ID
+     * @returns Promise<StartWorkflowResponse>
+     */
+    static async startWorkflow(): Promise<StartWorkflowResponse> {
+        try {
+            console.log('发送启动工作流请求到: /data/governance/task/process/start')
+            const response = await api.post<StartWorkflowResponse>(
+                '/data/governance/task/process/start'
+            )
+            console.log('启动工作流API响应:', response)
+            return response
+        } catch (error) {
+            console.error('启动工作流API调用失败:', error)
+            throw new Error(
+                `启动工作流失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
+
+    /**
+     * 获取工作流详情
+     * @description 根据批次ID获取工作流执行的详细信息
+     * @param batchId 批次ID
+     * @returns Promise<WorkflowDetailResponse>
+     */
+    static async getWorkflowDetail(batchId: string): Promise<WorkflowDetailResponse> {
+        try {
+            console.log(`发送获取工作流详情请求到: /data/governance/log/${batchId}`)
+            const response = await api.get<WorkflowDetailResponse>(
+                `/data/governance/log/${batchId}`
+            )
+            console.log('获取工作流详情API响应:', response)
+            return response
+        } catch (error) {
+            console.error('获取工作流详情API调用失败:', error)
+            throw new Error(
+                `获取工作流详情失败: ${error instanceof Error ? error.message : '未知错误'}`
+            )
+        }
+    }
 }
 
 /**
@@ -360,6 +403,10 @@ export const dataGovernanceService = {
     // 工作流配置相关
     getWorkflowConfig: DataGovernanceService.getWorkflowConfig,
     updateWorkflowConfig: DataGovernanceService.updateWorkflowConfig,
+
+    // 工作流执行相关
+    startWorkflow: DataGovernanceService.startWorkflow,
+    getWorkflowDetail: DataGovernanceService.getWorkflowDetail,
 }
 
 export default dataGovernanceService
