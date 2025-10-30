@@ -34,12 +34,12 @@ const DataGovernance: React.FC = () => {
             logger.debug('启动工作流响应:', response)
 
             if (response.code === 200) {
-                const batchId = response.data
-                logger.debug('获取到批次ID:', batchId)
+                const taskId = response.data
+                logger.debug('获取到任务ID:', taskId)
                 message.success('工作流启动成功！')
 
                 // 跳转到工作流详情页面
-                navigate(`/data-governance/workflow/${batchId}`)
+                navigate(`/data-governance/workflow/${taskId}`)
             } else {
                 logger.error('启动工作流失败:', response)
                 message.error(response.msg || '工作流启动失败')

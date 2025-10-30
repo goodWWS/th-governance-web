@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { logger } from '@/utils/logger'
+import api, { SSEManager, SSEStatus } from '@/utils/request'
 
 const { Title, Text } = Typography
 const { Step } = Steps
@@ -67,7 +68,9 @@ const EXECUTION_STEPS = [
 ]
 
 const WorkflowDetail: React.FC = () => {
-    const { batchId } = useParams<{ batchId: string }>()
+    const { taskId } = useParams<{ taskId: string }>()
+    const [sseManager, setSSEManager] = useState<SSEManager | null>(null)
+    const [sseStatus, setSSEStatus] = useState<SSEStatus>(SSEStatus.DISCONNECTED)
     const navigate = useNavigate()
     const _dispatch = useAppDispatch()
 
@@ -80,7 +83,7 @@ const WorkflowDetail: React.FC = () => {
     } | null>(null)
 
     const { tasks, loading } = useAppSelector(state => state.dataGovernance)
-    const executionDetail = tasks.find(task => task.id === batchId)
+    const executionDetail = tasks.find(task => task.id === taskId)
 
     // 获取当前执行步骤
     const getCurrentStep = () => {
@@ -116,9 +119,50 @@ const WorkflowDetail: React.FC = () => {
     }
 
     useEffect(() => {
-        // 这里可以添加获取详情的逻辑
-        logger.debug('获取执行详情', batchId)
-    }, [batchId])
+        console.log('WorkflowDetail mounted with taskId:', taskId)
+
+        if (!taskId) {
+            console.warn('No taskId provided')
+            return
+        }
+
+        // 创建SSE连接管理器
+        const manager = api.createSSE({
+            url: `/data/governance/task/sse/progress/${taskId}`,
+            onOpen: event => {
+                console.log('SSE连接已建立:', event)
+                setSSEStatus(SSEStatus.CONNECTED)
+            },
+            onMessage: event => {
+                console.log('收到SSE消息:', event)
+                try {
+                    const data = JSON.parse(event.data)
+                    console.log('解析后的数据:', data)
+                    // 这里可以根据需要更新组件状态
+                } catch (error) {
+                    console.error('解析SSE数据失败:', error)
+                    console.log('原始数据:', event.data)
+                }
+            },
+            onError: event => {
+                console.error('SSE连接错误:', event)
+                setSSEStatus(SSEStatus.ERROR)
+            },
+            onClose: () => {
+                console.log('SSE连接已关闭')
+                setSSEStatus(SSEStatus.DISCONNECTED)
+            },
+        })
+
+        setSSEManager(manager)
+        manager.connect()
+
+        // 清理函数：组件卸载时关闭SSE连接
+        return () => {
+            console.log('关闭SSE连接')
+            manager.disconnect()
+        }
+    }, [taskId])
 
     // 返回上一页
     const goBack = () => {
@@ -177,7 +221,7 @@ const WorkflowDetail: React.FC = () => {
 
     // 为没有数据时提供默认值
     const defaultExecutionDetail = {
-        id: batchId || 'unknown',
+        id: taskId || 'unknown',
         name: '数据治理工作流',
         status: 'idle' as const,
         startTime: new Date().toISOString(),
@@ -231,14 +275,42 @@ const WorkflowDetail: React.FC = () => {
             <Card title='基本信息' style={{ marginBottom: 24 }}>
                 <div
                     style={{
+                        marginBottom: 16,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                    }}
+                >
+                    <div>
+                        <Text strong>任务ID：</Text>
+                        <Text copyable>{displayDetail.id}</Text>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Text>连接状态:</Text>
+                        {sseStatus === SSEStatus.CONNECTED && (
+                            <span style={{ color: '#52c41a' }}>● 已连接</span>
+                        )}
+                        {sseStatus === SSEStatus.CONNECTING && (
+                            <span style={{ color: '#1890ff' }}>● 连接中</span>
+                        )}
+                        {sseStatus === SSEStatus.DISCONNECTED && (
+                            <span style={{ color: '#d9d9d9' }}>● 未连接</span>
+                        )}
+                        {sseStatus === SSEStatus.ERROR && (
+                            <span style={{ color: '#ff4d4f' }}>● 连接错误</span>
+                        )}
+                    </div>
+                </div>
+                <div
+                    style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                         gap: 16,
                     }}
                 >
                     <div>
-                        <Text strong>任务ID：</Text>
-                        <Text copyable>{displayDetail.id}</Text>
+                        <Text strong>任务名称：</Text>
+                        <Text>{displayDetail.name}</Text>
                     </div>
                     <div>
                         <Text strong>任务名称：</Text>

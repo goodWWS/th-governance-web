@@ -52,7 +52,7 @@ export const router = createBrowserRouter([
                 element: <ExecutionDetail />,
             },
             {
-                path: 'data-governance/workflow/:batchId',
+                path: 'data-governance/workflow/:taskId',
                 element: <WorkflowDetail />,
             },
             {

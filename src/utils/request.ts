@@ -205,7 +205,7 @@ const generateRequestId = (): string => {
 }
 
 // 请求方法封装
-export const api = {
+export const apiMethods = {
     // GET 请求
     get: <T = unknown>(url: string, config?: RequestConfig): Promise<T> => {
         return request.get(url, config)
@@ -322,6 +322,206 @@ export const requestCanceler = new RequestCanceler()
 
 // 导出 axios 实例（用于特殊情况）
 export { request }
+
+// SSE 连接配置接口
+export interface SSEConfig {
+    url: string
+    withCredentials?: boolean
+    reconnectInterval?: number
+    maxReconnectAttempts?: number
+    onOpen?: (event: Event) => void
+    onMessage?: (event: MessageEvent) => void
+    onError?: (event: Event) => void
+    onClose?: () => void
+}
+
+// SSE 连接状态
+export enum SSEStatus {
+    CONNECTING = 'connecting',
+    CONNECTED = 'connected',
+    DISCONNECTED = 'disconnected',
+    ERROR = 'error',
+}
+
+// SSE 管理器类
+export class SSEManager {
+    private eventSource: EventSource | null = null
+    private config: SSEConfig
+    private status: SSEStatus = SSEStatus.DISCONNECTED
+    private reconnectAttempts = 0
+    private reconnectTimer: NodeJS.Timeout | null = null
+
+    constructor(config: SSEConfig) {
+        this.config = {
+            withCredentials: true,
+            reconnectInterval: 3000,
+            maxReconnectAttempts: 5,
+            ...config,
+        }
+    }
+
+    // 连接 SSE
+    connect(): void {
+        if (this.eventSource) {
+            this.disconnect()
+        }
+
+        try {
+            this.status = SSEStatus.CONNECTING
+
+            // 构建完整的 URL，复用 request 工具的 baseURL 逻辑
+            const fullUrl = this.buildUrl(this.config.url)
+
+            // 创建 EventSource 实例
+            this.eventSource = new EventSource(fullUrl, {
+                withCredentials: this.config.withCredentials,
+            })
+
+            // 设置事件监听器
+            this.setupEventListeners()
+
+            logger.info('SSE连接已启动:', fullUrl)
+        } catch (error) {
+            logger.error('SSE连接失败:', error)
+            this.handleError(error as Event)
+        }
+    }
+
+    // 断开连接
+    disconnect(): void {
+        if (this.eventSource) {
+            this.eventSource.close()
+            this.eventSource = null
+        }
+
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer)
+            this.reconnectTimer = null
+        }
+
+        this.status = SSEStatus.DISCONNECTED
+        this.reconnectAttempts = 0
+
+        if (this.config.onClose) {
+            this.config.onClose()
+        }
+
+        logger.info('SSE连接已断开')
+    }
+
+    // 获取连接状态
+    getStatus(): SSEStatus {
+        return this.status
+    }
+
+    // 是否已连接
+    isConnected(): boolean {
+        return this.status === SSEStatus.CONNECTED
+    }
+
+    // 构建完整的 URL，复用 request 工具的逻辑
+    private buildUrl(url: string): string {
+        // 如果 URL 已经是完整的 URL，直接返回
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return this.addAuthToUrl(url)
+        }
+
+        // 使用与 request 工具相同的 baseURL
+        const baseURL = getEnv('VITE_APP_API_BASE_URL', '/api')
+
+        // 如果 URL 以 /api 开头，直接使用
+        if (url.startsWith('/api')) {
+            return this.addAuthToUrl(url)
+        }
+
+        // 否则添加 baseURL 前缀
+        const fullUrl = `${baseURL}${url.startsWith('/') ? url : `/${url}`}`
+        return this.addAuthToUrl(fullUrl)
+    }
+
+    // 添加认证头（通过 URL 参数，因为 EventSource 不支持自定义 headers）
+    private addAuthToUrl(url: string): string {
+        const token = localStorage.getItem('access_token')
+        if (!token) {
+            return url
+        }
+
+        const separator = url.includes('?') ? '&' : '?'
+        return `${url}${separator}token=${encodeURIComponent(token)}`
+    }
+
+    // 设置事件监听器
+    private setupEventListeners(): void {
+        if (!this.eventSource) return
+
+        this.eventSource.onopen = (event: Event) => {
+            this.status = SSEStatus.CONNECTED
+            this.reconnectAttempts = 0
+
+            logger.info('SSE连接已建立')
+
+            if (this.config.onOpen) {
+                this.config.onOpen(event)
+            }
+        }
+
+        this.eventSource.onmessage = (event: MessageEvent) => {
+            logger.debug('收到SSE消息:', event.data)
+
+            if (this.config.onMessage) {
+                this.config.onMessage(event)
+            }
+        }
+
+        this.eventSource.onerror = (event: Event) => {
+            logger.error('SSE连接错误:', event)
+            this.handleError(event)
+        }
+    }
+
+    // 处理错误和重连
+    private handleError(event: Event): void {
+        this.status = SSEStatus.ERROR
+
+        if (this.config.onError) {
+            this.config.onError(event)
+        }
+
+        // 如果还有重连次数，尝试重连
+        if (this.reconnectAttempts < (this.config.maxReconnectAttempts || 5)) {
+            this.reconnectAttempts++
+
+            logger.warn(
+                `SSE连接断开，${this.config.reconnectInterval}ms后尝试第${this.reconnectAttempts}次重连`
+            )
+
+            this.reconnectTimer = setTimeout(() => {
+                this.connect()
+            }, this.config.reconnectInterval)
+        } else {
+            logger.error('SSE重连次数已达上限，停止重连')
+            this.disconnect()
+        }
+    }
+}
+
+// 在 apiMethods 对象中添加 SSE 方法
+export const api = {
+    ...apiMethods,
+
+    // 创建 SSE 连接
+    createSSE: (config: SSEConfig): SSEManager => {
+        return new SSEManager(config)
+    },
+
+    // SSE 便捷方法
+    sse: (url: string, options?: Partial<SSEConfig>): SSEManager => {
+        return new SSEManager({
+            url,
+            ...options,
+        })
+    },
+}
 
 // 默认导出 api 对象
 export default api

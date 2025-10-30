@@ -165,7 +165,7 @@ export class DataGovernanceService {
      */
     static async getExecutionLogPage(): Promise<ExecutionLogPageResponse> {
         try {
-            return await api.get<ExecutionLogPageResponse>('/data/governance/log/page')
+            return await api.get<ExecutionLogPageResponse>('/data/governance/task/log/page')
         } catch (error) {
             throw new Error(
                 `获取日志列表失败: ${error instanceof Error ? error.message : '未知错误'}`

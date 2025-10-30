@@ -195,15 +195,15 @@ const WorkflowConfig: React.FC = () => {
 
             // 根据实际接口响应格式处理
             if (response.code === 200 && response.data) {
-                const batchId = response.data
-                logger.debug('获取到批次ID:', batchId)
+                const taskId = response.data
+                logger.debug('获取到任务ID:', taskId)
 
                 setIsRunning(true)
                 message.success('工作流启动成功！正在跳转到详情页面...')
 
                 // 延迟跳转，让用户看到成功消息
                 setTimeout(() => {
-                    navigate(`/data-governance/workflow/${batchId}`)
+                    navigate(`/data-governance/workflow/${taskId}`)
                 }, 1500)
             } else {
                 logger.error('启动工作流失败:', response)
