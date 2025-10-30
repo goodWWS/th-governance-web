@@ -333,6 +333,7 @@ export interface SSEConfig {
     onMessage?: (event: MessageEvent) => void
     onError?: (event: Event) => void
     onClose?: () => void
+    onMaxReconnectAttemptsReached?: () => void // 新增：达到最大重连次数时的回调
 }
 
 // SSE 连接状态
@@ -341,6 +342,7 @@ export enum SSEStatus {
     CONNECTED = 'connected',
     DISCONNECTED = 'disconnected',
     ERROR = 'error',
+    MAX_RECONNECT_REACHED = 'max_reconnect_reached', // 新增：达到最大重连次数
 }
 
 // SSE 管理器类
@@ -350,6 +352,7 @@ export class SSEManager {
     private status: SSEStatus = SSEStatus.DISCONNECTED
     private reconnectAttempts = 0
     private reconnectTimer: NodeJS.Timeout | null = null
+    private isManualDisconnect = false // 新增：标记是否为手动断开连接
 
     constructor(config: SSEConfig) {
         this.config = {
@@ -362,12 +365,19 @@ export class SSEManager {
 
     // 连接 SSE
     connect(): void {
+        // 如果已达到最大重连次数且不是手动重新连接，则不允许连接
+        if (this.status === SSEStatus.MAX_RECONNECT_REACHED && !this.isManualDisconnect) {
+            logger.warn('SSE已达到最大重连次数，请手动重置后再连接')
+            return
+        }
+
         if (this.eventSource) {
-            this.disconnect()
+            this.disconnect(false) // 不重置重连计数器
         }
 
         try {
             this.status = SSEStatus.CONNECTING
+            this.isManualDisconnect = false
 
             // 构建完整的 URL，复用 request 工具的 baseURL 逻辑
             const fullUrl = this.buildUrl(this.config.url)
@@ -388,7 +398,9 @@ export class SSEManager {
     }
 
     // 断开连接
-    disconnect(): void {
+    disconnect(resetReconnectAttempts = true): void {
+        this.isManualDisconnect = true
+
         if (this.eventSource) {
             this.eventSource.close()
             this.eventSource = null
@@ -399,14 +411,24 @@ export class SSEManager {
             this.reconnectTimer = null
         }
 
-        this.status = SSEStatus.DISCONNECTED
-        this.reconnectAttempts = 0
+        // 只有在手动断开时才重置重连计数器
+        if (resetReconnectAttempts) {
+            this.reconnectAttempts = 0
+            this.status = SSEStatus.DISCONNECTED
+        }
 
         if (this.config.onClose) {
             this.config.onClose()
         }
 
         logger.info('SSE连接已断开')
+    }
+
+    // 重置连接状态（用于手动重新开始连接）
+    reset(): void {
+        this.disconnect(true)
+        this.status = SSEStatus.DISCONNECTED
+        logger.info('SSE连接状态已重置')
     }
 
     // 获取连接状态
@@ -481,26 +503,46 @@ export class SSEManager {
 
     // 处理错误和重连
     private handleError(event: Event): void {
+        // 如果是手动断开连接，不进行错误处理
+        if (this.isManualDisconnect) {
+            return
+        }
+
         this.status = SSEStatus.ERROR
 
         if (this.config.onError) {
             this.config.onError(event)
         }
 
-        // 如果还有重连次数，尝试重连
-        if (this.reconnectAttempts < (this.config.maxReconnectAttempts || 5)) {
+        // 检查是否还有重连次数
+        const maxAttempts = this.config.maxReconnectAttempts || 5
+
+        if (this.reconnectAttempts < maxAttempts) {
             this.reconnectAttempts++
 
             logger.warn(
-                `SSE连接断开，${this.config.reconnectInterval}ms后尝试第${this.reconnectAttempts}次重连`
+                `SSE连接断开，${this.config.reconnectInterval}ms后尝试第${this.reconnectAttempts}次重连 (剩余${maxAttempts - this.reconnectAttempts}次)`
             )
 
             this.reconnectTimer = setTimeout(() => {
-                this.connect()
+                // 再次检查是否为手动断开，避免在定时器执行期间状态改变
+                if (!this.isManualDisconnect) {
+                    this.connect()
+                }
             }, this.config.reconnectInterval)
         } else {
-            logger.error('SSE重连次数已达上限，停止重连')
-            this.disconnect()
+            // 达到最大重连次数
+            this.status = SSEStatus.MAX_RECONNECT_REACHED
+
+            logger.error(`SSE重连次数已达上限(${maxAttempts}次)，停止重连`)
+
+            // 调用达到最大重连次数的回调
+            if (this.config.onMaxReconnectAttemptsReached) {
+                this.config.onMaxReconnectAttemptsReached()
+            }
+
+            // 清理资源但不重置重连计数器
+            this.disconnect(false)
         }
     }
 }

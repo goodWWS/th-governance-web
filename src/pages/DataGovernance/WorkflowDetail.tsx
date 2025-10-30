@@ -129,6 +129,8 @@ const WorkflowDetail: React.FC = () => {
         // 创建SSE连接管理器
         const manager = api.createSSE({
             url: `/data/governance/task/sse/progress/${taskId}`,
+            maxReconnectAttempts: 3, // 设置最大重连次数为3次
+            reconnectInterval: 5000, // 重连间隔5秒
             onOpen: event => {
                 console.log('SSE连接已建立:', event)
                 setSSEStatus(SSEStatus.CONNECTED)
@@ -151,6 +153,11 @@ const WorkflowDetail: React.FC = () => {
             onClose: () => {
                 console.log('SSE连接已关闭')
                 setSSEStatus(SSEStatus.DISCONNECTED)
+            },
+            onMaxReconnectAttemptsReached: () => {
+                console.warn('SSE重连次数已达上限，请检查网络连接或服务器状态')
+                setSSEStatus(SSEStatus.MAX_RECONNECT_REACHED)
+                // 可以在这里显示用户友好的提示信息
             },
         })
 
@@ -298,6 +305,24 @@ const WorkflowDetail: React.FC = () => {
                         )}
                         {sseStatus === SSEStatus.ERROR && (
                             <span style={{ color: '#ff4d4f' }}>● 连接错误</span>
+                        )}
+                        {sseStatus === SSEStatus.MAX_RECONNECT_REACHED && (
+                            <>
+                                <span style={{ color: '#ff7a45' }}>● 重连失败</span>
+                                <Button
+                                    size='small'
+                                    type='link'
+                                    onClick={() => {
+                                        if (sseManager) {
+                                            sseManager.reset()
+                                            sseManager.connect()
+                                        }
+                                    }}
+                                    style={{ padding: '0 4px', height: 'auto' }}
+                                >
+                                    重试
+                                </Button>
+                            </>
                         )}
                     </div>
                 </div>
