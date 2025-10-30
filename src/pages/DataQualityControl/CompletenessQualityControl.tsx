@@ -49,6 +49,12 @@ interface FieldCompleteness {
     isRequired: boolean
 }
 
+interface CompletenessFormValues {
+    database: string
+    tableType: string
+    tableFilter?: string
+}
+
 const CompletenessQualityControl: React.FC = () => {
     const [form] = Form.useForm()
     const [loading, setLoading] = useState(false)
@@ -82,7 +88,7 @@ const CompletenessQualityControl: React.FC = () => {
     ]
 
     // 执行完整性检查
-    const handleCompletenessCheck = async (_values: any) => {
+    const handleCompletenessCheck = async (_values: CompletenessFormValues) => {
         setLoading(true)
         try {
             // 模拟完整性检查过程
@@ -156,6 +162,7 @@ const CompletenessQualityControl: React.FC = () => {
 
             message.success('完整性检查完成！')
         } catch (error) {
+            console.error('完整性检查失败:', error)
             message.error('完整性检查失败，请重试')
         } finally {
             setLoading(false)

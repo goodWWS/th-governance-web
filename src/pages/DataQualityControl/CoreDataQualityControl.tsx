@@ -53,6 +53,11 @@ interface ComparisonResult {
     meetsBenchmark: boolean
 }
 
+interface CoreDataFormValues {
+    targetDatabase: string
+    dateRange: [dayjs.Dayjs, dayjs.Dayjs]
+}
+
 const CoreDataQualityControl: React.FC = () => {
     const [form] = Form.useForm()
     const [loading, setLoading] = useState(false)
@@ -87,7 +92,7 @@ const CoreDataQualityControl: React.FC = () => {
     ]
 
     // 执行核心数据质控
-    const handleCoreDataCheck = async (_values: any) => {
+    const handleCoreDataCheck = async (_values: CoreDataFormValues) => {
         setLoading(true)
         try {
             // 模拟检查过程
@@ -242,6 +247,7 @@ const CoreDataQualityControl: React.FC = () => {
 
             message.success('核心数据质控分析完成！')
         } catch (error) {
+            console.error('核心数据质控分析失败:', error)
             message.error('核心数据质控分析失败，请重试')
         } finally {
             setLoading(false)

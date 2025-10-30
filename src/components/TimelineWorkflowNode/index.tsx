@@ -73,11 +73,11 @@ const TimelineWorkflowNode: React.FC<TimelineWorkflowNodeProps> = ({
 
     const formatTime = (time?: string) => {
         if (!time) return '--'
-        return new Date(time).toLocaleTimeString('zh-CN', { 
+        return new Date(time).toLocaleTimeString('zh-CN', {
             hour12: false,
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
+            second: '2-digit',
         })
     }
 
@@ -86,14 +86,16 @@ const TimelineWorkflowNode: React.FC<TimelineWorkflowNodeProps> = ({
         const start = new Date(startTime).getTime()
         const end = new Date(endTime).getTime()
         const duration = Math.round((end - start) / 1000)
-        
+
         if (duration < 60) return `${duration}秒`
         if (duration < 3600) return `${Math.floor(duration / 60)}分${duration % 60}秒`
         return `${Math.floor(duration / 3600)}时${Math.floor((duration % 3600) / 60)}分`
     }
 
     const nodeContent = (
-        <div className={`${styles.timelineNode} ${styles[status]} ${isActive ? styles.active : ''}`}>
+        <div
+            className={`${styles.timelineNode} ${styles[status]} ${isActive ? styles.active : ''}`}
+        >
             {/* 时间线左侧：节点图标和连接线 */}
             <div className={styles.timelineLeft}>
                 <div className={styles.nodeIconWrapper}>
@@ -107,9 +109,9 @@ const TimelineWorkflowNode: React.FC<TimelineWorkflowNodeProps> = ({
 
             {/* 时间线右侧：节点信息 */}
             <div className={styles.timelineRight} onClick={handleClick}>
-                <Card 
+                <Card
                     className={`${styles.nodeCard} ${styles[status]} ${isActive ? styles.active : ''}`}
-                    size="small"
+                    size='small'
                     hoverable
                 >
                     {/* 节点头部 */}
@@ -123,9 +125,7 @@ const TimelineWorkflowNode: React.FC<TimelineWorkflowNodeProps> = ({
                     </div>
 
                     {/* 节点描述 */}
-                    <div className={styles.nodeDescription}>
-                        {description}
-                    </div>
+                    <div className={styles.nodeDescription}>{description}</div>
 
                     {/* 进度信息 */}
                     {(status === 'running' || status === 'completed' || status === 'paused') && (
@@ -136,23 +136,22 @@ const TimelineWorkflowNode: React.FC<TimelineWorkflowNodeProps> = ({
                             </div>
                             <Progress
                                 percent={progress}
-                                size="small"
-                                status={
-                                    status === 'error'
-                                        ? 'exception'
-                                        : progress === 100
-                                          ? 'success'
-                                          : 'active'
-                                }
+                                size='small'
+                                status={progress === 100 ? 'success' : 'active'}
                                 showInfo={false}
                                 strokeColor={
-                                    status === 'completed' ? '#52c41a' :
-                                    status === 'running' ? '#1890ff' :
-                                    status === 'paused' ? '#faad14' : undefined
+                                    status === 'completed'
+                                        ? '#52c41a'
+                                        : status === 'running'
+                                          ? '#1890ff'
+                                          : status === 'paused'
+                                            ? '#faad14'
+                                            : undefined
                                 }
                             />
                             <div className={styles.recordsInfo}>
-                                已处理: {processedRecords.toLocaleString()} / {totalRecords.toLocaleString()} 条记录
+                                已处理: {processedRecords.toLocaleString()} /{' '}
+                                {totalRecords.toLocaleString()} 条记录
                             </div>
                         </div>
                     )}
@@ -160,17 +159,21 @@ const TimelineWorkflowNode: React.FC<TimelineWorkflowNodeProps> = ({
                     {/* 时间信息 */}
                     {(startTime || endTime) && (
                         <div className={styles.timeInfo}>
-                            <Space size="large">
+                            <Space size='large'>
                                 {startTime && (
                                     <div className={styles.timeItem}>
                                         <span className={styles.timeLabel}>开始时间:</span>
-                                        <span className={styles.timeValue}>{formatTime(startTime)}</span>
+                                        <span className={styles.timeValue}>
+                                            {formatTime(startTime)}
+                                        </span>
                                     </div>
                                 )}
                                 {endTime && (
                                     <div className={styles.timeItem}>
                                         <span className={styles.timeLabel}>结束时间:</span>
-                                        <span className={styles.timeValue}>{formatTime(endTime)}</span>
+                                        <span className={styles.timeValue}>
+                                            {formatTime(endTime)}
+                                        </span>
                                     </div>
                                 )}
                                 {startTime && endTime && (
@@ -200,7 +203,7 @@ const TimelineWorkflowNode: React.FC<TimelineWorkflowNodeProps> = ({
     // 如果有错误信息，使用 Tooltip 显示详细错误
     if (status === 'error' && errorMessage && errorMessage.length > 50) {
         return (
-            <Tooltip title={errorMessage} placement="right">
+            <Tooltip title={errorMessage} placement='right'>
                 {nodeContent}
             </Tooltip>
         )

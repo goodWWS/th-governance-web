@@ -112,6 +112,32 @@ const PermissionSettings: React.FC = () => {
         return <Tag color={config.color}>{config.text}</Tag>
     }
 
+    // 权限管理操作函数
+    const handleAddSubPermission = (parent: SystemPermission) => {
+        setParentPermission(parent)
+        setEditingPermission(null)
+        form.resetFields()
+        form.setFieldsValue({
+            parentId: parent.id,
+            type: 'menu',
+            status: 'active',
+            sort: 0,
+        })
+        setIsPermissionModalVisible(true)
+    }
+
+    const handleEditPermission = (permission: SystemPermission) => {
+        setEditingPermission(permission)
+        setParentPermission(null)
+        form.setFieldsValue(permission)
+        setIsPermissionModalVisible(true)
+    }
+
+    const handleDeletePermission = (_permissionId: string) => {
+        // 这里应该调用删除权限的 Redux action
+        message.success('权限删除成功')
+    }
+
     // 表格列配置 - 树形表格
     const columns: ColumnsType<SystemPermission> = [
         {
@@ -209,32 +235,6 @@ const PermissionSettings: React.FC = () => {
         },
     ]
 
-    // 权限管理操作函数
-    const handleAddSubPermission = (parent: SystemPermission) => {
-        setParentPermission(parent)
-        setEditingPermission(null)
-        form.resetFields()
-        form.setFieldsValue({
-            parentId: parent.id,
-            type: 'menu',
-            status: 'active',
-            sort: 0,
-        })
-        setIsPermissionModalVisible(true)
-    }
-
-    const handleEditPermission = (permission: SystemPermission) => {
-        setEditingPermission(permission)
-        setParentPermission(null)
-        form.setFieldsValue(permission)
-        setIsPermissionModalVisible(true)
-    }
-
-    const handleDeletePermission = (_permissionId: string) => {
-        // 这里应该调用删除权限的 Redux action
-        message.success('权限删除成功')
-    }
-
     const handleAddRootPermission = () => {
         setParentPermission(null)
         setEditingPermission(null)
@@ -250,7 +250,7 @@ const PermissionSettings: React.FC = () => {
 
     const handlePermissionSubmit = async () => {
         try {
-            const _values = await form.validateFields()
+            await form.validateFields()
             if (editingPermission) {
                 // 更新权限
                 message.success('权限更新成功')
@@ -261,7 +261,7 @@ const PermissionSettings: React.FC = () => {
             setIsPermissionModalVisible(false)
             form.resetFields()
         } catch (error) {
-            logger.error('表单验证失败:', error)
+            logger.error('表单验证失败:', error instanceof Error ? error : new Error(String(error)))
         }
     }
 
@@ -305,8 +305,12 @@ const PermissionSettings: React.FC = () => {
     }
 
     // 处理权限树选择
-    const handlePermissionCheck = (checkedKeys: string[]) => {
-        setCheckedPermissions(checkedKeys)
+    const handlePermissionCheck = (
+        checkedKeys: React.Key[] | { checked: React.Key[]; halfChecked: React.Key[] },
+        _info: unknown
+    ) => {
+        const keys = Array.isArray(checkedKeys) ? checkedKeys : checkedKeys.checked
+        setCheckedPermissions(keys.map(key => String(key)))
     }
 
     // 保存角色权限

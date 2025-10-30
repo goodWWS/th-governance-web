@@ -58,6 +58,13 @@ const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
 }) => {
     const navigate = useNavigate()
     const [detailModalVisible, setDetailModalVisible] = useState(false)
+    const [selectedRecord, setSelectedRecord] = useState<ExecutionRecord | null>(null)
+
+    // 处理查看详情
+    const handleViewDetail = (record: ExecutionRecord) => {
+        setSelectedRecord(record)
+        setDetailModalVisible(true)
+    }
 
     // 状态渲染
     const renderStatus = (status: string) => {
@@ -197,21 +204,26 @@ const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
         {
             title: '操作',
             key: 'action',
-            width: 100,
+            width: 150,
             render: (_, record) => (
-                <Button
-                    type='link'
-                    size='small'
-                    onClick={() => {
-                        if (onViewDetail) {
-                            onViewDetail(record.id)
-                        } else {
-                            navigate(`/data-governance/execution/${record.id}`)
-                        }
-                    }}
-                >
-                    查看详情
-                </Button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <Button type='link' size='small' onClick={() => handleViewDetail(record)}>
+                        查看详情
+                    </Button>
+                    <Button
+                        type='link'
+                        size='small'
+                        onClick={() => {
+                            if (onViewDetail) {
+                                onViewDetail(record.id)
+                            } else {
+                                navigate(`/data-governance/execution/${record.id}`)
+                            }
+                        }}
+                    >
+                        进入页面
+                    </Button>
+                </div>
             ),
         },
     ]
@@ -340,11 +352,11 @@ const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
                             >
                                 <div>
                                     <Text strong>执行ID: </Text>
-                                    <Text code>{selectedRecord.id}</Text>
+                                    <Text code>{selectedRecord?.id}</Text>
                                 </div>
                                 <div>
                                     <Text strong>状态: </Text>
-                                    {renderStatus(selectedRecord.status)}
+                                    {selectedRecord && renderStatus(selectedRecord.status)}
                                 </div>
                             </div>
                             <div
@@ -356,33 +368,33 @@ const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
                             >
                                 <div>
                                     <Text strong>开始时间: </Text>
-                                    <Text>{selectedRecord.startTime}</Text>
+                                    <Text>{selectedRecord?.startTime}</Text>
                                 </div>
                                 <div>
                                     <Text strong>结束时间: </Text>
-                                    <Text>{selectedRecord.endTime || '进行中'}</Text>
+                                    <Text>{selectedRecord?.endTime || '进行中'}</Text>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <div>
                                     <Text strong>执行进度: </Text>
                                     <Text>
-                                        {selectedRecord.currentStep}/{selectedRecord.totalSteps}{' '}
+                                        {selectedRecord?.currentStep}/{selectedRecord?.totalSteps}{' '}
                                         步骤
                                     </Text>
                                 </div>
                                 <div>
                                     <Text strong>处理记录: </Text>
                                     <Text>
-                                        {selectedRecord.processedRecords.toLocaleString()} /{' '}
-                                        {selectedRecord.totalRecords.toLocaleString()}
+                                        {selectedRecord?.processedRecords.toLocaleString()} /{' '}
+                                        {selectedRecord?.totalRecords.toLocaleString()}
                                     </Text>
                                 </div>
                             </div>
-                            {selectedRecord.errorMessage && (
+                            {selectedRecord?.errorMessage && (
                                 <div style={{ marginTop: 12 }}>
                                     <Text strong>错误信息: </Text>
-                                    <Text type='danger'>{selectedRecord.errorMessage}</Text>
+                                    <Text type='danger'>{selectedRecord?.errorMessage}</Text>
                                 </div>
                             )}
                         </div>
@@ -397,7 +409,7 @@ const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
                             </Text>
                             <Table
                                 columns={stepColumns}
-                                dataSource={selectedRecord.steps}
+                                dataSource={selectedRecord?.steps || []}
                                 rowKey='stepId'
                                 pagination={false}
                                 size='small'

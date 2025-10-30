@@ -47,7 +47,7 @@ export const fetchUserInfo = createAsyncThunk(
             }
 
             return mockUser
-        } catch (error) {
+        } catch {
             return rejectWithValue('获取用户信息失败')
         }
     }

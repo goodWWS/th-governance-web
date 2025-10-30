@@ -102,7 +102,7 @@ export const useNetworkErrorHandler = () => {
             setNetworkError('网络请求失败，请稍后重试')
         }
 
-        logger.error('Network error:', error)
+        logger.error('Network error:', error instanceof Error ? error : new Error(String(error)))
     }, [])
 
     const clearNetworkError = useCallback(() => {

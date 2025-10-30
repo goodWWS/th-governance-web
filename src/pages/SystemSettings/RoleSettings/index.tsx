@@ -68,6 +68,36 @@ const RoleSettings: React.FC = () => {
             role.description.toLowerCase().includes(searchText.toLowerCase())
     )
 
+    // 处理编辑角色
+    const handleEdit = (role: SystemRole) => {
+        setEditingRole(role)
+        setIsModalVisible(true)
+        form.setFieldsValue(role)
+    }
+
+    // 处理删除角色
+    const handleDelete = (id: string) => {
+        dispatch(deleteRole(id))
+        message.success('角色删除成功')
+    }
+
+    // 处理状态变更
+    const handleStatusChange = (id: string, checked: boolean) => {
+        dispatch(
+            updateRoleStatus({
+                id,
+                status: checked ? 'active' : 'inactive',
+            })
+        )
+        message.success(`角色${checked ? '启用' : '禁用'}成功`)
+    }
+
+    // 处理分配用户
+    const handleAssignUsers = (role: SystemRole) => {
+        setAssigningRole(role)
+        setIsUserModalVisible(true)
+    }
+
     // 表格列配置
     const columns: ColumnsType<SystemRole> = [
         {
@@ -175,36 +205,6 @@ const RoleSettings: React.FC = () => {
         form.resetFields()
     }
 
-    // 处理编辑角色
-    const handleEdit = (role: SystemRole) => {
-        setEditingRole(role)
-        setIsModalVisible(true)
-        form.setFieldsValue(role)
-    }
-
-    // 处理删除角色
-    const handleDelete = (id: string) => {
-        dispatch(deleteRole(id))
-        message.success('角色删除成功')
-    }
-
-    // 处理状态变更
-    const handleStatusChange = (id: string, checked: boolean) => {
-        dispatch(
-            updateRoleStatus({
-                id,
-                status: checked ? 'active' : 'inactive',
-            })
-        )
-        message.success(`角色${checked ? '启用' : '禁用'}成功`)
-    }
-
-    // 处理分配用户
-    const handleAssignUsers = (role: SystemRole) => {
-        setAssigningRole(role)
-        setIsUserModalVisible(true)
-    }
-
     // 处理表单提交
     const handleSubmit = async () => {
         try {
@@ -234,7 +234,7 @@ const RoleSettings: React.FC = () => {
             setIsModalVisible(false)
             form.resetFields()
         } catch (error) {
-            logger.error('表单验证失败:', error)
+            logger.error('表单验证失败:', error instanceof Error ? error : new Error(String(error)))
         }
     }
 
@@ -246,12 +246,16 @@ const RoleSettings: React.FC = () => {
     }
 
     // 处理用户分配
-    const handleUserAssign = (targetKeys: string[]) => {
+    const handleUserAssign = (
+        targetKeys: React.Key[],
+        _direction: unknown,
+        _moveKeys: React.Key[]
+    ) => {
         if (assigningRole) {
             dispatch(
                 assignUsersToRole({
                     roleId: assigningRole.id,
-                    userIds: targetKeys,
+                    userIds: targetKeys.map(key => String(key)),
                 })
             )
             message.success('用户分配成功')

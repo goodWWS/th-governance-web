@@ -62,6 +62,30 @@ const UserSettings: React.FC = () => {
             user.email.toLowerCase().includes(searchText.toLowerCase())
     )
 
+    // 处理编辑用户
+    const handleEdit = (user: SystemUser) => {
+        setEditingUser(user)
+        setIsModalVisible(true)
+        form.setFieldsValue(user)
+    }
+
+    // 处理删除用户
+    const handleDelete = (id: string) => {
+        dispatch(deleteUser(id))
+        message.success('用户删除成功')
+    }
+
+    // 处理状态变更
+    const handleStatusChange = (id: string, checked: boolean) => {
+        dispatch(
+            updateUserStatus({
+                id,
+                status: checked ? 'active' : 'inactive',
+            })
+        )
+        message.success(`用户${checked ? '启用' : '禁用'}成功`)
+    }
+
     // 表格列配置
     const columns: ColumnsType<SystemUser> = [
         {
@@ -182,30 +206,6 @@ const UserSettings: React.FC = () => {
         form.resetFields()
     }
 
-    // 处理编辑用户
-    const handleEdit = (user: SystemUser) => {
-        setEditingUser(user)
-        setIsModalVisible(true)
-        form.setFieldsValue(user)
-    }
-
-    // 处理删除用户
-    const handleDelete = (id: string) => {
-        dispatch(deleteUser(id))
-        message.success('用户删除成功')
-    }
-
-    // 处理状态变更
-    const handleStatusChange = (id: string, checked: boolean) => {
-        dispatch(
-            updateUserStatus({
-                id,
-                status: checked ? 'active' : 'inactive',
-            })
-        )
-        message.success(`用户${checked ? '启用' : '禁用'}成功`)
-    }
-
     // 处理表单提交
     const handleSubmit = async () => {
         try {
@@ -229,7 +229,7 @@ const UserSettings: React.FC = () => {
             setIsModalVisible(false)
             form.resetFields()
         } catch (error) {
-            logger.error('表单验证失败:', error)
+            logger.error('表单验证失败:', error instanceof Error ? error : new Error(String(error)))
         }
     }
 

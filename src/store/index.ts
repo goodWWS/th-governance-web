@@ -10,7 +10,7 @@ import systemPermissionReducer from './slices/systemPermissionSlice'
 // 扩展 Window 接口以支持 Redux DevTools
 declare global {
     interface Window {
-        __REDUX_DEVTOOLS_EXTENSION__?: any
+        __REDUX_DEVTOOLS_EXTENSION__?: () => unknown
     }
 }
 
@@ -24,7 +24,7 @@ export const store = configureStore({
         systemPermission: systemPermissionReducer,
     },
     // 开发环境启用 Redux DevTools
-    devTools: typeof window !== 'undefined' && window.__REDUX_DEVTOOLS_EXTENSION__,
+    devTools: typeof window !== 'undefined' && !!window.__REDUX_DEVTOOLS_EXTENSION__,
     // 中间件配置
     middleware: getDefaultMiddleware =>
         getDefaultMiddleware({

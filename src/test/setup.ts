@@ -35,15 +35,21 @@ global.URL.createObjectURL = vi.fn().mockImplementation(() => 'mock-url')
 global.URL.revokeObjectURL = vi.fn()
 
 // Mock console methods to reduce noise in tests
+// eslint-disable-next-line no-console
 const originalConsoleError = console.error
+// eslint-disable-next-line no-console
 const originalConsoleWarn = console.warn
 
 beforeAll(() => {
+    // eslint-disable-next-line no-console
     console.error = vi.fn()
+    // eslint-disable-next-line no-console
     console.warn = vi.fn()
 })
 
 afterAll(() => {
+    // eslint-disable-next-line no-console
     console.error = originalConsoleError
+    // eslint-disable-next-line no-console
     console.warn = originalConsoleWarn
 })

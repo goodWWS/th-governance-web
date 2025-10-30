@@ -1,8 +1,11 @@
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
+import { fileURLToPath, URL } from 'node:url'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { defineConfig } from 'vite'
 import viteCompression from 'vite-plugin-compression'
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -63,7 +66,7 @@ export default defineConfig(({ mode }) => {
                             // eslint-disable-next-line no-console
                             console.log('proxy error', err)
                         })
-                        proxy.on('proxyReq', (proxyReq, req, _res) => {
+                        proxy.on('proxyReq', (_proxyReq, req, _res) => {
                             // eslint-disable-next-line no-console
                             console.log('Sending Request to the Target:', req.method, req.url)
                         })

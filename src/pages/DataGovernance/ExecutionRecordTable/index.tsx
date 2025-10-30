@@ -14,7 +14,7 @@ import dayjs from 'dayjs'
 import React, { useMemo, useState } from 'react'
 import { logger } from '@/utils/logger'
 
-const { Text, _Paragraph } = Typography
+const { Text } = Typography
 
 /**
  * 执行记录表格组件属性
@@ -91,40 +91,19 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
         try {
             return JSON.parse(detailsStr)
         } catch (error) {
-            logger.error('解析详情失败:', error)
+            logger.error('解析详情失败:', error instanceof Error ? error : new Error(String(error)))
             return null
         }
     }
 
     /**
-     * 渲染详情内容
-     */
-    const renderDetailsContent = (details: any) => {
-        if (!details) return <Text type='secondary'>无详情信息</Text>
-
-        // 处理数组格式的详情
-        if (Array.isArray(details)) {
-            return (
-                <Space direction='vertical' style={{ width: '100%' }}>
-                    {details.map((item, index) => (
-                        <Card key={index} size='small' style={{ marginBottom: 8 }}>
-                            {renderSingleDetailItem(item)}
-                        </Card>
-                    ))}
-                </Space>
-            )
-        }
-
-        // 处理单个对象格式的详情
-        return renderSingleDetailItem(details)
-    }
-
-    /**
      * 渲染单个详情项
      */
-    const renderSingleDetailItem = (item: any) => {
+    const renderSingleDetailItem = (
+        item: DuplicateCheckDetails | SpecialCharCheckDetails | OrphanCheckDetails
+    ) => {
         // 数据重复检查详情
-        if (item.table && item.problems) {
+        if ('problems' in item && item.table && item.problems) {
             const duplicateDetails = item as DuplicateCheckDetails
             return (
                 <div>
@@ -166,7 +145,7 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
         }
 
         // 特殊字符检查详情
-        if (item.table && item.problem_fields) {
+        if ('problem_fields' in item && item.table && item.problem_fields) {
             const specialCharDetails = item as SpecialCharCheckDetails
             return (
                 <div>
@@ -197,7 +176,13 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
         }
 
         // 丢孤检查详情
-        if (item.table && item.masterTable && item.orphanDetails) {
+        if (
+            'masterTable' in item &&
+            'orphanDetails' in item &&
+            item.table &&
+            item.masterTable &&
+            item.orphanDetails
+        ) {
             const orphanDetails = item as OrphanCheckDetails
             return (
                 <div>
@@ -245,6 +230,38 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
                 {JSON.stringify(item, null, 2)}
             </pre>
         )
+    }
+
+    /**
+     * 渲染详情内容
+     */
+    const renderDetailsContent = (
+        details:
+            | DuplicateCheckDetails
+            | SpecialCharCheckDetails
+            | OrphanCheckDetails
+            | DuplicateCheckDetails[]
+            | SpecialCharCheckDetails[]
+            | OrphanCheckDetails[]
+            | null
+    ) => {
+        if (!details) return <Text type='secondary'>无详情信息</Text>
+
+        // 处理数组格式的详情
+        if (Array.isArray(details)) {
+            return (
+                <Space direction='vertical' style={{ width: '100%' }}>
+                    {details.map((item, index) => (
+                        <Card key={index} size='small' style={{ marginBottom: 8 }}>
+                            {renderSingleDetailItem(item)}
+                        </Card>
+                    ))}
+                </Space>
+            )
+        }
+
+        // 处理单个对象格式的详情
+        return renderSingleDetailItem(details)
     }
 
     /**
@@ -302,7 +319,7 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             key: 'step_status',
             width: 80,
             align: 'center',
-            render: (status: ExecutionStepStatus) => renderStatus(status),
+            render: renderStatus,
             filters: [
                 { text: '成功', value: 0 },
                 { text: '失败', value: 1 },
@@ -416,7 +433,7 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
                                 {selectedRecord.step_name}
                             </Descriptions.Item>
                             <Descriptions.Item label='执行状态'>
-                                {renderStatus(selectedRecord.step_status)}
+                                {renderStatus(selectedRecord.step_status as ExecutionStepStatus)}
                             </Descriptions.Item>
                             <Descriptions.Item label='执行时长'>
                                 {calculateDuration(

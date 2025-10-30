@@ -1,10 +1,21 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import type { RootState } from '../index'
 import type { WorkflowNode } from '@/types'
 import { dataGovernanceService } from '@/services/dataGovernanceService'
 
 // 数据治理任务状态类型
 export type TaskStatus = 'idle' | 'running' | 'completed' | 'error' | 'paused'
+
+// 连接测试错误接口
+interface ConnectionTestError {
+    connectionId: string
+    status: 'error'
+    lastTestTime: string
+}
+
+// 任务配置接口
+export interface TaskConfig {
+    [key: string]: string | number | boolean | undefined
+}
 
 // 数据治理任务接口
 export interface GovernanceTask {
@@ -18,7 +29,7 @@ export interface GovernanceTask {
     startTime?: string
     endTime?: string
     errorMessage?: string
-    config?: Record<string, any>
+    config?: TaskConfig
 }
 
 // 数据库连接接口
@@ -200,8 +211,9 @@ export const fetchWorkflowConfig = createAsyncThunk(
         try {
             const response = await dataGovernanceService.getWorkflowConfig()
             return response.data
-        } catch (error: any) {
-            return rejectWithValue(error.message || '获取工作流配置失败')
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : '获取工作流配置失败'
+            return rejectWithValue(errorMessage)
         }
     }
 )
@@ -210,7 +222,7 @@ export const fetchWorkflowConfig = createAsyncThunk(
 export const updateWorkflowConfig = createAsyncThunk(
     'dataGovernance/updateWorkflowConfig',
     async (
-        updates: Array<{ id: number; enabled?: boolean; isAuto?: boolean }>,
+        updates: Array<{ id: number; enabled?: boolean; is_auto?: boolean }>,
         { rejectWithValue, dispatch }
     ) => {
         try {
@@ -218,8 +230,9 @@ export const updateWorkflowConfig = createAsyncThunk(
             // 更新成功后重新获取数据
             dispatch(fetchWorkflowConfig())
             return updates
-        } catch (error: any) {
-            return rejectWithValue(error.message || '更新工作流配置失败')
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : '更新工作流配置失败'
+            return rejectWithValue(errorMessage)
         }
     }
 )
@@ -227,61 +240,16 @@ export const updateWorkflowConfig = createAsyncThunk(
 // 异步操作：启动任务
 export const startTask = createAsyncThunk(
     'dataGovernance/startTask',
-    async (taskId: string, { rejectWithValue, dispatch, getState }) => {
+    async (taskId: string, { rejectWithValue }) => {
         try {
             // 模拟API调用
             await new Promise(resolve => setTimeout(resolve, 1000))
-
-            // 获取任务的总记录数
-            const state = getState() as RootState
-            const task = state.dataGovernance.tasks.find(t => t.id === taskId)
-            const totalRecords = task?.totalRecords || 0
-
-            // 启动进度模拟
-            const simulateProgress = () => {
-                let progress = 0
-                const interval = setInterval(() => {
-                    progress += Math.random() * 15 + 5 // 每次增加5-20%
-                    if (progress >= 100) {
-                        progress = 100
-                        clearInterval(interval)
-                        // 任务完成
-                        dispatch(
-                            updateTaskProgress({
-                                taskId,
-                                progress: 100,
-                                processedRecords: totalRecords, // 完成时处理记录数等于总记录数
-                            })
-                        )
-                        // 标记任务完成
-                        dispatch(
-                            completeTask({
-                                taskId,
-                                endTime: new Date().toLocaleString('zh-CN'),
-                            })
-                        )
-                    } else {
-                        // 根据进度计算已处理记录数
-                        const processedRecords = Math.floor((progress / 100) * totalRecords)
-                        dispatch(
-                            updateTaskProgress({
-                                taskId,
-                                progress: Math.floor(progress),
-                                processedRecords,
-                            })
-                        )
-                    }
-                }, 2000) // 每2秒更新一次
-            }
-
-            // 延迟启动进度模拟
-            setTimeout(simulateProgress, 1000)
 
             return {
                 taskId,
                 startTime: new Date().toLocaleString('zh-CN'),
             }
-        } catch (error) {
+        } catch {
             return rejectWithValue('启动任务失败')
         }
     }
@@ -295,7 +263,7 @@ export const pauseTask = createAsyncThunk(
             // 模拟API调用
             await new Promise(resolve => setTimeout(resolve, 500))
             return taskId
-        } catch (error) {
+        } catch {
             return rejectWithValue('暂停任务失败')
         }
     }
@@ -319,7 +287,7 @@ export const testConnection = createAsyncThunk(
                 status: 'connected' as const,
                 lastTestTime: new Date().toLocaleString('zh-CN'),
             }
-        } catch (error) {
+        } catch {
             return rejectWithValue({
                 connectionId,
                 status: 'error' as const,
@@ -363,7 +331,7 @@ const dataGovernanceSlice = createSlice({
         // 更新任务配置
         updateTaskConfig: (
             state,
-            action: PayloadAction<{ taskId: string; config: Record<string, any> }>
+            action: PayloadAction<{ taskId: string; config: TaskConfig }>
         ) => {
             const { taskId, config } = action.payload
             const task = state.tasks.find(t => t.id === taskId)
@@ -514,7 +482,7 @@ const dataGovernanceSlice = createSlice({
             })
             .addCase(testConnection.rejected, (state, action) => {
                 state.loading = false
-                const payload = action.payload as any
+                const payload = action.payload as ConnectionTestError
                 const connection = state.connections.find(conn => conn.id === payload.connectionId)
                 if (connection) {
                     connection.status = payload.status

@@ -2,9 +2,9 @@ import { ArrowLeftOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icon
 import { Alert, Button, Card, Progress, Spin, Steps, Tag, Typography, Modal, Space } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAppDispatch, useAppSelector } from '../../store/hooks'
+import { useAppSelector } from '../../store/hooks'
 import { logger } from '@/utils/logger'
-import api, { SSEManager, SSEStatus } from '@/utils/request'
+import api, { SSEManager, SSEStatus, SSEStatusType } from '@/utils/request'
 
 const { Title, Text } = Typography
 const { Step } = Steps
@@ -70,13 +70,12 @@ const EXECUTION_STEPS = [
 const WorkflowDetail: React.FC = () => {
     const { taskId } = useParams<{ taskId: string }>()
     const [sseManager, setSSEManager] = useState<SSEManager | null>(null)
-    const [sseStatus, setSSEStatus] = useState<SSEStatus>(SSEStatus.DISCONNECTED)
+    const [sseStatus, setSSEStatus] = useState<SSEStatusType>(SSEStatus.DISCONNECTED)
     const navigate = useNavigate()
-    const _dispatch = useAppDispatch()
 
     // 状态管理
     const [resultModalVisible, setResultModalVisible] = useState(false)
-    const [selectedStepResult, _setSelectedStepResult] = useState<{
+    const [selectedStepResult, setSelectedStepResult] = useState<{
         title: string
         resultSummary: string
         stepIndex: number
@@ -186,6 +185,8 @@ const WorkflowDetail: React.FC = () => {
     // 查看执行结果
     const handleViewResult = (stepIndex: number) => {
         const step = EXECUTION_STEPS[stepIndex]
+        if (!step) return
+
         setSelectedStepResult({
             title: step.title,
             resultSummary: step.resultSummary,
@@ -386,7 +387,6 @@ const WorkflowDetail: React.FC = () => {
                 >
                     {EXECUTION_STEPS.map((step, index) => {
                         const stepStatus = getStepStatus(index)
-                        const _currentStep = getCurrentStep()
                         const isCompleted = stepStatus === 'finish' || stepStatus === 'error'
                         const canViewResult = isCompleted && displayDetail?.status !== 'idle'
 
@@ -397,26 +397,17 @@ const WorkflowDetail: React.FC = () => {
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                         <span>{step.title}</span>
                                         <Space>
-                                            <Tag
-                                                color={step.isAutomatic ? 'blue' : 'orange'}
-                                                size='small'
-                                            >
+                                            <Tag color={step.isAutomatic ? 'blue' : 'orange'}>
                                                 {step.isAutomatic ? '自动执行' : '手动执行'}
                                             </Tag>
                                             {stepStatus === 'finish' && (
-                                                <Tag color='success' size='small'>
-                                                    已完成
-                                                </Tag>
+                                                <Tag color='success'>已完成</Tag>
                                             )}
                                             {stepStatus === 'error' && (
-                                                <Tag color='error' size='small'>
-                                                    执行失败
-                                                </Tag>
+                                                <Tag color='error'>执行失败</Tag>
                                             )}
                                             {stepStatus === 'process' && (
-                                                <Tag color='processing' size='small'>
-                                                    执行中
-                                                </Tag>
+                                                <Tag color='processing'>执行中</Tag>
                                             )}
                                         </Space>
                                     </div>

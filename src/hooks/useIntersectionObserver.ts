@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 
-interface UseIntersectionObserverOptions extends IntersectionObserverInit {
+interface UseIntersectionObserverOptions {
+    root?: Element | null
+    rootMargin?: string
+    threshold?: number | number[]
     freezeOnceVisible?: boolean
 }
 

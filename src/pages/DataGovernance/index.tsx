@@ -4,16 +4,14 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ExecutionRecordTable from '../../components/ExecutionRecordTable'
 import { dataGovernanceService } from '../../services/dataGovernanceService'
-import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { startTask } from '../../store/slices/dataGovernanceSlice'
+import { useAppSelector } from '../../store/hooks'
 import { logger } from '../../utils/logger'
 
 const { Title } = Typography
 
 const DataGovernance: React.FC = () => {
-    const dispatch = useAppDispatch()
     const navigate = useNavigate()
-    const { tasks, loading, error: _error } = useAppSelector(state => state.dataGovernance)
+    const { tasks, loading } = useAppSelector(state => state.dataGovernance)
     const [startingWorkflow, setStartingWorkflow] = useState(false)
 
     // 获取执行记录
@@ -41,37 +39,20 @@ const DataGovernance: React.FC = () => {
                 // 跳转到工作流详情页面
                 navigate(`/data-governance/workflow/${taskId}`)
             } else {
-                logger.error('启动工作流失败:', response)
-                message.error(response.msg || '工作流启动失败')
+                const errorMsg = response.msg || '工作流启动失败'
+                logger.error('启动工作流失败:', new Error(errorMsg))
+                message.error(errorMsg)
             }
         } catch (error) {
-            logger.error('启动工作流异常:', error)
+            logger.error(
+                '启动工作流异常:',
+                error instanceof Error ? error : new Error(String(error))
+            )
             message.error('工作流启动失败，请稍后重试')
         } finally {
             setStartingWorkflow(false)
         }
     }, [navigate])
-
-    // 执行工作流（保留原有逻辑作为备用）
-    const _executeWorkflow = async () => {
-        try {
-            // 启动第一个任务作为示例
-            const firstIdleTask = tasks.find(task => task.status === 'idle')
-            if (firstIdleTask) {
-                await dispatch(startTask(firstIdleTask.id)).unwrap()
-                message.success('工作流开始执行')
-                // 跳转到执行详情页
-                navigate(`/data-governance/execution/${firstIdleTask.id}`)
-            } else {
-                message.warning('没有可执行的任务')
-            }
-        } catch (error) {
-            message.error('工作流执行失败')
-        }
-    }
-
-    // 检查是否有任务正在运行
-    const _hasRunningTask = tasks.some(task => task.status === 'running')
 
     // 初始化加载执行记录
     useEffect(() => {

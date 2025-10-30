@@ -7,8 +7,8 @@ export interface SystemPermission {
     code: string
     type: 'menu' | 'button' | 'api'
     parentId: string | null
-    path?: string
-    icon?: string
+    path?: string | null
+    icon?: string | null
     sort: number
     status: 'active' | 'inactive'
     description: string

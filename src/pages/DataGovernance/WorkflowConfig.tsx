@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router-dom'
 import { useDebounceCallback } from '../../hooks/useDebounce'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import {
-    startTask as _startTask,
     fetchWorkflowConfig,
     updateWorkflowConfig,
     updateWorkflowConfigLocal,
@@ -24,7 +23,7 @@ import type { WorkflowConfigUpdateItem } from '../../types'
 import { dataGovernanceService } from '../../services/dataGovernanceService'
 import { logger } from '../../utils/logger'
 
-const { Title, _Text } = Typography
+const { Title } = Typography
 
 // 节点类型到图标的映射
 const nodeTypeIconMap = {
@@ -60,32 +59,7 @@ const WorkflowConfig: React.FC = () => {
     // 用于收集待更新的配置项
     const pendingUpdatesRef = useRef<Map<number, WorkflowConfigUpdateItem>>(new Map())
 
-    /**
-     * 初始化加载工作流配置
-     */
-    const _loadWorkflowConfig = useCallback(async () => {
-        try {
-            setInitialLoading(true)
-            const response = await dataGovernanceService.getWorkflowConfig()
-
-            if (response.code === 200 && response.data) {
-                // 按步骤序号排序
-                const sortedSteps = response.data.sort((a, b) => a.nodeStep - b.nodeStep)
-                setSteps(sortedSteps)
-            } else {
-                message.error(response.msg || '获取工作流配置失败')
-            }
-        } catch (error) {
-            logger.error('加载工作流配置失败:', error)
-            message.error('加载工作流配置失败，请刷新页面重试')
-        } finally {
-            setInitialLoading(false)
-        }
-    }, [])
-
-    /**
-     * 批量更新工作流配置
-     */
+    // 批量更新工作流配置
     const updateWorkflowConfigs = useCallback(async () => {
         const updates = Array.from(pendingUpdatesRef.current.values())
         if (updates.length === 0) return
@@ -103,9 +77,14 @@ const WorkflowConfig: React.FC = () => {
 
             // 清空待更新列表
             pendingUpdatesRef.current.clear()
-        } catch (error: any) {
-            logger.error('更新工作流配置失败:', error)
-            message.error(error || '更新工作流配置失败，请稍后重试')
+        } catch (error: unknown) {
+            logger.error(
+                '更新工作流配置失败:',
+                error instanceof Error ? error : new Error(String(error))
+            )
+            const errorMessage =
+                error instanceof Error ? error.message : '更新工作流配置失败，请稍后重试'
+            message.error(errorMessage)
         }
     }, [dispatch])
 
@@ -206,11 +185,15 @@ const WorkflowConfig: React.FC = () => {
                     navigate(`/data-governance/workflow/${taskId}`)
                 }, 1500)
             } else {
-                logger.error('启动工作流失败:', response)
-                message.error(response.msg || '启动工作流失败，请重试')
+                const errorMsg = response.msg || '启动工作流失败，请重试'
+                logger.error('启动工作流失败:', new Error(errorMsg))
+                message.error(errorMsg)
             }
         } catch (error) {
-            logger.error('启动工作流异常:', error)
+            logger.error(
+                '启动工作流异常:',
+                error instanceof Error ? error : new Error(String(error))
+            )
             message.error('启动工作流失败，请检查网络连接')
         } finally {
             setLoading(false)

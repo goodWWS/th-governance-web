@@ -4,6 +4,7 @@
  */
 
 import type {
+    ApiResponse,
     DataGovernanceLog,
     DataGovernanceResult,
     DbConnectionPageParams,
@@ -207,9 +208,12 @@ export class DataGovernanceService {
         dbStatus: number
         remark: string
         createUser: string
-    }): Promise<any> {
+    }): Promise<ApiResponse<{ id: string }>> {
         try {
-            return await api.post<any>('/data/governance/db-connection', connection)
+            return await api.post<ApiResponse<{ id: string }>>(
+                '/data/governance/db-connection',
+                connection
+            )
         } catch (error) {
             throw new Error(
                 `新增数据库连接失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -240,9 +244,9 @@ export class DataGovernanceService {
     /**
      * 删除数据库连接
      */
-    static async deleteDbConnection(id: string, updateUser: string): Promise<any> {
+    static async deleteDbConnection(id: string, updateUser: string): Promise<ApiResponse<boolean>> {
         try {
-            return await api.delete<any>(`/data/governance/db-connection/${id}`, {
+            return await api.delete<ApiResponse<boolean>>(`/data/governance/db-connection/${id}`, {
                 params: { updateUser },
             })
         } catch (error) {
@@ -268,9 +272,12 @@ export class DataGovernanceService {
             remark: string
             updateUser: string
         }
-    ): Promise<any> {
+    ): Promise<ApiResponse<boolean>> {
         try {
-            return await api.put<any>(`/data/governance/db-connection/${id}`, connection)
+            return await api.put<ApiResponse<boolean>>(
+                `/data/governance/db-connection/${id}`,
+                connection
+            )
         } catch (error) {
             throw new Error(
                 `更新数据库连接失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -283,9 +290,13 @@ export class DataGovernanceService {
      * @param id 数据库连接ID
      * @returns Promise<any>
      */
-    static async testDbConnection(id: string): Promise<any> {
+    static async testDbConnection(
+        id: string
+    ): Promise<ApiResponse<{ status: 'success' | 'failed'; message: string }>> {
         try {
-            return await api.post<any>(`/data/governance/db/connection/test/${id}`)
+            return await api.post<ApiResponse<{ status: 'success' | 'failed'; message: string }>>(
+                `/data/governance/db/connection/test/${id}`
+            )
         } catch (error) {
             throw new Error(
                 `测试数据库连接失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -343,7 +354,10 @@ export class DataGovernanceService {
             logger.debug('启动工作流API响应:', response)
             return response
         } catch (error) {
-            logger.error('启动工作流API调用失败:', error)
+            logger.error(
+                '启动工作流API调用失败:',
+                error instanceof Error ? error : new Error(String(error))
+            )
             throw new Error(
                 `启动工作流失败: ${error instanceof Error ? error.message : '未知错误'}`
             )
@@ -365,7 +379,10 @@ export class DataGovernanceService {
             logger.debug('获取工作流详情API响应:', response)
             return response
         } catch (error) {
-            logger.error('获取工作流详情API调用失败:', error)
+            logger.error(
+                '获取工作流详情API调用失败:',
+                error instanceof Error ? error : new Error(String(error))
+            )
             throw new Error(
                 `获取工作流详情失败: ${error instanceof Error ? error.message : '未知错误'}`
             )
@@ -391,7 +408,7 @@ export const dataGovernanceService = {
     sync: DataGovernanceService.sync,
 
     // 日志查询操作
-    getLogPage: DataGovernanceService.getLogPage,
+    getLogPage: DataGovernanceService.getExecutionLogPage,
     getLogDetail: DataGovernanceService.getLogDetail,
 
     // 数据库配置操作

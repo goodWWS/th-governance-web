@@ -37,6 +37,7 @@ const DatabaseConnection: React.FC = () => {
     const [editingConnection, setEditingConnection] = useState<DbConnection | null>(null)
     const [loading, setLoading] = useState(false)
     const [tableLoading, setTableLoading] = useState(false)
+    const [testingConnections, setTestingConnections] = useState<Record<string, boolean>>({})
     const [statusStats, setStatusStats] = useState({
         totalConnections: 0,
         connectedCount: 0,
@@ -48,11 +49,6 @@ const DatabaseConnection: React.FC = () => {
         total: 0,
     })
     const [form] = Form.useForm()
-
-    // 页面初始化时获取数据库连接列表
-    useEffect(() => {
-        fetchDbConnections()
-    }, [])
 
     // 获取数据库连接列表
     const fetchDbConnections = async (pageNo = 1, pageSize = 10) => {
@@ -71,24 +67,81 @@ const DatabaseConnection: React.FC = () => {
                     pageSize: result.data.pageSize || pageSize,
                     total: result.data.total || 0,
                 })
-                // 设置统计数据
-                setStatusStats(
-                    result.data.statusStats || {
-                        totalConnections: 0,
-                        connectedCount: 0,
-                        abnormalCount: 0,
-                    }
-                )
+
+                // 计算状态统计
+                const totalConnections = result.data.list?.length || 0
+                const connectedCount =
+                    result.data.list?.filter((conn: DbConnection) => conn.status === 'connected')
+                        .length || 0
+                const abnormalCount = totalConnections - connectedCount
+
+                setStatusStats({
+                    totalConnections,
+                    connectedCount,
+                    abnormalCount,
+                })
             } else {
-                message.error(result.msg || '获取数据库连接列表失败')
+                message.error(result.message || '获取数据库连接列表失败')
             }
         } catch (error) {
-            logger.error('获取数据库连接列表失败:', error)
-            message.error(error instanceof Error ? error.message : '获取数据库连接列表失败')
+            console.error('获取数据库连接列表失败:', error)
+            message.error('获取数据库连接列表失败')
         } finally {
             setTableLoading(false)
         }
     }
+
+    // 编辑连接
+    const handleEdit = (connection: DbConnection) => {
+        setEditingConnection(connection)
+        form.setFieldsValue({
+            ...connection,
+            password: '', // 出于安全考虑，不显示密码
+        })
+        setIsModalVisible(true)
+    }
+
+    // 删除连接
+    const handleDelete = async (id: string) => {
+        try {
+            const result = await dataGovernanceService.deleteDbConnection(id)
+            if (result.code === 200) {
+                message.success('删除成功')
+                await fetchDbConnections(pagination.current, pagination.pageSize)
+            } else {
+                message.error(result.message || '删除失败')
+            }
+        } catch (error) {
+            console.error('删除连接失败:', error)
+            message.error('删除失败')
+        }
+    }
+
+    // 测试连接
+    const handleTestConnection = async (id: string) => {
+        try {
+            setTestingConnections(prev => ({ ...prev, [id]: true }))
+            const result = await dataGovernanceService.testDbConnection(id)
+
+            if (result.code === 200) {
+                message.success('连接测试成功')
+                // 刷新列表以更新连接状态
+                await fetchDbConnections(pagination.current, pagination.pageSize)
+            } else {
+                message.error(result.message || '连接测试失败')
+            }
+        } catch (error) {
+            console.error('测试连接失败:', error)
+            message.error('连接测试失败')
+        } finally {
+            setTestingConnections(prev => ({ ...prev, [id]: false }))
+        }
+    }
+
+    // 页面初始化时获取数据库连接列表
+    useEffect(() => {
+        fetchDbConnections()
+    }, [])
 
     // 数据库类型配置
     const dbTypeOptions = [
@@ -186,6 +239,7 @@ const DatabaseConnection: React.FC = () => {
                     <Button
                         type='link'
                         size='small'
+                        loading={testingConnections[record.id]}
                         onClick={() => handleTestConnection(record.id)}
                     >
                         测试连接
@@ -218,123 +272,6 @@ const DatabaseConnection: React.FC = () => {
         setEditingConnection(null)
         form.resetFields()
         setIsModalVisible(true)
-    }
-
-    // 处理编辑连接
-    const handleEdit = (connection: DbConnection) => {
-        setEditingConnection(connection)
-        // 映射数据库字段到表单字段
-        form.setFieldsValue({
-            connectionName: connection.connectionName,
-            name: connection.dbName,
-            type: connection.dbType,
-            host: connection.dbHost,
-            port: connection.dbPort,
-            database: connection.dbName,
-            username: connection.dbUsername,
-            password: connection.dbPassword,
-            remark: connection.remark,
-        })
-        setIsModalVisible(true)
-    }
-
-    // 处理删除连接
-    const handleDelete = async (id: string) => {
-        try {
-            // 获取当前用户信息，这里假设从某个地方获取当前用户
-            const currentUser = 'admin' // TODO: 从用户上下文或状态管理中获取真实的当前用户
-
-            const result = await dataGovernanceService.deleteDbConnection(id, currentUser)
-
-            if (result.code === 200) {
-                // 从本地状态中移除已删除的连接
-                setConnections(connections.filter(conn => conn.id !== id))
-                message.success('数据库连接已删除')
-
-                // 重新获取列表以确保数据同步
-                await fetchDbConnections(pagination.current, pagination.pageSize)
-            } else {
-                message.error(result.message || '删除数据库连接失败')
-            }
-        } catch (error) {
-            logger.error('删除数据库连接失败:', error)
-            message.error(error instanceof Error ? error.message : '删除数据库连接失败')
-        }
-    }
-
-    // 处理测试连接
-    const handleTestConnection = async (id: string) => {
-        try {
-            message.loading({ content: '正在测试连接...', key: 'test' })
-
-            // 调用真实的测试连接接口
-            const result = await dataGovernanceService.testDbConnection(id)
-
-            message.destroy('test')
-
-            if (result.code === 200 && result.success) {
-                // 测试成功，更新连接状态
-                setConnections(prev =>
-                    prev.map(conn =>
-                        conn.id === id
-                            ? {
-                                  ...conn,
-                                  dbStatus: 1, // 设置为连接成功状态
-                                  updateTime: new Date().toISOString(),
-                              }
-                            : conn
-                    )
-                )
-
-                message.success('连接测试成功！数据库连接正常')
-
-                // 刷新列表以获取最新状态
-                await fetchDbConnections(pagination.current, pagination.pageSize)
-            } else {
-                // 测试失败，更新连接状态
-                setConnections(prev =>
-                    prev.map(conn =>
-                        conn.id === id
-                            ? {
-                                  ...conn,
-                                  dbStatus: 0, // 设置为连接失败状态
-                                  updateTime: new Date().toISOString(),
-                              }
-                            : conn
-                    )
-                )
-
-                message.error(result.msg || '连接测试失败，请检查数据库配置')
-
-                // 刷新列表以获取最新状态
-                await fetchDbConnections(pagination.current, pagination.pageSize)
-            }
-        } catch (error) {
-            message.destroy('test')
-            logger.error('测试数据库连接失败:', error)
-
-            // 发生异常时也更新状态为失败
-            setConnections(prev =>
-                prev.map(conn =>
-                    conn.id === id
-                        ? {
-                              ...conn,
-                              dbStatus: 0, // 设置为连接失败状态
-                              updateTime: new Date().toISOString(),
-                          }
-                        : conn
-                )
-            )
-
-            message.error(
-                error instanceof Error
-                    ? `连接测试失败: ${error.message}`
-                    : '连接测试失败，请检查网络连接或数据库配置'
-            )
-
-            // 刷新列表以获取最新状态
-            await fetchDbConnections(pagination.current, pagination.pageSize)
-        }
     }
 
     // 处理表单提交
@@ -378,7 +315,10 @@ const DatabaseConnection: React.FC = () => {
                         message.error(result.message || '更新数据库连接失败')
                     }
                 } catch (apiError) {
-                    logger.error('API调用失败:', apiError)
+                    logger.error(
+                        'API调用失败:',
+                        apiError instanceof Error ? apiError : new Error(String(apiError))
+                    )
                     message.error(
                         apiError instanceof Error ? apiError.message : '更新数据库连接失败'
                     )
@@ -410,7 +350,10 @@ const DatabaseConnection: React.FC = () => {
                         message.error(result.message || '添加数据库连接失败')
                     }
                 } catch (apiError) {
-                    logger.error('API调用失败:', apiError)
+                    logger.error(
+                        'API调用失败:',
+                        apiError instanceof Error ? apiError : new Error(String(apiError))
+                    )
                     message.error(
                         apiError instanceof Error ? apiError.message : '添加数据库连接失败'
                     )
@@ -420,7 +363,7 @@ const DatabaseConnection: React.FC = () => {
             setIsModalVisible(false)
             form.resetFields()
         } catch (error) {
-            logger.error('表单验证失败:', error)
+            logger.error('表单验证失败:', error instanceof Error ? error : new Error(String(error)))
             message.error('表单验证失败，请检查输入信息')
         } finally {
             setLoading(false)
@@ -500,7 +443,7 @@ const DatabaseConnection: React.FC = () => {
                         onChange: (page, size) => {
                             fetchDbConnections(page, size)
                         },
-                        onShowSizeChange: (current, size) => {
+                        onShowSizeChange: (_current, size) => {
                             fetchDbConnections(1, size)
                         },
                     }}

@@ -1,4 +1,5 @@
 // 全局类型定义
+import type { ComponentType, ChangeEvent, MouseEvent, FormEvent } from 'react'
 
 export interface ApiResponse<T = unknown> {
     success: boolean
@@ -46,7 +47,7 @@ export type { AppDispatch, RootState } from '../store'
 
 export interface RouteConfig {
     path: string
-    component: React.ComponentType
+    component: ComponentType
     exact?: boolean
     meta?: {
         title?: string
@@ -71,9 +72,9 @@ export type DeepPartial<T> = {
 
 // 事件处理类型
 export type EventHandler<T = Event> = (event: T) => void
-export type ChangeHandler = EventHandler<React.ChangeEvent<HTMLInputElement>>
-export type ClickHandler = EventHandler<React.MouseEvent<HTMLElement>>
-export type SubmitHandler = EventHandler<React.FormEvent<HTMLFormElement>>
+export type ChangeHandler = EventHandler<ChangeEvent<HTMLInputElement>>
+export type ClickHandler = EventHandler<MouseEvent<HTMLElement>>
+export type SubmitHandler = EventHandler<FormEvent<HTMLFormElement>>
 
 // 表单相关类型
 export interface FormField {
@@ -355,9 +356,9 @@ export interface WorkflowConfigUpdateItem {
     /** 工作流节点ID */
     id: number
     /** 是否启用 */
-    enabled: boolean
+    enabled?: boolean
     /** 是否自动流转 */
-    is_auto: boolean
+    is_auto?: boolean
 }
 
 export interface WorkflowConfigUpdateRequest {

@@ -63,9 +63,7 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
         >
             {/* 节点头部 */}
             <div className={styles.nodeHeader}>
-                <div className={styles.nodeIcon}>
-                    {statusIconMap[status]}
-                </div>
+                <div className={styles.nodeIcon}>{statusIconMap[status]}</div>
                 <div className={styles.nodeTitle}>
                     <div className={styles.nodeName}>{name}</div>
                     <div className={styles.nodeStatus}>{statusTextMap[status]}</div>
@@ -75,20 +73,14 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
             {/* 节点内容 */}
             <div className={styles.nodeContent}>
                 <div className={styles.nodeDescription}>{description}</div>
-                
+
                 {/* 进度条 */}
                 {(status === 'running' || status === 'completed' || status === 'paused') && (
                     <div className={styles.progressSection}>
                         <Progress
                             percent={progress}
-                            size="small"
-                            status={
-                                status === 'error'
-                                    ? 'exception'
-                                    : progress === 100
-                                      ? 'success'
-                                      : 'active'
-                            }
+                            size='small'
+                            status={progress === 100 ? 'success' : 'active'}
                             showInfo={false}
                         />
                         <div className={styles.progressText}>
@@ -99,9 +91,7 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
 
                 {/* 错误信息 */}
                 {status === 'error' && errorMessage && (
-                    <div className={styles.errorMessage}>
-                        {errorMessage}
-                    </div>
+                    <div className={styles.errorMessage}>{errorMessage}</div>
                 )}
             </div>
 
@@ -113,7 +103,7 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
     // 如果有错误信息，使用 Tooltip 显示详细错误
     if (status === 'error' && errorMessage) {
         return (
-            <Tooltip title={errorMessage} placement="top">
+            <Tooltip title={errorMessage} placement='top'>
                 {nodeContent}
             </Tooltip>
         )

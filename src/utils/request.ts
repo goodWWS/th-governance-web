@@ -47,7 +47,68 @@ export const RequestStatus = {
 
 export type RequestStatusType = (typeof RequestStatus)[keyof typeof RequestStatus]
 
-// 创建 axios 实例
+// 生成请求 ID
+const generateRequestId = (): string => {
+    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+}
+
+// 错误处理函数
+const handleApiError = (error: AxiosError): Promise<never> => {
+    const { response, code } = error
+
+    // 网络错误
+    if (!response) {
+        if (code === 'ECONNABORTED') {
+            return Promise.reject(new Error('请求超时，请稍后重试'))
+        }
+        if (code === 'ERR_NETWORK') {
+            return Promise.reject(new Error('网络连接失败，请检查网络'))
+        }
+        return Promise.reject(new Error('网络错误，请稍后重试'))
+    }
+
+    const { status, data } = response
+
+    // HTTP 状态码错误处理
+    switch (status) {
+        case 400:
+            return Promise.reject(
+                new Error((data as { message?: string })?.message || '请求参数错误')
+            )
+        case 401:
+            // 未授权，清除 token 并跳转到登录页
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('refresh_token')
+            window.location.href = '/login'
+            return Promise.reject(
+                new Error((data as { message?: string })?.message || '未授权访问')
+            )
+        case 403:
+            return Promise.reject(new Error((data as { message?: string })?.message || '权限不足'))
+        case 404:
+            return Promise.reject(new Error('请求的资源不存在'))
+        case 422:
+            return Promise.reject(
+                new Error((data as { message?: string })?.message || '请求参数验证失败')
+            )
+        case 429:
+            return Promise.reject(new Error('请求过于频繁，请稍后重试'))
+        case 500:
+            return Promise.reject(new Error('服务器内部错误'))
+        case 502:
+            return Promise.reject(new Error('网关错误'))
+        case 503:
+            return Promise.reject(new Error('服务暂时不可用'))
+        case 504:
+            return Promise.reject(new Error('网关超时'))
+        default:
+            return Promise.reject(
+                new Error((data as { message?: string })?.message || `请求失败 (${status})`)
+            )
+    }
+}
+
+// 创建 Axios 实例
 const createAxiosInstance = (): AxiosInstance => {
     const instance = axios.create({
         baseURL: getEnv('VITE_APP_API_BASE_URL', '/api'),
@@ -142,67 +203,6 @@ request.interceptors.response.use(
         return handleApiError(error)
     }
 )
-
-// 错误处理函数
-const handleApiError = (error: AxiosError): Promise<never> => {
-    const { response, code } = error
-
-    // 网络错误
-    if (!response) {
-        if (code === 'ECONNABORTED') {
-            return Promise.reject(new Error('请求超时，请稍后重试'))
-        }
-        if (code === 'ERR_NETWORK') {
-            return Promise.reject(new Error('网络连接失败，请检查网络'))
-        }
-        return Promise.reject(new Error('网络错误，请稍后重试'))
-    }
-
-    const { status, data } = response
-
-    // HTTP 状态码错误处理
-    switch (status) {
-        case 400:
-            return Promise.reject(
-                new Error((data as { message?: string })?.message || '请求参数错误')
-            )
-        case 401:
-            // 未授权，清除 token 并跳转到登录页
-            localStorage.removeItem('access_token')
-            localStorage.removeItem('refresh_token')
-            window.location.href = '/login'
-            return Promise.reject(
-                new Error((data as { message?: string })?.message || '未授权访问')
-            )
-        case 403:
-            return Promise.reject(new Error((data as { message?: string })?.message || '权限不足'))
-        case 404:
-            return Promise.reject(new Error('请求的资源不存在'))
-        case 422:
-            return Promise.reject(
-                new Error((data as { message?: string })?.message || '请求参数验证失败')
-            )
-        case 429:
-            return Promise.reject(new Error('请求过于频繁，请稍后重试'))
-        case 500:
-            return Promise.reject(new Error('服务器内部错误'))
-        case 502:
-            return Promise.reject(new Error('网关错误'))
-        case 503:
-            return Promise.reject(new Error('服务暂时不可用'))
-        case 504:
-            return Promise.reject(new Error('网关超时'))
-        default:
-            return Promise.reject(
-                new Error((data as { message?: string })?.message || `请求失败 (${status})`)
-            )
-    }
-}
-
-// 生成请求 ID
-const generateRequestId = (): string => {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-}
 
 // 请求方法封装
 export const apiMethods = {
@@ -337,21 +337,23 @@ export interface SSEConfig {
 }
 
 // SSE 连接状态
-export enum SSEStatus {
-    CONNECTING = 'connecting',
-    CONNECTED = 'connected',
-    DISCONNECTED = 'disconnected',
-    ERROR = 'error',
-    MAX_RECONNECT_REACHED = 'max_reconnect_reached', // 新增：达到最大重连次数
-}
+export const SSEStatus = {
+    CONNECTING: 'connecting',
+    CONNECTED: 'connected',
+    DISCONNECTED: 'disconnected',
+    ERROR: 'error',
+    MAX_RECONNECT_REACHED: 'max_reconnect_reached', // 新增：达到最大重连次数
+} as const
+
+export type SSEStatusType = (typeof SSEStatus)[keyof typeof SSEStatus]
 
 // SSE 管理器类
 export class SSEManager {
     private eventSource: EventSource | null = null
     private config: SSEConfig
-    private status: SSEStatus = SSEStatus.DISCONNECTED
+    private status: SSEStatusType = SSEStatus.DISCONNECTED
     private reconnectAttempts = 0
-    private reconnectTimer: NodeJS.Timeout | null = null
+    private reconnectTimer: ReturnType<typeof setTimeout> | null = null
     private isManualDisconnect = false // 新增：标记是否为手动断开连接
 
     constructor(config: SSEConfig) {
@@ -392,7 +394,7 @@ export class SSEManager {
 
             logger.info('SSE连接已启动:', fullUrl)
         } catch (error) {
-            logger.error('SSE连接失败:', error)
+            logger.error('SSE连接失败:', error instanceof Error ? error : new Error(String(error)))
             this.handleError(error as Event)
         }
     }
@@ -432,7 +434,7 @@ export class SSEManager {
     }
 
     // 获取连接状态
-    getStatus(): SSEStatus {
+    getStatus(): SSEStatusType {
         return this.status
     }
 
@@ -496,7 +498,7 @@ export class SSEManager {
         }
 
         this.eventSource.onerror = (event: Event) => {
-            logger.error('SSE连接错误:', event)
+            logger.error('SSE连接错误:', new Error(`SSE connection error: ${event.type}`))
             this.handleError(event)
         }
     }

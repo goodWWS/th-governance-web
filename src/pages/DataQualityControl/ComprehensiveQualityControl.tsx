@@ -25,7 +25,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { UploadProps } from 'antd/es/upload'
 import React, { useState } from 'react'
 
-const { Title, _Text } = Typography
+const { Title } = Typography
 const { Dragger } = Upload
 
 interface QualityMetric {
@@ -45,6 +45,10 @@ interface QualityReport {
     passRate: number
 }
 
+interface ComprehensiveFormValues {
+    targetDatabase: string
+}
+
 const ComprehensiveQualityControl: React.FC = () => {
     const [form] = Form.useForm()
     const [loading, setLoading] = useState(false)
@@ -60,6 +64,59 @@ const ComprehensiveQualityControl: React.FC = () => {
         { label: '检查检验相关表', value: 'examination_tables' },
         { label: '药品处方相关表', value: 'prescription_tables' },
     ]
+
+    // 解析Excel结果
+    const parseExcelResults = () => {
+        // 模拟Excel解析结果
+        const mockReports: QualityReport[] = [
+            {
+                key: '1',
+                category: '数据完整性',
+                totalItems: 1000,
+                passedItems: 850,
+                failedItems: 150,
+                passRate: 85,
+                status: 'warning',
+                details: '部分患者基本信息缺失',
+            },
+            {
+                key: '2',
+                category: '数据一致性',
+                totalItems: 800,
+                passedItems: 720,
+                failedItems: 80,
+                passRate: 90,
+                status: 'success',
+                details: '数据一致性良好',
+            },
+            {
+                key: '3',
+                category: '数据准确性',
+                totalItems: 1200,
+                passedItems: 1080,
+                failedItems: 120,
+                passRate: 90,
+                status: 'success',
+                details: '数据准确性符合要求',
+            },
+            {
+                key: '4',
+                category: '数据时效性',
+                totalItems: 500,
+                passedItems: 400,
+                failedItems: 100,
+                passRate: 80,
+                status: 'warning',
+                details: '部分数据更新不及时',
+            },
+        ]
+        setQualityReports(mockReports)
+
+        // 计算综合得分
+        const totalScore = mockReports.reduce((sum, report) => sum + report.passRate, 0)
+        const avgScore = Math.round(totalScore / mockReports.length)
+        setOverallScore(avgScore)
+    }
 
     // Excel文件上传配置
     const uploadProps: UploadProps = {
@@ -93,49 +150,8 @@ const ComprehensiveQualityControl: React.FC = () => {
         },
     }
 
-    // 解析Excel结果
-    const parseExcelResults = () => {
-        // 模拟Excel解析结果
-        const mockReports: QualityReport[] = [
-            {
-                key: '1',
-                category: '数据完整性',
-                totalItems: 1000,
-                passedItems: 850,
-                failedItems: 150,
-                passRate: 85,
-            },
-            {
-                key: '2',
-                category: '数据准确性',
-                totalItems: 1000,
-                passedItems: 920,
-                failedItems: 80,
-                passRate: 92,
-            },
-            {
-                key: '3',
-                category: '数据一致性',
-                totalItems: 1000,
-                passedItems: 780,
-                failedItems: 220,
-                passRate: 78,
-            },
-            {
-                key: '4',
-                category: '数据时效性',
-                totalItems: 1000,
-                passedItems: 950,
-                failedItems: 50,
-                passRate: 95,
-            },
-        ]
-        setQualityReports(mockReports)
-        message.success('Excel质控结果解析完成！')
-    }
-
     // 执行综合质控
-    const handleComprehensiveCheck = async (_values: any) => {
+    const handleComprehensiveCheck = async (_values: ComprehensiveFormValues) => {
         setLoading(true)
         try {
             // 模拟质控检查过程
@@ -187,6 +203,7 @@ const ComprehensiveQualityControl: React.FC = () => {
             setOverallScore(avgScore)
             message.success('综合质控检查完成！')
         } catch (error) {
+            console.error('质控检查失败:', error)
             message.error('质控检查失败，请重试')
         } finally {
             setLoading(false)

@@ -52,6 +52,11 @@ interface LogicCheckResult {
     errorDetails: string[]
 }
 
+interface LogicFormValues {
+    targetDatabase: string
+    checkType: string
+}
+
 const BasicMedicalLogicQualityControl: React.FC = () => {
     const [form] = Form.useForm()
     const [loading, setLoading] = useState(false)
@@ -85,7 +90,7 @@ const BasicMedicalLogicQualityControl: React.FC = () => {
     ]
 
     // 执行医疗逻辑检查
-    const handleLogicCheck = async (_values: any) => {
+    const handleLogicCheck = async (_values: LogicFormValues) => {
         setLoading(true)
         try {
             // 模拟检查过程
@@ -240,6 +245,7 @@ const BasicMedicalLogicQualityControl: React.FC = () => {
 
             message.success('医疗逻辑检查完成！')
         } catch (error) {
+            console.error('医疗逻辑检查失败:', error)
             message.error('医疗逻辑检查失败，请重试')
         } finally {
             setLoading(false)

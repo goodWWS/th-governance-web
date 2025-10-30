@@ -30,6 +30,11 @@ interface QualityResult {
     suggestion: string
 }
 
+interface TextQualityFormValues {
+    targetTable: string
+    textContent: string
+}
+
 const TextQualityControl: React.FC = () => {
     const [form] = Form.useForm()
     const [loading, setLoading] = useState(false)
@@ -78,7 +83,7 @@ const TextQualityControl: React.FC = () => {
     }
 
     // 执行质控检查
-    const handleQualityCheck = async (_values: any) => {
+    const handleQualityCheck = async (_values: TextQualityFormValues) => {
         setLoading(true)
         try {
             // 模拟质控检查过程
@@ -112,6 +117,7 @@ const TextQualityControl: React.FC = () => {
             setQualityResults(mockResults)
             message.success('文本质控检查完成！')
         } catch (error) {
+            console.error('质控检查失败:', error)
             message.error('质控检查失败，请重试')
         } finally {
             setLoading(false)

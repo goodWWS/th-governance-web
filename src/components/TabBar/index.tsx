@@ -31,7 +31,7 @@ const TabBar: React.FC<TabBarProps> = ({ className, maxTabs = 10, onTabChange, o
 
     // 路由标签映射 - 使用useMemo优化
     const routeTabMap = React.useMemo(
-        () => ({
+        (): Record<string, { label: string; icon?: React.ReactNode; closable: boolean }> => ({
             '/dashboard': {
                 label: '仪表盘',
                 icon: <HomeOutlined />,
@@ -134,12 +134,14 @@ const TabBar: React.FC<TabBarProps> = ({ className, maxTabs = 10, onTabChange, o
                     if (newTabs.length > 0) {
                         // 优先选择右侧标签，如果没有则选择左侧
                         if (targetIndex < newTabs.length) {
-                            nextActiveKey = newTabs[targetIndex].key
+                            nextActiveKey = newTabs[targetIndex]?.key || ''
                         } else {
-                            nextActiveKey = newTabs[newTabs.length - 1].key
+                            nextActiveKey = newTabs[newTabs.length - 1]?.key || ''
                         }
 
-                        navigate(nextActiveKey)
+                        if (nextActiveKey) {
+                            navigate(nextActiveKey)
+                        }
                     }
                 }
 
