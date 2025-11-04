@@ -1,9 +1,8 @@
-import { HistoryOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Space, Typography, message } from 'antd'
-import React, { useCallback, useEffect, useState } from 'react'
+import { HistoryOutlined, SettingOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Space, Typography } from 'antd'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ExecutionRecordTable from '../../components/ExecutionRecordTable'
-import { dataGovernanceService } from '../../services/dataGovernanceService'
 import { useAppSelector } from '../../store/hooks'
 import { logger } from '../../utils/logger'
 
@@ -11,8 +10,7 @@ const { Title } = Typography
 
 const DataGovernance: React.FC = () => {
     const navigate = useNavigate()
-    const { tasks, loading } = useAppSelector(state => state.dataGovernance)
-    const [startingWorkflow, setStartingWorkflow] = useState(false)
+    const { loading } = useAppSelector(state => state.dataGovernance)
 
     // 获取执行记录
     const refreshRecords = () => {
@@ -20,39 +18,10 @@ const DataGovernance: React.FC = () => {
         logger.debug('刷新执行记录')
     }
 
-    // 启动工作流
-    const startWorkflow = useCallback(async () => {
-        try {
-            logger.debug('开始启动工作流...')
-            setStartingWorkflow(true)
-
-            // 调用启动工作流API
-            logger.debug('调用 dataGovernanceService.startWorkflow()')
-            const response = await dataGovernanceService.startWorkflow()
-            logger.debug('启动工作流响应:', response)
-
-            if (response.code === 200) {
-                const taskId = response.data
-                logger.debug('获取到任务ID:', taskId)
-                message.success('工作流启动成功！')
-
-                // 跳转到工作流详情页面
-                navigate(`/data-governance/workflow/${taskId}`)
-            } else {
-                const errorMsg = response.msg || '工作流启动失败'
-                logger.error('启动工作流失败:', new Error(errorMsg))
-                message.error(errorMsg)
-            }
-        } catch (error) {
-            logger.error(
-                '启动工作流异常:',
-                error instanceof Error ? error : new Error(String(error))
-            )
-            message.error('工作流启动失败，请稍后重试')
-        } finally {
-            setStartingWorkflow(false)
-        }
-    }, [navigate])
+    // 跳转到工作流配置页面
+    const goToWorkflowConfig = () => {
+        navigate('/data-governance/workflow-config')
+    }
 
     // 初始化加载执行记录
     useEffect(() => {
@@ -77,11 +46,10 @@ const DataGovernance: React.FC = () => {
                     <Button
                         type='primary'
                         size='large'
-                        icon={<PlayCircleOutlined />}
-                        loading={startingWorkflow}
-                        onClick={startWorkflow}
+                        icon={<SettingOutlined />}
+                        onClick={goToWorkflowConfig}
                     >
-                        {startingWorkflow ? '启动中...' : '启动工作流'}
+                        工作流配置
                     </Button>
                     <Button icon={<ReloadOutlined />} onClick={refreshRecords} loading={loading}>
                         刷新记录
@@ -91,7 +59,7 @@ const DataGovernance: React.FC = () => {
 
             <Alert
                 message='数据治理执行记录'
-                description='查看所有数据治理工作流的执行历史记录，点击单条记录可查看详细的执行步骤和进度信息。点击"启动工作流"开始新的数据治理流程。'
+                description='查看所有数据治理工作流的执行历史记录，点击单条记录可查看详细的执行步骤和进度信息。点击"工作流配置"进入配置页面启动新的数据治理流程。'
                 type='info'
                 showIcon
                 style={{ marginBottom: 24 }}
@@ -99,11 +67,7 @@ const DataGovernance: React.FC = () => {
 
             {/* 执行记录表格 */}
             <Card>
-                <ExecutionRecordTable
-                    records={tasks}
-                    loading={loading}
-                    onRefresh={refreshRecords}
-                />
+                <ExecutionRecordTable records={[]} loading={loading} onRefresh={refreshRecords} />
             </Card>
         </div>
     )

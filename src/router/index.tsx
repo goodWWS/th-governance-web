@@ -3,7 +3,6 @@ import MainLayout from '../components/Layout/MainLayout'
 import Dashboard from '../pages/Dashboard'
 import DatabaseConnection from '../pages/DatabaseConnection'
 import DataGovernance from '../pages/DataGovernance'
-import ExecutionDetail from '../pages/DataGovernance/ExecutionDetail'
 import { ExecutionHistory } from '../pages/DataGovernance/ExecutionHistory'
 import WorkflowConfig from '../pages/DataGovernance/WorkflowConfig'
 import WorkflowDetail from '../pages/DataGovernance/WorkflowDetail'
@@ -46,10 +45,6 @@ export const router = createBrowserRouter([
             {
                 path: 'data-governance/execution-history',
                 element: <ExecutionHistory />,
-            },
-            {
-                path: 'data-governance/execution/:id',
-                element: <ExecutionDetail />,
             },
             {
                 path: 'data-governance/workflow/:taskId',
@@ -101,10 +96,6 @@ export const router = createBrowserRouter([
                     },
                 ],
             },
-            // {
-            //     path: 'style-demo',
-            //     element: <StyleDemo />,
-            // },
         ],
     },
 ])

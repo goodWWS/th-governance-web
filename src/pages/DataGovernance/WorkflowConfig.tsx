@@ -10,7 +10,7 @@ import {
     UnorderedListOutlined,
 } from '@ant-design/icons'
 import { Alert, Button, Card, message, Space, Spin, Switch, Typography } from 'antd'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDebounceCallback } from '../../hooks/useDebounce'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
@@ -20,21 +20,23 @@ import {
     updateWorkflowConfigLocal,
 } from '../../store/slices/dataGovernanceSlice'
 import type { WorkflowConfigUpdateItem } from '../../types'
-import { dataGovernanceService } from '../../services/dataGovernanceService'
 import { logger } from '../../utils/logger'
+import { startWorkflow } from '../../utils/workflowUtils'
 
 const { Title } = Typography
 
 // 节点类型到图标的映射
 const nodeTypeIconMap = {
     dataAccess: <UnorderedListOutlined />,
-    dataValidate: <BookOutlined />,
-    dataClean: <ClearOutlined />,
+    StandardMapping: <BookOutlined />,
+    DataCleansing: <ClearOutlined />,
     dataTransform: <SwapOutlined />,
-    dataFilter: <DeleteOutlined />,
-    dataMerge: <CopyOutlined />,
-    dataMask: <EyeInvisibleOutlined />,
-    dataRecheck: <BookOutlined />,
+    DataDeduplication: <DeleteOutlined />,
+    EMPIDefinitionDistribution: <CopyOutlined />,
+    EMOIDefinitionDistribution: <CopyOutlined />,
+    DataStandardization: <BookOutlined />,
+    DataDesensitization: <EyeInvisibleOutlined />,
+    DataOrphan: <BookOutlined />,
     dataLoad: <UnorderedListOutlined />,
 }
 
@@ -43,8 +45,12 @@ const nodeTypeIconMap = {
  * 提供工作流执行步骤的配置和管理
  */
 const WorkflowConfig: React.FC = () => {
-    const navigate = useNavigate()
     const dispatch = useAppDispatch()
+    const navigate = useNavigate()
+
+    // Redux 状态管理
+    // 由于不再维护 currentExecution，可以通过其他方式判断执行状态
+    // 例如通过 workflowLoading 或消息列表来判断
 
     // 从Redux获取状态
     const {
@@ -52,9 +58,6 @@ const WorkflowConfig: React.FC = () => {
         workflowLoading,
         error: _error,
     } = useAppSelector(state => state.dataGovernance)
-
-    const [loading, setLoading] = useState(false)
-    const [isRunning, setIsRunning] = useState(false)
 
     // 用于收集待更新的配置项
     const pendingUpdatesRef = useRef<Map<number, WorkflowConfigUpdateItem>>(new Map())
@@ -154,49 +157,36 @@ const WorkflowConfig: React.FC = () => {
      * 启动工作流
      */
     const handleStartWorkflow = async () => {
+        logger.debug('工作流配置页面 - 开始启动工作流...')
+
         try {
-            setLoading(true)
-            logger.debug('工作流配置页面 - 开始启动工作流...')
-
-            // 检查是否有启用的步骤
-            const enabledSteps = steps.filter(step => step.enabled)
-            if (enabledSteps.length === 0) {
-                message.warning('请至少启用一个工作流步骤')
-                return
-            }
-
-            logger.debug('启用的工作流步骤:', enabledSteps)
-
-            // 调用真实的启动工作流API
-            logger.debug('调用 dataGovernanceService.startWorkflow()')
-            const response = await dataGovernanceService.startWorkflow()
-            logger.debug('启动工作流响应:', response)
-
-            // 根据实际接口响应格式处理
-            if (response.code === 200 && response.data) {
-                const taskId = response.data
-                logger.debug('获取到任务ID:', taskId)
-
-                setIsRunning(true)
-                message.success('工作流启动成功！正在跳转到详情页面...')
-
-                // 延迟跳转，让用户看到成功消息
-                setTimeout(() => {
+            // 使用工作流工具函数启动工作流
+            const success = await startWorkflow({
+                onSuccess: taskId => {
+                    logger.debug('工作流启动成功，任务ID:', taskId)
+                    message.success('工作流启动成功！')
+                },
+                onError: error => {
+                    message.error(`工作流启动失败: ${error}`)
+                },
+                onMessage: msg => {
+                    logger.debug('收到工作流消息:', msg)
+                },
+                onOpen: taskId => {
                     navigate(`/data-governance/workflow/${taskId}`)
-                }, 1500)
-            } else {
-                const errorMsg = response.msg || '启动工作流失败，请重试'
-                logger.error('启动工作流失败:', new Error(errorMsg))
-                message.error(errorMsg)
+                },
+            })
+
+            if (!success) {
+                logger.warn('工作流启动失败')
+                message.error('工作流启动失败，请稍后重试')
             }
-        } catch (error) {
+        } catch (_error) {
             logger.error(
-                '启动工作流异常:',
-                error instanceof Error ? error : new Error(String(error))
+                '启动工作流时发生异常',
+                _error instanceof Error ? _error : new Error(String(_error))
             )
-            message.error('启动工作流失败，请检查网络连接')
-        } finally {
-            setLoading(false)
+            message.error('启动工作流时发生异常，请稍后重试')
         }
     }
 
@@ -237,8 +227,6 @@ const WorkflowConfig: React.FC = () => {
                     <Button
                         type='primary'
                         icon={<PlayCircleOutlined />}
-                        loading={loading && !isRunning}
-                        disabled={isRunning || workflowLoading}
                         onClick={handleStartWorkflow}
                     >
                         启动工作流
@@ -254,21 +242,6 @@ const WorkflowConfig: React.FC = () => {
                 showIcon
                 style={{ marginBottom: 24 }}
             />
-
-            {/* 状态提示 */}
-            {isRunning && (
-                <Alert
-                    message='工作流运行中'
-                    description='当前工作流正在执行中，请在执行历史页面查看详细进度。'
-                    type='success'
-                    showIcon
-                    style={{ marginBottom: 24 }}
-                />
-            )}
-
-            {/* 更新状态提示 */}
-            {/* 移除Alert组件，改为使用message toast提示 */}
-
             {/* 工作流步骤卡片 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {steps.map((step, _index) => (

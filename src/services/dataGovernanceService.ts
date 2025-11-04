@@ -5,16 +5,17 @@
 
 import type {
     ApiResponse,
-    DataGovernanceLog,
     DataGovernanceResult,
     DbConnectionPageParams,
     DbConnectionPageResponse,
     ExecutionLogPageResponse,
-    StartWorkflowResponse,
     WorkflowConfigResponse,
     WorkflowConfigUpdateItem,
     WorkflowConfigUpdateResponse,
     WorkflowDetailResponse,
+    WorkflowLogDetailResponse,
+    DataEntryRequest,
+    DataEntryResponse,
 } from '@/types'
 import { api } from '@/utils/request'
 import { logger } from '@/utils/logger'
@@ -161,6 +162,30 @@ export class DataGovernanceService {
     }
 
     /**
+     * 10.1、数据录入（带参数版本）
+     * @description 封装 /data/governance/sync 的数据录入请求，统一错误处理与日志
+     * @param payload { taskId, workflowData }
+     * @returns Promise<DataEntryResponse>
+     */
+    static async syncDataEntry(payload: DataEntryRequest): Promise<DataEntryResponse> {
+        try {
+            if (!payload?.taskId) {
+                throw new Error('任务ID不能为空')
+            }
+            logger.debug('发送数据录入请求到: /data/governance/sync', payload)
+            const res = await api.post<DataEntryResponse>('/data/governance/sync', payload)
+            logger.debug('数据录入API响应:', res)
+            return res
+        } catch (error) {
+            logger.error(
+                '数据录入API调用失败:',
+                error instanceof Error ? error : new Error(String(error))
+            )
+            throw new Error(`数据录入失败: ${error instanceof Error ? error.message : '未知错误'}`)
+        }
+    }
+
+    /**
      * 获取执行历史日志列表
      * @returns 执行历史日志全部数据
      */
@@ -175,17 +200,17 @@ export class DataGovernanceService {
     }
 
     /**
-     * 12、日志详细
-     * @description 获取指定日志的详细信息
+     * 获取执行日志详情
+     * @description 根据日志ID获取工作流执行的详细信息，包含步骤列表和任务摘要
      * @param logId 日志ID
-     * @returns Promise<DataGovernanceLog>
+     * @returns Promise<WorkflowLogDetailResponse>
      */
-    static async getLogDetail(logId: string): Promise<DataGovernanceLog> {
+    static async getLogDetail(logId: string): Promise<WorkflowLogDetailResponse> {
         try {
             if (!logId) {
                 throw new Error('日志ID不能为空')
             }
-            return await api.get<DataGovernanceLog>(`/data/governance/log/${logId}`)
+            return await api.get<WorkflowLogDetailResponse>(`/data/governance/task/log/${logId}`)
         } catch (error) {
             throw new Error(
                 `获取日志详情失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -295,7 +320,7 @@ export class DataGovernanceService {
     ): Promise<ApiResponse<{ status: 'success' | 'failed'; message: string }>> {
         try {
             return await api.post<ApiResponse<{ status: 'success' | 'failed'; message: string }>>(
-                `/data/governance/db/connection/test/${id}`
+                `/data/governance/db-connection/mock-test/${id}`
             )
         } catch (error) {
             throw new Error(
@@ -336,30 +361,6 @@ export class DataGovernanceService {
         } catch (error) {
             throw new Error(
                 `更新工作流配置失败: ${error instanceof Error ? error.message : '未知错误'}`
-            )
-        }
-    }
-
-    /**
-     * 启动工作流
-     * @description 启动数据治理工作流，返回批次ID
-     * @returns Promise<StartWorkflowResponse>
-     */
-    static async startWorkflow(): Promise<StartWorkflowResponse> {
-        try {
-            logger.debug('发送启动工作流请求到: /data/governance/task/process/start')
-            const response = await api.post<StartWorkflowResponse>(
-                '/data/governance/task/process/start'
-            )
-            logger.debug('启动工作流API响应:', response)
-            return response
-        } catch (error) {
-            logger.error(
-                '启动工作流API调用失败:',
-                error instanceof Error ? error : new Error(String(error))
-            )
-            throw new Error(
-                `启动工作流失败: ${error instanceof Error ? error.message : '未知错误'}`
             )
         }
     }
@@ -406,6 +407,7 @@ export const dataGovernanceService = {
     removeOrphanRecords: DataGovernanceService.removeOrphanRecords,
     maskSensitiveData: DataGovernanceService.maskSensitiveData,
     sync: DataGovernanceService.sync,
+    syncDataEntry: DataGovernanceService.syncDataEntry,
 
     // 日志查询操作
     getLogPage: DataGovernanceService.getExecutionLogPage,
@@ -423,7 +425,6 @@ export const dataGovernanceService = {
     updateWorkflowConfig: DataGovernanceService.updateWorkflowConfig,
 
     // 工作流执行相关
-    startWorkflow: DataGovernanceService.startWorkflow,
     getWorkflowDetail: DataGovernanceService.getWorkflowDetail,
 }
 

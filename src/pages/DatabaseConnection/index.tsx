@@ -84,7 +84,10 @@ const DatabaseConnection: React.FC = () => {
                 message.error(result.message || '获取数据库连接列表失败')
             }
         } catch (error) {
-            console.error('获取数据库连接列表失败:', error)
+            logger.error(
+                '获取数据库连接列表失败:',
+                error instanceof Error ? error : new Error(String(error))
+            )
             message.error('获取数据库连接列表失败')
         } finally {
             setTableLoading(false)
@@ -112,7 +115,7 @@ const DatabaseConnection: React.FC = () => {
                 message.error(result.message || '删除失败')
             }
         } catch (error) {
-            console.error('删除连接失败:', error)
+            logger.error('删除连接失败:', error instanceof Error ? error : new Error(String(error)))
             message.error('删除失败')
         }
     }
@@ -131,7 +134,7 @@ const DatabaseConnection: React.FC = () => {
                 message.error(result.message || '连接测试失败')
             }
         } catch (error) {
-            console.error('测试连接失败:', error)
+            logger.error('测试连接失败:', error instanceof Error ? error : new Error(String(error)))
             message.error('连接测试失败')
         } finally {
             setTestingConnections(prev => ({ ...prev, [id]: false }))

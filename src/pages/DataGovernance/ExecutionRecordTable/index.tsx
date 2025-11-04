@@ -1,18 +1,14 @@
 import {
-    DuplicateCheckDetails,
     ExecutionLogItem,
     ExecutionStepStatus,
     ExecutionStepStatusColors,
     ExecutionStepStatusLabels,
-    OrphanCheckDetails,
-    SpecialCharCheckDetails,
 } from '@/types'
-import { EyeOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Divider, Modal, Space, Table, Tag, Typography } from 'antd'
+import { Button, Card, Table, Tag, Typography } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import dayjs from 'dayjs'
-import React, { useMemo, useState } from 'react'
-import { logger } from '@/utils/logger'
+import React, { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const { Text } = Typography
 
@@ -42,8 +38,7 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
     onViewDetails,
     pagination,
 }) => {
-    const [detailModalVisible, setDetailModalVisible] = useState(false)
-    const [selectedRecord, setSelectedRecord] = useState<ExecutionLogItem | null>(null)
+    const navigate = useNavigate()
 
     /**
      * 渲染步骤状态标签
@@ -85,199 +80,15 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
     }
 
     /**
-     * 解析详情JSON字符串
+     * 跳转到完整详情页面
      */
-    const parseDetails = (detailsStr: string) => {
-        try {
-            return JSON.parse(detailsStr)
-        } catch (error) {
-            logger.error('解析详情失败:', error instanceof Error ? error : new Error(String(error)))
-            return null
+    const handleViewFullDetails = (record: ExecutionLogItem) => {
+        // 如果外部传入了查看详情回调，则优先调用回调；否则跳转到详情页
+        if (onViewDetails) {
+            onViewDetails(record)
+            return
         }
-    }
-
-    /**
-     * 渲染单个详情项
-     */
-    const renderSingleDetailItem = (
-        item: DuplicateCheckDetails | SpecialCharCheckDetails | OrphanCheckDetails
-    ) => {
-        // 数据重复检查详情
-        if ('problems' in item && item.table && item.problems) {
-            const duplicateDetails = item as DuplicateCheckDetails
-            return (
-                <div>
-                    <Text strong>表名：</Text>
-                    <Text>{duplicateDetails.table}</Text>
-                    <br />
-                    <Text strong>总记录数：</Text>
-                    <Text>{duplicateDetails.total}</Text>
-                    <br />
-                    <Text strong>重复问题：</Text>
-                    {duplicateDetails.problems.map((problem, idx) => (
-                        <div key={idx} style={{ marginLeft: 16, marginTop: 8 }}>
-                            <Text strong>字段：</Text>
-                            <Text>{problem.field}</Text>
-                            <br />
-                            <Text strong>重复组数：</Text>
-                            <Text>{problem.duplicate_groups.length}</Text>
-                            <br />
-                            <Text strong>重复记录总数：</Text>
-                            <Text>{problem.total_count}</Text>
-                            <br />
-                            <details style={{ marginTop: 4 }}>
-                                <summary style={{ cursor: 'pointer', color: '#1890ff' }}>
-                                    查看重复组详情
-                                </summary>
-                                {problem.duplicate_groups.map((group, groupIdx) => (
-                                    <div key={groupIdx} style={{ marginLeft: 16, marginTop: 4 }}>
-                                        <Text>
-                                            值：{group.value} | 记录数：{group.count} | ID：
-                                            {group.ids.join(', ')}
-                                        </Text>
-                                    </div>
-                                ))}
-                            </details>
-                        </div>
-                    ))}
-                </div>
-            )
-        }
-
-        // 特殊字符检查详情
-        if ('problem_fields' in item && item.table && item.problem_fields) {
-            const specialCharDetails = item as SpecialCharCheckDetails
-            return (
-                <div>
-                    <Text strong>表名：</Text>
-                    <Text>{specialCharDetails.table}</Text>
-                    <br />
-                    <Text strong>问题记录总数：</Text>
-                    <Text>{specialCharDetails.total_count}</Text>
-                    <br />
-                    <Text strong>问题字段：</Text>
-                    {specialCharDetails.problem_fields.map((field, idx) => (
-                        <div key={idx} style={{ marginLeft: 16, marginTop: 8 }}>
-                            <Text strong>字段：</Text>
-                            <Text>{field.field}</Text>
-                            <br />
-                            <Text strong>问题类型：</Text>
-                            <Text type='warning'>{field.problem_type}</Text>
-                            <br />
-                            <Text strong>问题记录数：</Text>
-                            <Text>{field.count}</Text>
-                            <br />
-                            <Text strong>记录ID：</Text>
-                            <Text>{field.ids.join(', ')}</Text>
-                        </div>
-                    ))}
-                </div>
-            )
-        }
-
-        // 丢孤检查详情
-        if (
-            'masterTable' in item &&
-            'orphanDetails' in item &&
-            item.table &&
-            item.masterTable &&
-            item.orphanDetails
-        ) {
-            const orphanDetails = item as OrphanCheckDetails
-            return (
-                <div>
-                    <Text strong>子表：</Text>
-                    <Text>{orphanDetails.table}</Text>
-                    <br />
-                    <Text strong>主表：</Text>
-                    <Text>{orphanDetails.masterTable}</Text>
-                    <br />
-                    <Text strong>孤儿记录数：</Text>
-                    <Text>{orphanDetails.orphanCount}</Text>
-                    <br />
-                    <Text strong>关联字段：</Text>
-                    <Text>{orphanDetails.relatedFields.join(', ')}</Text>
-                    <br />
-                    <Text strong>孤儿记录详情：</Text>
-                    {orphanDetails.orphanDetails.map((orphan, idx) => (
-                        <div key={idx} style={{ marginLeft: 16, marginTop: 8 }}>
-                            <Text strong>ID：</Text>
-                            <Text>{orphan.id}</Text>
-                            <br />
-                            <Text strong>字段值：</Text>
-                            <Text>{JSON.stringify(orphan.fields)}</Text>
-                            <br />
-                            <Text strong>原因：</Text>
-                            <Text type='danger'>{orphan.reason}</Text>
-                        </div>
-                    ))}
-                </div>
-            )
-        }
-
-        // 默认JSON展示
-        return (
-            <pre
-                style={{
-                    background: '#f5f5f5',
-                    padding: 12,
-                    borderRadius: 4,
-                    fontSize: 12,
-                    maxHeight: 300,
-                    overflow: 'auto',
-                }}
-            >
-                {JSON.stringify(item, null, 2)}
-            </pre>
-        )
-    }
-
-    /**
-     * 渲染详情内容
-     */
-    const renderDetailsContent = (
-        details:
-            | DuplicateCheckDetails
-            | SpecialCharCheckDetails
-            | OrphanCheckDetails
-            | DuplicateCheckDetails[]
-            | SpecialCharCheckDetails[]
-            | OrphanCheckDetails[]
-            | null
-    ) => {
-        if (!details) return <Text type='secondary'>无详情信息</Text>
-
-        // 处理数组格式的详情
-        if (Array.isArray(details)) {
-            return (
-                <Space direction='vertical' style={{ width: '100%' }}>
-                    {details.map((item, index) => (
-                        <Card key={index} size='small' style={{ marginBottom: 8 }}>
-                            {renderSingleDetailItem(item)}
-                        </Card>
-                    ))}
-                </Space>
-            )
-        }
-
-        // 处理单个对象格式的详情
-        return renderSingleDetailItem(details)
-    }
-
-    /**
-     * 查看详情
-     */
-    const handleViewDetails = (record: ExecutionLogItem) => {
-        setSelectedRecord(record)
-        setDetailModalVisible(true)
-    }
-
-    /**
-     * 关闭详情弹窗
-     */
-    const handleCloseModal = () => {
-        setDetailModalVisible(false)
-        setSelectedRecord(null)
+        navigate(`/data-governance/workflow/${record.batch_id}`)
     }
 
     /**
@@ -285,11 +96,11 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
      */
     const columns: ColumnsType<ExecutionLogItem> = [
         {
-            title: '日志ID',
-            dataIndex: 'log_id',
-            key: 'log_id',
+            title: '任务ID',
+            dataIndex: 'id',
+            key: 'id',
             width: 80,
-            sorter: (a, b) => a.log_id - b.log_id,
+            sorter: (a, b) => a.id - b.id,
         },
         {
             title: '批次ID',
@@ -299,24 +110,38 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             render: (batchId: number) => <Text code>{batchId}</Text>,
         },
         {
-            title: '步骤',
-            dataIndex: 'step_no',
-            key: 'step_no',
-            width: 60,
-            align: 'center',
-            sorter: (a, b) => a.step_no - b.step_no,
-        },
-        {
-            title: '步骤名称',
-            dataIndex: 'step_name',
-            key: 'step_name',
+            title: '任务名称',
+            dataIndex: 'name',
+            key: 'name',
             width: 200,
             ellipsis: true,
         },
         {
+            title: '节点类型',
+            dataIndex: 'node_type',
+            key: 'node_type',
+            width: 120,
+            render: (nodeType: string) => {
+                const nodeTypeMap: Record<string, { label: string; color: string }> = {
+                    dataLoad: { label: '数据加载', color: 'blue' },
+                    DataCleansing: { label: '数据清洗', color: 'green' },
+                    dataDedupe: { label: '数据去重', color: 'orange' },
+                    typeConvert: { label: '类型转换', color: 'purple' },
+                    standardMap: { label: '标准对照', color: 'cyan' },
+                    empiDistribute: { label: 'EMPI发放', color: 'magenta' },
+                    emoiDistribute: { label: 'EMOI发放', color: 'volcano' },
+                    dataUnify: { label: '数据归一', color: 'lime' },
+                    orphanDrop: { label: '丢孤儿', color: 'red' },
+                    dataDesensitize: { label: '数据脱敏', color: 'geekblue' },
+                }
+                const config = nodeTypeMap[nodeType] || { label: nodeType, color: 'default' }
+                return <Tag color={config.color}>{config.label}</Tag>
+            },
+        },
+        {
             title: '状态',
-            dataIndex: 'step_status',
-            key: 'step_status',
+            dataIndex: 'status',
+            key: 'status',
             width: 80,
             align: 'center',
             render: renderStatus,
@@ -325,15 +150,15 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
                 { text: '失败', value: 1 },
                 { text: '进行中', value: 2 },
             ],
-            onFilter: (value, record) => record.step_status === value,
+            onFilter: (value, record) => record.status === value,
         },
         {
             title: '开始时间',
-            dataIndex: 'create_time',
-            key: 'create_time',
+            dataIndex: 'start_time',
+            key: 'start_time',
             width: 160,
             render: (time: string) => formatTime(time),
-            sorter: (a, b) => dayjs(a.create_time).unix() - dayjs(b.create_time).unix(),
+            sorter: (a, b) => dayjs(a.start_time).unix() - dayjs(b.start_time).unix(),
         },
         {
             title: '结束时间',
@@ -346,7 +171,7 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             title: '执行时长',
             key: 'duration',
             width: 100,
-            render: (_, record) => calculateDuration(record.create_time, record.end_time),
+            render: (_, record) => calculateDuration(record.start_time, record.end_time),
         },
         {
             title: '操作',
@@ -354,16 +179,9 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             width: 100,
             fixed: 'right',
             render: (_, record) => (
-                <Space>
-                    <Button
-                        type='link'
-                        size='small'
-                        icon={<EyeOutlined />}
-                        onClick={() => handleViewDetails(record)}
-                    >
-                        详情
-                    </Button>
-                </Space>
+                <Button type='link' size='small' onClick={() => handleViewFullDetails(record)}>
+                    查看详情
+                </Button>
             ),
         },
     ]
@@ -374,95 +192,20 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
     const tableData = useMemo(() => {
         return data.map(item => ({
             ...item,
-            key: `${item.log_id}-${item.batch_id}`,
+            key: `${item.id}-${item.batch_id}`,
         }))
     }, [data])
 
     return (
-        <>
-            <Card>
-                <Table
-                    columns={columns}
-                    dataSource={tableData}
-                    loading={loading}
-                    pagination={pagination}
-                    scroll={{ x: 1200 }}
-                    size='middle'
-                />
-            </Card>
-
-            {/* 详情弹窗 */}
-            <Modal
-                title='执行详情'
-                open={detailModalVisible}
-                onCancel={handleCloseModal}
-                footer={[
-                    <Button key='close' onClick={handleCloseModal}>
-                        关闭
-                    </Button>,
-                    selectedRecord && onViewDetails && (
-                        <Button
-                            key='viewMore'
-                            type='primary'
-                            onClick={() => {
-                                onViewDetails(selectedRecord)
-                                handleCloseModal()
-                            }}
-                        >
-                            查看完整详情
-                        </Button>
-                    ),
-                ]}
-                width={800}
-                style={{ top: 20 }}
-            >
-                {selectedRecord && (
-                    <div>
-                        {/* 基本信息 */}
-                        <Descriptions title='基本信息' bordered size='small' column={2}>
-                            <Descriptions.Item label='日志ID'>
-                                {selectedRecord.log_id}
-                            </Descriptions.Item>
-                            <Descriptions.Item label='批次ID'>
-                                <Text code>{selectedRecord.batch_id}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label='步骤编号'>
-                                {selectedRecord.step_no}
-                            </Descriptions.Item>
-                            <Descriptions.Item label='步骤名称'>
-                                {selectedRecord.step_name}
-                            </Descriptions.Item>
-                            <Descriptions.Item label='执行状态'>
-                                {renderStatus(selectedRecord.step_status as ExecutionStepStatus)}
-                            </Descriptions.Item>
-                            <Descriptions.Item label='执行时长'>
-                                {calculateDuration(
-                                    selectedRecord.create_time,
-                                    selectedRecord.end_time
-                                )}
-                            </Descriptions.Item>
-                            <Descriptions.Item label='开始时间'>
-                                {formatTime(selectedRecord.create_time)}
-                            </Descriptions.Item>
-                            <Descriptions.Item label='结束时间'>
-                                {formatTime(selectedRecord.end_time)}
-                            </Descriptions.Item>
-                        </Descriptions>
-
-                        <Divider />
-
-                        {/* 详情信息 */}
-                        <div>
-                            <Text strong style={{ fontSize: 16 }}>
-                                详情信息
-                            </Text>
-                            <div style={{ marginTop: 16 }}>
-                                {renderDetailsContent(parseDetails(selectedRecord.details))}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </Modal>
-        </>
+        <Card>
+            <Table
+                columns={columns}
+                dataSource={tableData}
+                loading={loading}
+                pagination={pagination}
+                scroll={{ x: 1200 }}
+                size='middle'
+            />
+        </Card>
     )
 }

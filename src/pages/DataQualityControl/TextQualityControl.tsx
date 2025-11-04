@@ -17,6 +17,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import type { UploadProps } from 'antd/es/upload'
 import React, { useState } from 'react'
+import { logger } from '@/utils/logger'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -117,7 +118,7 @@ const TextQualityControl: React.FC = () => {
             setQualityResults(mockResults)
             message.success('文本质控检查完成！')
         } catch (error) {
-            console.error('质控检查失败:', error)
+            logger.error('质控检查失败:', error instanceof Error ? error : new Error(String(error)))
             message.error('质控检查失败，请重试')
         } finally {
             setLoading(false)

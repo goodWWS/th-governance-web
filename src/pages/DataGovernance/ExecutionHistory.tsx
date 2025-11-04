@@ -1,6 +1,7 @@
 import { DataGovernanceService } from '@/services/dataGovernanceService'
 import type { ExecutionLogItem } from '@/types'
 import { logger } from '@/utils/logger'
+import { getMockExecutionHistoryResponse, mockApiDelay } from '@/utils/mockData'
 import { ReloadOutlined, SettingOutlined } from '@ant-design/icons'
 import { Button, Card, message, Space, Typography } from 'antd'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -19,6 +20,7 @@ export const ExecutionHistory: React.FC = () => {
     const [allExecutionRecords, setAllExecutionRecords] = useState<ExecutionLogItem[]>([])
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(10)
+    const [usingMockData, setUsingMockData] = useState(false) // 标记是否使用模拟数据
 
     /**
      * 获取执行历史数据
@@ -26,16 +28,38 @@ export const ExecutionHistory: React.FC = () => {
     const fetchExecutionHistory = useCallback(async () => {
         try {
             setLoading(true)
-            const response = await DataGovernanceService.getExecutionLogPage()
 
-            if (response.code === 200) {
-                setAllExecutionRecords(response.data)
-            } else {
-                message.error(response.msg || '获取执行历史失败')
+            // 添加模拟延迟，模拟真实API调用
+            await mockApiDelay(800)
+
+            try {
+                // 尝试调用真实接口
+                const response = await DataGovernanceService.getExecutionLogPage()
+
+                if (response.code === 200) {
+                    setAllExecutionRecords(response.data)
+                    setUsingMockData(false)
+                    logger.info('成功获取执行历史数据', response.data.length)
+                } else {
+                    throw new Error(response.msg || '接口返回错误')
+                }
+            } catch (apiError) {
+                // 接口调用失败时使用模拟数据
+                logger.warn('接口调用失败，使用模拟数据', apiError)
+                const mockResponse = getMockExecutionHistoryResponse(50)
+                setAllExecutionRecords(mockResponse.data)
+                setUsingMockData(true)
+
+                message.warning('接口暂时无法连接，当前显示模拟数据')
             }
         } catch (error) {
             logger.error('获取执行历史失败', error as Error)
             message.error('获取执行历史失败，请稍后重试')
+
+            // 即使出现错误也提供模拟数据
+            const mockResponse = getMockExecutionHistoryResponse(20)
+            setAllExecutionRecords(mockResponse.data)
+            setUsingMockData(true)
         } finally {
             setLoading(false)
         }
@@ -84,7 +108,7 @@ export const ExecutionHistory: React.FC = () => {
      */
     const handleViewDetails = useCallback(
         (record: ExecutionLogItem) => {
-            navigate(`/data-governance/execution/${record.batch_id}`)
+            navigate(`/data-governance/execution/${record.id}`)
         },
         [navigate]
     )
@@ -123,13 +147,25 @@ export const ExecutionHistory: React.FC = () => {
                 size='small'
                 style={{
                     marginBottom: 16,
-                    backgroundColor: '#f6ffed',
-                    border: '1px solid #b7eb8f',
+                    backgroundColor: usingMockData ? '#fff7e6' : '#f6ffed',
+                    border: usingMockData ? '1px solid #ffd591' : '1px solid #b7eb8f',
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', color: '#52c41a' }}>
-                    <span style={{ fontSize: 16, marginRight: 8 }}>✓</span>
-                    <span>数据治理工作流正在正常运行中</span>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: usingMockData ? '#fa8c16' : '#52c41a',
+                    }}
+                >
+                    <span style={{ fontSize: 16, marginRight: 8 }}>
+                        {usingMockData ? '⚠' : '✓'}
+                    </span>
+                    <span>
+                        {usingMockData
+                            ? '当前显示模拟数据，接口暂时无法连接'
+                            : '数据治理工作流正在正常运行中'}
+                    </span>
                 </div>
             </Card>
 

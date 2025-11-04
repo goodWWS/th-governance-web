@@ -2,34 +2,11 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import type { WorkflowNode } from '@/types'
 import { dataGovernanceService } from '@/services/dataGovernanceService'
 
-// 数据治理任务状态类型
-export type TaskStatus = 'idle' | 'running' | 'completed' | 'error' | 'paused'
-
 // 连接测试错误接口
 interface ConnectionTestError {
     connectionId: string
     status: 'error'
     lastTestTime: string
-}
-
-// 任务配置接口
-export interface TaskConfig {
-    [key: string]: string | number | boolean | undefined
-}
-
-// 数据治理任务接口
-export interface GovernanceTask {
-    id: string
-    name: string
-    description: string
-    status: TaskStatus
-    progress: number
-    processedRecords: number
-    totalRecords: number
-    startTime?: string
-    endTime?: string
-    errorMessage?: string
-    config?: TaskConfig
 }
 
 // 数据库连接接口
@@ -58,7 +35,6 @@ export interface StatisticData {
 
 // 状态接口
 interface DataGovernanceState {
-    tasks: GovernanceTask[]
     connections: DatabaseConnection[]
     statistics: StatisticData
     workflowConfig: WorkflowNode[]
@@ -69,89 +45,6 @@ interface DataGovernanceState {
 
 // 初始状态
 const initialState: DataGovernanceState = {
-    tasks: [
-        {
-            id: '1',
-            name: '数据清洗',
-            description: '清理无效字符，确保数据质量',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 1180000,
-        },
-        {
-            id: '2',
-            name: '数据去重',
-            description: '移除重复数据，防止数据失真',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 45000,
-        },
-        {
-            id: '3',
-            name: '类型转换',
-            description: '将字符串类型转换为数据模型定义的标准类型',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 850000,
-        },
-        {
-            id: '4',
-            name: '标准字典对照',
-            description: '将多源数据字典统一为标准字典',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 850000,
-        },
-        {
-            id: '5',
-            name: 'EMPI发放',
-            description: '为同一患者发放唯一主索引',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 125000,
-        },
-        {
-            id: '6',
-            name: 'EMOI发放',
-            description: '为检查检验发放就诊唯一主索引',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 95000,
-        },
-        {
-            id: '7',
-            name: '数据归一',
-            description: '统一数据格式和标准值',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 920000,
-        },
-        {
-            id: '8',
-            name: '孤儿数据处理',
-            description: '清理无法关联主表的无效数据',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 15000,
-        },
-        {
-            id: '9',
-            name: '数据脱敏',
-            description: '保护敏感数据安全',
-            status: 'idle',
-            progress: 0,
-            processedRecords: 0,
-            totalRecords: 680000,
-        },
-    ],
     connections: [
         {
             id: '1',
@@ -198,7 +91,94 @@ const initialState: DataGovernanceState = {
         duplicateRecords: 45000,
         errorRecords: 25000,
     },
-    workflowConfig: [],
+    workflowConfig: [
+        {
+            id: 1,
+            nodeName: '数据清洗',
+            nodeType: 'DataCleansing',
+            nodeStep: 1,
+            enabled: true,
+            isAuto: false,
+            descript:
+                '脏数据主要是数据值域内包含了一些无效字符、特殊字符、过渡态的拼接符等。脏数据处理是通过清洗函数等工程手段，在固定环节调用，将数据装载到ODS数据中心的过程。',
+        },
+        {
+            id: 2,
+            nodeName: '数据去重',
+            nodeType: 'DataDeduplication',
+            nodeStep: 2,
+            enabled: true,
+            isAuto: false,
+            descript: 'PK完全相同的某一条数据，或者某部分数据。',
+        },
+        {
+            id: 3,
+            nodeName: '类型转换',
+            nodeType: 'dataTransform',
+            nodeStep: 3,
+            enabled: true,
+            isAuto: false,
+            descript: '将string类型转化为模型中约束的类型的过程。',
+        },
+        {
+            id: 4,
+            nodeName: '标准对照',
+            nodeType: 'StandardMapping',
+            nodeStep: 4,
+            enabled: true,
+            isAuto: false,
+            descript: '对多源数据依据标准字典对照，及对数据清洗成标准字典的一系列过程。',
+        },
+        {
+            id: 5,
+            nodeName: 'EMPI定义发放',
+            nodeType: 'EMPIDefinitionDistribution',
+            nodeStep: 5,
+            enabled: true,
+            isAuto: false,
+            descript:
+                '将同一个区域医院中同一个患者的多个患者号进行标记识别，合并患者，统一发布患者唯一主索引。',
+        },
+        {
+            id: 6,
+            nodeName: 'EMOI定义发放',
+            nodeType: 'EMOIDefinitionDistribution',
+            nodeStep: 6,
+            enabled: true,
+            isAuto: false,
+            descript:
+                '将同一个区域同一个患者的多次就诊号进行标记识别，根据就诊时间标明检查检验所属就诊时间，统一发布检查检验就诊唯一主索引。',
+        },
+        {
+            id: 7,
+            nodeName: '数据归一',
+            nodeType: 'DataStandardization',
+            nodeStep: 7,
+            enabled: true,
+            isAuto: false,
+            descript:
+                '数据格式标准化的一种，基于国家规定，将所需数据进行标准归一，定义所有数据标准格式和标准值。',
+        },
+        {
+            id: 8,
+            nodeName: '丢孤儿',
+            nodeType: 'DataDeduplication',
+            nodeStep: 8,
+            enabled: true,
+            isAuto: false,
+            descript:
+                '数据中无法与主表有任何关联的数据，可能是系统上线前测试或违规操作产生，无使用价值。',
+        },
+        {
+            id: 9,
+            nodeName: '数据脱敏',
+            nodeType: 'DataDesensitization',
+            nodeStep: 9,
+            enabled: true,
+            isAuto: false,
+            descript: '出于数据安全考虑，对数据中的关键字段进行脱敏处理。',
+        },
+    ],
     workflowLoading: false,
     loading: false,
     error: null,
@@ -233,38 +213,6 @@ export const updateWorkflowConfig = createAsyncThunk(
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : '更新工作流配置失败'
             return rejectWithValue(errorMessage)
-        }
-    }
-)
-
-// 异步操作：启动任务
-export const startTask = createAsyncThunk(
-    'dataGovernance/startTask',
-    async (taskId: string, { rejectWithValue }) => {
-        try {
-            // 模拟API调用
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            return {
-                taskId,
-                startTime: new Date().toLocaleString('zh-CN'),
-            }
-        } catch {
-            return rejectWithValue('启动任务失败')
-        }
-    }
-)
-
-// 异步操作：暂停任务
-export const pauseTask = createAsyncThunk(
-    'dataGovernance/pauseTask',
-    async (taskId: string, { rejectWithValue }) => {
-        try {
-            // 模拟API调用
-            await new Promise(resolve => setTimeout(resolve, 500))
-            return taskId
-        } catch {
-            return rejectWithValue('暂停任务失败')
         }
     }
 )
@@ -328,37 +276,6 @@ const dataGovernanceSlice = createSlice({
             state.workflowConfig = action.payload
         },
 
-        // 更新任务配置
-        updateTaskConfig: (
-            state,
-            action: PayloadAction<{ taskId: string; config: TaskConfig }>
-        ) => {
-            const { taskId, config } = action.payload
-            const task = state.tasks.find(t => t.id === taskId)
-            if (task) {
-                task.config = config
-            }
-        },
-
-        // 更新任务进度
-        updateTaskProgress: (
-            state,
-            action: PayloadAction<{ taskId: string; progress: number; processedRecords: number }>
-        ) => {
-            const { taskId, progress, processedRecords } = action.payload
-            const task = state.tasks.find(t => t.id === taskId)
-            if (task) {
-                task.progress = progress
-                task.processedRecords = processedRecords
-
-                // 如果进度达到100%，标记为完成
-                if (progress >= 100) {
-                    task.status = 'completed'
-                    task.endTime = new Date().toLocaleString('zh-CN')
-                }
-            }
-        },
-
         // 添加数据库连接
         addConnection: (
             state,
@@ -398,17 +315,6 @@ const dataGovernanceSlice = createSlice({
         clearError: state => {
             state.error = null
         },
-
-        // 完成任务
-        completeTask: (state, action: PayloadAction<{ taskId: string; endTime: string }>) => {
-            const { taskId, endTime } = action.payload
-            const task = state.tasks.find(t => t.id === taskId)
-            if (task) {
-                task.status = 'completed'
-                task.endTime = endTime
-                task.progress = 100
-            }
-        },
     },
     extraReducers: builder => {
         builder
@@ -419,7 +325,9 @@ const dataGovernanceSlice = createSlice({
             })
             .addCase(fetchWorkflowConfig.fulfilled, (state, action) => {
                 state.workflowLoading = false
-                state.workflowConfig = action.payload
+                // 为了防止后端返回空数据或非数组，进行健壮性处理
+                // 当响应的 data 为 null/undefined 或非数组时，回退为空数组，避免前端运行时异常
+                state.workflowConfig = Array.isArray(action.payload) ? action.payload : []
             })
             .addCase(fetchWorkflowConfig.rejected, (state, action) => {
                 state.workflowLoading = false
@@ -437,34 +345,6 @@ const dataGovernanceSlice = createSlice({
             .addCase(updateWorkflowConfig.rejected, (state, action) => {
                 state.workflowLoading = false
                 state.error = action.payload as string
-            })
-
-            // 启动任务
-            .addCase(startTask.pending, state => {
-                state.loading = true
-                state.error = null
-            })
-            .addCase(startTask.fulfilled, (state, action) => {
-                state.loading = false
-                const { taskId, startTime } = action.payload
-                const task = state.tasks.find(t => t.id === taskId)
-                if (task) {
-                    task.status = 'running'
-                    task.startTime = startTime
-                    task.errorMessage = undefined
-                }
-            })
-            .addCase(startTask.rejected, (state, action) => {
-                state.loading = false
-                state.error = action.payload as string
-            })
-
-            // 暂停任务
-            .addCase(pauseTask.fulfilled, (state, action) => {
-                const task = state.tasks.find(t => t.id === action.payload)
-                if (task) {
-                    task.status = 'paused'
-                }
             })
 
             // 测试连接
@@ -496,14 +376,11 @@ const dataGovernanceSlice = createSlice({
 export const {
     updateWorkflowConfigLocal,
     setWorkflowConfig,
-    updateTaskConfig,
-    updateTaskProgress,
     addConnection,
     updateConnection,
     removeConnection,
     updateStatistics,
     clearError,
-    completeTask,
 } = dataGovernanceSlice.actions
 
 // 导出 reducer

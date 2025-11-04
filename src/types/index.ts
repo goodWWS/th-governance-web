@@ -99,13 +99,6 @@ export interface HttpResponse<T = unknown> {
     timestamp?: number
 }
 
-// 工作流启动响应类型
-export interface StartWorkflowResponse {
-    code: number
-    msg: string
-    data: number // 批次ID
-}
-
 // 工作流详情响应类型
 export interface WorkflowDetailResponse {
     code: number
@@ -189,7 +182,88 @@ export interface DataGovernanceResult {
     count: number
 }
 
-// 数据治理日志类型
+/**
+ * 工作流步骤日志详情
+ */
+export interface WorkflowStepLog {
+    /** 日志ID */
+    log_id: number
+    /** 批次ID */
+    batch_id: number
+    /** 步骤序号 */
+    step_no: number
+    /** 步骤状态 （ 1-5：0未执行，1执行中，2已完成，3暂停，4跳过，5失败） */
+    step_status: number
+    /** 步骤名称 */
+    step_name: string
+    /** 详细信息 */
+    details: string | null
+    /** 创建时间 */
+    create_time: string
+    /** 结束时间 */
+    end_time: string
+    /** 更新时间 */
+    update_time: string
+    /** 是否启用 */
+    enabled: boolean
+    /** 是否自动执行 */
+    is_auto: boolean
+    /** 步骤节点类型 */
+    node_type: string
+    /** 已完成数量 (通过SSE动态更新) */
+    completedQuantity?: number
+    /** 总表数量 (通过SSE动态更新) */
+    table_quantity?: number
+    /** 描述信息 */
+    descript?: string
+}
+
+/**
+ * 工作流任务摘要信息
+ */
+export interface WorkflowLogSummary {
+    /** 任务ID */
+    id: number
+    /** 批次ID */
+    batch_id: number
+    /** 任务名称 */
+    name: string
+    /** 任务状态 */
+    status: number
+    /** 开始时间 */
+    start_time: string
+    /** 结束时间 */
+    end_time: string
+    /** 节点类型 */
+    node_type: string
+}
+
+/**
+ * 工作流详情数据
+ */
+export interface WorkflowLogDetailData {
+    /** 步骤日志列表 */
+    logList: WorkflowStepLog[]
+    /** 任务摘要信息 */
+    logSummary: WorkflowLogSummary
+}
+
+/**
+ * 工作流详情响应
+ */
+export interface WorkflowLogDetailResponse {
+    /** 响应码 */
+    code: number
+    /** 响应消息 */
+    msg: string
+    /** 响应数据 */
+    data: WorkflowLogDetailData
+}
+
+/**
+ * 数据治理日志详情 (保持向后兼容)
+ * @deprecated 请使用 WorkflowLogDetailResponse
+ */
 export interface DataGovernanceLog {
     /** 日志ID */
     id: string
@@ -307,16 +381,7 @@ export interface WorkflowNode {
     /** 节点名称 */
     nodeName: string
     /** 节点类型 */
-    nodeType:
-        | 'dataAccess'
-        | 'dataValidate'
-        | 'dataClean'
-        | 'dataTransform'
-        | 'dataFilter'
-        | 'dataMerge'
-        | 'dataMask'
-        | 'dataRecheck'
-        | 'dataLoad'
+    nodeType: WorkflowNodeType
     /** 节点步骤序号 */
     nodeStep: number
     /** 是否启用 */
@@ -325,6 +390,42 @@ export interface WorkflowNode {
     isAuto: boolean
     /** 节点描述 */
     descript: string
+}
+
+/**
+ * 工作流执行消息类型
+ * 用于SSE推送的实时执行状态信息
+ */
+export interface WorkflowExecutionMessage {
+    /** 表数量 */
+    tableQuantity: number
+    /** 节点信息 */
+    node: {
+        /** 节点ID */
+        id: number
+        /** 节点名称 */
+        nodeName: string
+        /** 节点类型 */
+        nodeType: string
+        /** 节点步骤 */
+        nodeStep: number
+        /** 是否启用 */
+        enabled: boolean
+        /** 是否自动执行 */
+        isAuto: boolean
+        /** 节点描述 */
+        descript: string
+    }
+    /** 执行状态 */
+    executionStatus: string
+    /** 进度百分比 */
+    progress: number
+    /** 已完成数量 */
+    completedQuantity: number
+    /** 任务ID */
+    taskId: number
+    /** 状态码 */
+    status: number
 }
 
 export interface WorkflowConfigResponse {
@@ -338,15 +439,24 @@ export interface WorkflowConfigResponse {
 
 // 工作流节点类型枚举
 export const WorkflowNodeType = {
-    DATA_ACCESS: 'dataAccess',
-    DATA_VALIDATE: 'dataValidate',
-    DATA_CLEAN: 'dataClean',
+    /** 数据清洗 */
+    DATA_CLEANSING: 'DataCleansing',
+    /** 数据去重 */
+    DATA_DEDUPLICATION: 'DataDeduplication',
+    /** 数据转换 */
     DATA_TRANSFORM: 'dataTransform',
-    DATA_FILTER: 'dataFilter',
-    DATA_MERGE: 'dataMerge',
-    DATA_MASK: 'dataMask',
-    DATA_RECHECK: 'dataRecheck',
-    DATA_LOAD: 'dataLoad',
+    /** 标准字典对照 */
+    STANDARD_MAPPING: 'StandardMapping',
+    /** EMPI发放 */
+    EMPI_DEFINITION_DISTRIBUTION: 'EMPIDefinitionDistribution',
+    /** EMOI发放 */
+    EMOI_DEFINITION_DISTRIBUTION: 'EMOIDefinitionDistribution',
+    /** 数据归一 */
+    DATA_STANDARDIZATION: 'DataStandardization',
+    /** 孤儿数据处理 */
+    DATA_ORPHAN: 'DataOrphan',
+    /** 数据脱敏 */
+    DATA_DESENSITIZATION: 'DataDesensitization',
 } as const
 
 export type WorkflowNodeType = (typeof WorkflowNodeType)[keyof typeof WorkflowNodeType]
@@ -377,24 +487,59 @@ export interface WorkflowConfigUpdateResponse {
 
 // ==================== 执行历史日志相关类型定义 ====================
 
+/**
+ * 数据录入（同步）请求参数
+ * 携带当前任务ID与展示层的工作流详情数据
+ */
+export interface DataEntryRequest {
+    /** 任务ID（字符串形式以便路由参数直接传递） */
+    taskId: string
+    /** 工作流详情数据（用于后端生成或校验录入内容） */
+    workflowData: WorkflowLogDetailData
+}
+
+/**
+ * 数据录入（同步）结果数据
+ * 为保持与页面现有处理兼容，结果放在 data 内部
+ */
+export interface DataEntryResult {
+    /** 是否录入成功 */
+    success: boolean
+    /** 失败或提示信息 */
+    message?: string
+    /** 可选：本次录入涉及的记录数 */
+    insertedCount?: number
+}
+
+/**
+ * 数据录入（同步）响应
+ * 统一采用 { code, msg, data } 的响应结构
+ */
+export interface DataEntryResponse {
+    /** 响应状态码 */
+    code: number
+    /** 响应消息 */
+    msg: string
+    /** 响应数据 */
+    data: DataEntryResult
+}
+
 /** 执行历史日志项 */
 export interface ExecutionLogItem {
-    /** 日志ID */
-    log_id: number
+    /** 任务ID */
+    id: number
     /** 批次ID */
     batch_id: number
-    /** 步骤编号 */
-    step_no: number
-    /** 步骤状态 (0: 成功, 1: 失败, 2: 进行中) */
-    step_status: number
-    /** 步骤名称 */
-    step_name: string
-    /** 详情信息 (JSON字符串) */
-    details: string
-    /** 创建时间 */
-    create_time: string
+    /** 任务名称 */
+    name: string
+    /** 任务状态 */
+    status: number
+    /** 开始时间 */
+    start_time: string
     /** 结束时间 */
-    end_time: string
+    end_time?: string
+    /** 节点类型 */
+    node_type: string
 }
 
 /** 执行历史日志分页响应 */

@@ -43,6 +43,16 @@ export default defineConfig([
                     caughtErrors: 'none',
                 },
             ],
+            // 更精确的未使用表达式检测，允许常见的短路与可选链写法
+            'no-unused-expressions': 'off',
+            '@typescript-eslint/no-unused-expressions': [
+                'error',
+                {
+                    allowShortCircuit: true,
+                    allowTernary: true,
+                    allowTaggedTemplates: true,
+                },
+            ],
             '@typescript-eslint/no-explicit-any': 'warn',
             '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -50,8 +60,9 @@ export default defineConfig([
 
             // 未使用导入和变量检测
             'unused-imports/no-unused-imports': 'error',
+            // 与 TS 的 no-unused-vars 协调，降低重复报错为警告
             'unused-imports/no-unused-vars': [
-                'error',
+                'warn',
                 {
                     vars: 'all',
                     varsIgnorePattern: '^_',
@@ -61,7 +72,8 @@ export default defineConfig([
             ],
 
             // 变量和函数声明检测
-            'no-undef': 'error', // 检测未声明的变量
+            // 使用TypeScript时关闭no-undef，由TS类型系统负责未定义检测
+            'no-undef': 'off',
             'no-use-before-define': 'off', // 关闭JS版本
             '@typescript-eslint/no-use-before-define': [
                 'error',
@@ -81,7 +93,6 @@ export default defineConfig([
             'no-console': 'warn',
             'no-debugger': 'error',
             'no-duplicate-imports': 'error',
-            'no-unused-expressions': 'error',
             'prefer-const': 'error',
             'no-var': 'error',
         },

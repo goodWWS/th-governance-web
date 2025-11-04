@@ -1,25 +1,8 @@
-import {
-    BarChartOutlined,
-    CheckCircleOutlined,
-    ClockCircleOutlined,
-    DatabaseOutlined,
-    ExclamationCircleOutlined,
-    HistoryOutlined,
-} from '@ant-design/icons'
-import { Alert, Card, Col, Progress, Row, Space, Statistic, Table, Tag, Typography } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { BarChartOutlined, CheckCircleOutlined, DatabaseOutlined } from '@ant-design/icons'
+import { Alert, Card, Col, Progress, Row, Space, Statistic, Typography } from 'antd'
 import React, { useState } from 'react'
 
 const { Title } = Typography
-
-interface TaskRecord {
-    key: string
-    taskName: string
-    status: 'completed' | 'running' | 'pending' | 'error'
-    progress: number
-    recordCount: number
-    lastRunTime: string
-}
 
 interface StatisticData {
     totalTables: number
@@ -39,141 +22,6 @@ const Dashboard: React.FC = () => {
         duplicateRecords: 45000,
         errorRecords: 25000,
     })
-
-    const [taskData, _setTaskData] = useState<TaskRecord[]>([
-        {
-            key: '1',
-            taskName: '数据清洗',
-            status: 'completed',
-            progress: 100,
-            recordCount: 1180000,
-            lastRunTime: '2024-01-15 14:30:00',
-        },
-        {
-            key: '2',
-            taskName: '数据去重',
-            status: 'running',
-            progress: 75,
-            recordCount: 45000,
-            lastRunTime: '2024-01-15 15:20:00',
-        },
-        {
-            key: '3',
-            taskName: '类型转换',
-            status: 'pending',
-            progress: 0,
-            recordCount: 0,
-            lastRunTime: '-',
-        },
-        {
-            key: '4',
-            taskName: '标准字典对照',
-            status: 'completed',
-            progress: 100,
-            recordCount: 850000,
-            lastRunTime: '2024-01-15 13:45:00',
-        },
-        {
-            key: '5',
-            taskName: 'EMPI发放',
-            status: 'error',
-            progress: 30,
-            recordCount: 125000,
-            lastRunTime: '2024-01-15 12:15:00',
-        },
-        {
-            key: '6',
-            taskName: 'EMOI发放',
-            status: 'pending',
-            progress: 0,
-            recordCount: 0,
-            lastRunTime: '-',
-        },
-        {
-            key: '7',
-            taskName: '数据归一',
-            status: 'completed',
-            progress: 100,
-            recordCount: 920000,
-            lastRunTime: '2024-01-15 11:30:00',
-        },
-        {
-            key: '8',
-            taskName: '孤儿数据处理',
-            status: 'running',
-            progress: 60,
-            recordCount: 15000,
-            lastRunTime: '2024-01-15 16:00:00',
-        },
-        {
-            key: '9',
-            taskName: '数据脱敏',
-            status: 'pending',
-            progress: 0,
-            recordCount: 0,
-            lastRunTime: '-',
-        },
-    ])
-
-    // 状态标签渲染
-    const renderStatusTag = (status: string) => {
-        const statusConfig = {
-            completed: { color: 'success', icon: <CheckCircleOutlined />, text: '已完成' },
-            running: { color: 'processing', icon: <ClockCircleOutlined />, text: '运行中' },
-            pending: { color: 'default', icon: <ExclamationCircleOutlined />, text: '待执行' },
-            error: { color: 'error', icon: <ExclamationCircleOutlined />, text: '错误' },
-        }
-
-        const config = statusConfig[status as keyof typeof statusConfig]
-        return (
-            <Tag color={config.color} icon={config.icon}>
-                {config.text}
-            </Tag>
-        )
-    }
-
-    // 表格列配置
-    const columns: ColumnsType<TaskRecord> = [
-        {
-            title: '任务名称',
-            dataIndex: 'taskName',
-            key: 'taskName',
-            width: 150,
-        },
-        {
-            title: '状态',
-            dataIndex: 'status',
-            key: 'status',
-            width: 120,
-            render: renderStatusTag,
-        },
-        {
-            title: '进度',
-            dataIndex: 'progress',
-            key: 'progress',
-            width: 200,
-            render: (progress: number) => (
-                <Progress
-                    percent={progress}
-                    size='small'
-                    status={progress === 100 ? 'success' : progress > 0 ? 'active' : 'normal'}
-                />
-            ),
-        },
-        {
-            title: '处理记录数',
-            dataIndex: 'recordCount',
-            key: 'recordCount',
-            width: 120,
-            render: (count: number) => count.toLocaleString(),
-        },
-        {
-            title: '最后运行时间',
-            dataIndex: 'lastRunTime',
-            key: 'lastRunTime',
-            width: 180,
-        },
-    ]
 
     // 计算处理进度
     const overallProgress = Math.round(
@@ -298,23 +146,6 @@ const Dashboard: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
-
-            {/* 任务执行状态表格 - 使用Card包装，与数据治理页面保持一致 */}
-            <Card>
-                <div style={{ marginBottom: 16 }}>
-                    <Title level={4} style={{ margin: 0 }}>
-                        <HistoryOutlined style={{ marginRight: 8 }} />
-                        数据治理任务执行状态
-                    </Title>
-                </div>
-                <Table
-                    columns={columns}
-                    dataSource={taskData}
-                    pagination={false}
-                    size='middle'
-                    scroll={{ x: 800 }}
-                />
-            </Card>
         </div>
     )
 }

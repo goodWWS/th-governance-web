@@ -245,7 +245,7 @@ const BasicMedicalLogicQualityControl: React.FC = () => {
 
             message.success('医疗逻辑检查完成！')
         } catch (error) {
-            console.error('医疗逻辑检查失败:', error)
+            logger.error('医疗逻辑检查失败:', error)
             message.error('医疗逻辑检查失败，请重试')
         } finally {
             setLoading(false)

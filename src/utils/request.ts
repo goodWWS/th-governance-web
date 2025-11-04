@@ -326,6 +326,9 @@ export { request }
 // SSE 连接配置接口
 export interface SSEConfig {
     url: string
+    method?: 'GET' | 'POST' // 新增：支持指定HTTP方法
+    data?: unknown // 新增：POST请求的数据
+    headers?: Record<string, string> // 新增：自定义请求头
     withCredentials?: boolean
     reconnectInterval?: number
     maxReconnectAttempts?: number
@@ -333,7 +336,7 @@ export interface SSEConfig {
     onMessage?: (event: MessageEvent) => void
     onError?: (event: Event) => void
     onClose?: () => void
-    onMaxReconnectAttemptsReached?: () => void // 新增：达到最大重连次数时的回调
+    onMaxReconnectAttemptsReached?: () => void
 }
 
 // SSE 连接状态
@@ -350,14 +353,16 @@ export type SSEStatusType = (typeof SSEStatus)[keyof typeof SSEStatus]
 // SSE 管理器类
 export class SSEManager {
     private eventSource: EventSource | null = null
+    private abortController: AbortController | null = null // 新增：用于fetch请求的取消控制
     private config: SSEConfig
     private status: SSEStatusType = SSEStatus.DISCONNECTED
     private reconnectAttempts = 0
     private reconnectTimer: ReturnType<typeof setTimeout> | null = null
-    private isManualDisconnect = false // 新增：标记是否为手动断开连接
+    private isManualDisconnect = false
 
     constructor(config: SSEConfig) {
         this.config = {
+            method: 'GET', // 默认使用GET方法
             withCredentials: true,
             reconnectInterval: 3000,
             maxReconnectAttempts: 5,
@@ -373,7 +378,7 @@ export class SSEManager {
             return
         }
 
-        if (this.eventSource) {
+        if (this.eventSource || this.abortController) {
             this.disconnect(false) // 不重置重连计数器
         }
 
@@ -381,18 +386,14 @@ export class SSEManager {
             this.status = SSEStatus.CONNECTING
             this.isManualDisconnect = false
 
-            // 构建完整的 URL，复用 request 工具的 baseURL 逻辑
-            const fullUrl = this.buildUrl(this.config.url)
+            // 根据HTTP方法选择连接方式
+            if (this.config.method === 'POST') {
+                this.connectWithFetch()
+            } else {
+                this.connectWithEventSource()
+            }
 
-            // 创建 EventSource 实例
-            this.eventSource = new EventSource(fullUrl, {
-                withCredentials: this.config.withCredentials,
-            })
-
-            // 设置事件监听器
-            this.setupEventListeners()
-
-            logger.info('SSE连接已启动:', fullUrl)
+            logger.info(`SSE连接已启动 (${this.config.method}):`, this.config.url)
         } catch (error) {
             logger.error('SSE连接失败:', error instanceof Error ? error : new Error(String(error)))
             this.handleError(error as Event)
@@ -403,9 +404,16 @@ export class SSEManager {
     disconnect(resetReconnectAttempts = true): void {
         this.isManualDisconnect = true
 
+        // 关闭EventSource连接
         if (this.eventSource) {
             this.eventSource.close()
             this.eventSource = null
+        }
+
+        // 取消fetch请求
+        if (this.abortController) {
+            this.abortController.abort()
+            this.abortController = null
         }
 
         if (this.reconnectTimer) {
@@ -426,6 +434,143 @@ export class SSEManager {
         logger.info('SSE连接已断开')
     }
 
+    // 使用EventSource连接（GET请求）
+    private connectWithEventSource(): void {
+        // 构建完整的 URL，复用 request 工具的 baseURL 逻辑
+        const fullUrl = this.buildUrl(this.config.url)
+
+        // 创建 EventSource 实例
+        this.eventSource = new EventSource(fullUrl, {
+            withCredentials: this.config.withCredentials,
+        })
+
+        // 设置事件监听器
+        this.setupEventSourceListeners()
+    }
+
+    // 使用fetch连接（POST请求）
+    private async connectWithFetch(): Promise<void> {
+        try {
+            this.abortController = new AbortController()
+
+            // 构建请求配置
+            const fullUrl = this.buildUrl(this.config.url, false) // 不添加token到URL，而是放在headers中
+            const headers: Record<string, string> = {
+                Accept: 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Content-Type': 'application/json',
+                ...this.config.headers,
+            }
+
+            // 添加认证头
+            const token = localStorage.getItem('access_token')
+            if (token) {
+                headers.Authorization = `Bearer ${token}`
+            }
+
+            const fetchConfig: RequestInit = {
+                method: 'POST',
+                headers,
+                signal: this.abortController.signal,
+                credentials: this.config.withCredentials ? 'include' : 'same-origin',
+            }
+
+            // 添加请求体
+            if (this.config.data) {
+                fetchConfig.body = JSON.stringify(this.config.data)
+            }
+
+            // 发起fetch请求
+            const response = await fetch(fullUrl, fetchConfig)
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+            }
+
+            if (!response.body) {
+                throw new Error('Response body is null')
+            }
+
+            // 连接成功
+            this.status = SSEStatus.CONNECTED
+            this.reconnectAttempts = 0
+
+            if (this.config.onOpen) {
+                this.config.onOpen(new Event('open'))
+            }
+
+            // 处理流式响应
+            const reader = response.body.getReader()
+            const decoder = new TextDecoder()
+            let buffer = ''
+
+            while (true) {
+                const { done, value } = await reader.read()
+
+                if (done) {
+                    logger.info('SSE流已结束')
+                    break
+                }
+
+                // 解码数据
+                buffer += decoder.decode(value, { stream: true })
+
+                // 处理SSE消息
+                this.processFetchSSEData(buffer)
+
+                // 清空已处理的数据
+                const lastNewlineIndex = buffer.lastIndexOf('\n\n')
+                if (lastNewlineIndex !== -1) {
+                    buffer = buffer.substring(lastNewlineIndex + 2)
+                }
+            }
+        } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                logger.info('SSE fetch请求被取消')
+                return
+            }
+
+            logger.error('SSE fetch连接错误:', error)
+            this.handleError(new Event('error'))
+        }
+    }
+
+    // 处理fetch方式的SSE数据
+    private processFetchSSEData(buffer: string): void {
+        const messages = buffer.split('\n\n')
+
+        for (const message of messages) {
+            if (!message.trim()) continue
+
+            const lines = message.split('\n')
+            let eventType = 'message'
+            let data = ''
+
+            for (const line of lines) {
+                if (line.startsWith('event:')) {
+                    eventType = line.substring(6).trim()
+                } else if (line.startsWith('data:')) {
+                    data += line.substring(5).trim() + '\n'
+                }
+            }
+
+            if (data) {
+                // 移除最后的换行符
+                data = data.slice(0, -1)
+
+                // 创建MessageEvent并触发回调
+                const messageEvent = new MessageEvent(eventType, {
+                    data: data,
+                    origin: window.location.origin,
+                })
+
+                if (this.config.onMessage) {
+                    this.config.onMessage(messageEvent)
+                }
+            }
+        }
+    }
+
     // 重置连接状态（用于手动重新开始连接）
     reset(): void {
         this.disconnect(true)
@@ -444,10 +589,10 @@ export class SSEManager {
     }
 
     // 构建完整的 URL，复用 request 工具的逻辑
-    private buildUrl(url: string): string {
+    private buildUrl(url: string, addToken = true): string {
         // 如果 URL 已经是完整的 URL，直接返回
         if (url.startsWith('http://') || url.startsWith('https://')) {
-            return this.addAuthToUrl(url)
+            return addToken ? this.addAuthToUrl(url) : url
         }
 
         // 使用与 request 工具相同的 baseURL
@@ -455,12 +600,12 @@ export class SSEManager {
 
         // 如果 URL 以 /api 开头，直接使用
         if (url.startsWith('/api')) {
-            return this.addAuthToUrl(url)
+            return addToken ? this.addAuthToUrl(url) : url
         }
 
         // 否则添加 baseURL 前缀
         const fullUrl = `${baseURL}${url.startsWith('/') ? url : `/${url}`}`
-        return this.addAuthToUrl(fullUrl)
+        return addToken ? this.addAuthToUrl(fullUrl) : fullUrl
     }
 
     // 添加认证头（通过 URL 参数，因为 EventSource 不支持自定义 headers）
@@ -474,8 +619,8 @@ export class SSEManager {
         return `${url}${separator}token=${encodeURIComponent(token)}`
     }
 
-    // 设置事件监听器
-    private setupEventListeners(): void {
+    // 设置EventSource事件监听器
+    private setupEventSourceListeners(): void {
         if (!this.eventSource) return
 
         this.eventSource.onopen = (event: Event) => {

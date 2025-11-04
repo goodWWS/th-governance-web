@@ -1,46 +1,9 @@
-// 数据治理相关常量定义
-
-// 执行状态
-export const EXECUTION_STATUS = {
-    PENDING: 'pending',
-    RUNNING: 'running',
-    COMPLETED: 'completed',
-    FAILED: 'failed',
-} as const
-
-// 执行状态标签映射
-export const STATUS_LABELS = {
-    [EXECUTION_STATUS.PENDING]: '等待中',
-    [EXECUTION_STATUS.RUNNING]: '执行中',
-    [EXECUTION_STATUS.COMPLETED]: '已完成',
-    [EXECUTION_STATUS.FAILED]: '执行失败',
-} as const
-
-// 执行状态颜色映射
-export const STATUS_COLORS = {
-    [EXECUTION_STATUS.PENDING]: 'default',
-    [EXECUTION_STATUS.RUNNING]: 'processing',
-    [EXECUTION_STATUS.COMPLETED]: 'success',
-    [EXECUTION_STATUS.FAILED]: 'error',
-} as const
-
-// 步骤类型
-export const STEP_TYPES = {
-    DATA_COLLECTION: 'data_collection',
-    DATA_VALIDATION: 'data_validation',
-    DATA_TRANSFORMATION: 'data_transformation',
-    DATA_LOADING: 'data_loading',
-    QUALITY_CHECK: 'quality_check',
-} as const
-
-// 步骤名称映射
-export const STEP_NAMES = {
-    [STEP_TYPES.DATA_COLLECTION]: '数据收集',
-    [STEP_TYPES.DATA_VALIDATION]: '数据验证',
-    [STEP_TYPES.DATA_TRANSFORMATION]: '数据转换',
-    [STEP_TYPES.DATA_LOADING]: '数据加载',
-    [STEP_TYPES.QUALITY_CHECK]: '质量检查',
-} as const
-
-export type ExecutionStatus = (typeof EXECUTION_STATUS)[keyof typeof EXECUTION_STATUS]
-export type StepType = (typeof STEP_TYPES)[keyof typeof STEP_TYPES]
+// 执行状态映射
+export const statusConfig = {
+    0: { text: '等待中', color: 'default' }, // 灰色 - 等待状态
+    1: { text: '执行中', color: 'processing' }, // 蓝色 - 执行中状态
+    2: { text: '已完成', color: 'success' }, // 绿色 - 完成状态
+    3: { text: '暂停中', color: 'warning' }, // 橙色 - 暂停状态
+    4: { text: '已跳过', color: 'default' }, // 灰色 - 跳过状态
+    5: { text: '失败', color: 'error' }, // 红色 - 失败状态
+}

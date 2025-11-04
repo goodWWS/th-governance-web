@@ -24,6 +24,7 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import React, { useState } from 'react'
+import { logger } from '@/utils/logger'
 
 const { Title, Text } = Typography
 
@@ -162,7 +163,10 @@ const CompletenessQualityControl: React.FC = () => {
 
             message.success('完整性检查完成！')
         } catch (error) {
-            console.error('完整性检查失败:', error)
+            logger.error(
+                '完整性检查失败:',
+                error instanceof Error ? error : new Error(String(error))
+            )
             message.error('完整性检查失败，请重试')
         } finally {
             setLoading(false)
