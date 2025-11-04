@@ -178,8 +178,8 @@ export interface UploadOptions {
 
 // 数据治理操作结果类型
 export interface DataGovernanceResult {
-    /** 操作影响的记录数 */
-    count: number
+    code: number
+    msg: string
 }
 
 /**
@@ -487,42 +487,8 @@ export interface WorkflowConfigUpdateResponse {
 
 // ==================== 执行历史日志相关类型定义 ====================
 
-/**
- * 数据录入（同步）请求参数
- * 携带当前任务ID与展示层的工作流详情数据
- */
-export interface DataEntryRequest {
-    /** 任务ID（字符串形式以便路由参数直接传递） */
-    taskId: string
-    /** 工作流详情数据（用于后端生成或校验录入内容） */
-    workflowData: WorkflowLogDetailData
-}
-
-/**
- * 数据录入（同步）结果数据
- * 为保持与页面现有处理兼容，结果放在 data 内部
- */
-export interface DataEntryResult {
-    /** 是否录入成功 */
-    success: boolean
-    /** 失败或提示信息 */
-    message?: string
-    /** 可选：本次录入涉及的记录数 */
-    insertedCount?: number
-}
-
-/**
- * 数据录入（同步）响应
- * 统一采用 { code, msg, data } 的响应结构
- */
-export interface DataEntryResponse {
-    /** 响应状态码 */
-    code: number
-    /** 响应消息 */
-    msg: string
-    /** 响应数据 */
-    data: DataEntryResult
-}
+// （已移除）数据录入（同步）相关类型
+// DataEntryRequest / DataEntryResult / DataEntryResponse
 
 /** 执行历史日志项 */
 export interface ExecutionLogItem {
@@ -542,14 +508,30 @@ export interface ExecutionLogItem {
     node_type: string
 }
 
-/** 执行历史日志分页响应 */
+/** 执行历史日志分页请求参数 */
+export interface ExecutionLogPageParams {
+    /** 页码，从1开始 */
+    pageNo: number
+    /** 每页数量 */
+    pageSize: number
+}
+
+/** 执行历史日志分页数据 */
+export interface ExecutionLogPageData {
+    /** 总条数 */
+    total: number
+    /** 当前页数据列表 */
+    list: ExecutionLogItem[]
+}
+
+/** 执行历史日志分页响应（后端返回包含 total 和 list 的对象） */
 export interface ExecutionLogPageResponse {
     /** 响应状态码 */
     code: number
     /** 响应消息 */
     msg: string
-    /** 日志数据列表 */
-    data: ExecutionLogItem[]
+    /** 分页数据对象 */
+    data: ExecutionLogPageData
 }
 
 /** 步骤状态枚举 */

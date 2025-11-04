@@ -8,14 +8,13 @@ import type {
     DataGovernanceResult,
     DbConnectionPageParams,
     DbConnectionPageResponse,
+    ExecutionLogPageParams,
     ExecutionLogPageResponse,
     WorkflowConfigResponse,
     WorkflowConfigUpdateItem,
     WorkflowConfigUpdateResponse,
     WorkflowDetailResponse,
     WorkflowLogDetailResponse,
-    DataEntryRequest,
-    DataEntryResponse,
 } from '@/types'
 import { api } from '@/utils/request'
 import { logger } from '@/utils/logger'
@@ -161,37 +160,20 @@ export class DataGovernanceService {
         }
     }
 
-    /**
-     * 10.1、数据录入（带参数版本）
-     * @description 封装 /data/governance/sync 的数据录入请求，统一错误处理与日志
-     * @param payload { taskId, workflowData }
-     * @returns Promise<DataEntryResponse>
-     */
-    static async syncDataEntry(payload: DataEntryRequest): Promise<DataEntryResponse> {
-        try {
-            if (!payload?.taskId) {
-                throw new Error('任务ID不能为空')
-            }
-            logger.debug('发送数据录入请求到: /data/governance/sync', payload)
-            const res = await api.post<DataEntryResponse>('/data/governance/sync', payload)
-            logger.debug('数据录入API响应:', res)
-            return res
-        } catch (error) {
-            logger.error(
-                '数据录入API调用失败:',
-                error instanceof Error ? error : new Error(String(error))
-            )
-            throw new Error(`数据录入失败: ${error instanceof Error ? error.message : '未知错误'}`)
-        }
-    }
+    // （已移除）数据录入（同步）封装方法 syncDataEntry
 
     /**
-     * 获取执行历史日志列表
-     * @returns 执行历史日志全部数据
+     * 获取执行历史日志分页列表
+     * @param params 分页参数 { pageNo, pageSize }
+     * @returns 执行历史日志分页数据
      */
-    static async getExecutionLogPage(): Promise<ExecutionLogPageResponse> {
+    static async getExecutionLogPage(
+        params: ExecutionLogPageParams
+    ): Promise<ExecutionLogPageResponse> {
         try {
-            return await api.get<ExecutionLogPageResponse>('/data/governance/task/log/page')
+            return await api.get<ExecutionLogPageResponse>('/data/governance/task/log/page', {
+                params,
+            })
         } catch (error) {
             throw new Error(
                 `获取日志列表失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -407,7 +389,7 @@ export const dataGovernanceService = {
     removeOrphanRecords: DataGovernanceService.removeOrphanRecords,
     maskSensitiveData: DataGovernanceService.maskSensitiveData,
     sync: DataGovernanceService.sync,
-    syncDataEntry: DataGovernanceService.syncDataEntry,
+    // （已移除）syncDataEntry
 
     // 日志查询操作
     getLogPage: DataGovernanceService.getExecutionLogPage,

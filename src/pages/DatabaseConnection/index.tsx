@@ -14,7 +14,6 @@ import {
     Col,
     Form,
     Input,
-    message,
     Modal,
     Popconfirm,
     Row,
@@ -27,6 +26,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import React, { useEffect, useState } from 'react'
 import { logger } from '@/utils/logger'
+import uiMessage from '@/utils/uiMessage'
 
 const { Title } = Typography
 const { Option } = Select
@@ -81,14 +81,14 @@ const DatabaseConnection: React.FC = () => {
                     abnormalCount,
                 })
             } else {
-                message.error(result.message || '获取数据库连接列表失败')
+                uiMessage.error(result.message || '获取数据库连接列表失败')
             }
         } catch (error) {
             logger.error(
                 '获取数据库连接列表失败:',
                 error instanceof Error ? error : new Error(String(error))
             )
-            message.error('获取数据库连接列表失败')
+            uiMessage.error('获取数据库连接列表失败')
         } finally {
             setTableLoading(false)
         }
@@ -109,14 +109,14 @@ const DatabaseConnection: React.FC = () => {
         try {
             const result = await dataGovernanceService.deleteDbConnection(id)
             if (result.code === 200) {
-                message.success('删除成功')
+                uiMessage.success('删除成功')
                 await fetchDbConnections(pagination.current, pagination.pageSize)
             } else {
-                message.error(result.message || '删除失败')
+                uiMessage.error(result.message || '删除失败')
             }
         } catch (error) {
             logger.error('删除连接失败:', error instanceof Error ? error : new Error(String(error)))
-            message.error('删除失败')
+            uiMessage.error('删除失败')
         }
     }
 
@@ -127,15 +127,15 @@ const DatabaseConnection: React.FC = () => {
             const result = await dataGovernanceService.testDbConnection(id)
 
             if (result.code === 200) {
-                message.success('连接测试成功')
+                uiMessage.success('连接测试成功')
                 // 刷新列表以更新连接状态
                 await fetchDbConnections(pagination.current, pagination.pageSize)
             } else {
-                message.error(result.message || '连接测试失败')
+                uiMessage.error(result.message || '连接测试失败')
             }
         } catch (error) {
             logger.error('测试连接失败:', error instanceof Error ? error : new Error(String(error)))
-            message.error('连接测试失败')
+            uiMessage.error('连接测试失败')
         } finally {
             setTestingConnections(prev => ({ ...prev, [id]: false }))
         }
@@ -310,19 +310,19 @@ const DatabaseConnection: React.FC = () => {
                                 conn.id === editingConnection.id ? { ...conn, ...values } : conn
                             )
                         )
-                        message.success('数据库连接已更新')
+                        uiMessage.success('数据库连接已更新')
 
                         // 重新获取列表以确保数据同步
                         await fetchDbConnections(pagination.current, pagination.pageSize)
                     } else {
-                        message.error(result.message || '更新数据库连接失败')
+                        uiMessage.error(result.message || '更新数据库连接失败')
                     }
                 } catch (apiError) {
                     logger.error(
                         'API调用失败:',
                         apiError instanceof Error ? apiError : new Error(String(apiError))
                     )
-                    message.error(
+                    uiMessage.error(
                         apiError instanceof Error ? apiError.message : '更新数据库连接失败'
                     )
                 }
@@ -345,19 +345,19 @@ const DatabaseConnection: React.FC = () => {
                     const result = await dataGovernanceService.addDbConnection(connectionData)
 
                     if (result.success) {
-                        message.success('数据库连接已成功添加')
+                        uiMessage.success('数据库连接已成功添加')
 
                         // 重新获取列表以确保数据同步
                         await fetchDbConnections(pagination.current, pagination.pageSize)
                     } else {
-                        message.error(result.message || '添加数据库连接失败')
+                        uiMessage.error(result.message || '添加数据库连接失败')
                     }
                 } catch (apiError) {
                     logger.error(
                         'API调用失败:',
                         apiError instanceof Error ? apiError : new Error(String(apiError))
                     )
-                    message.error(
+                    uiMessage.error(
                         apiError instanceof Error ? apiError.message : '添加数据库连接失败'
                     )
                 }
@@ -367,7 +367,7 @@ const DatabaseConnection: React.FC = () => {
             form.resetFields()
         } catch (error) {
             logger.error('表单验证失败:', error instanceof Error ? error : new Error(String(error)))
-            message.error('表单验证失败，请检查输入信息')
+            uiMessage.error('表单验证失败，请检查输入信息')
         } finally {
             setLoading(false)
         }

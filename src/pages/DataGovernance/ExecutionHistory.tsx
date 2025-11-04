@@ -3,8 +3,9 @@ import type { ExecutionLogItem } from '@/types'
 import { logger } from '@/utils/logger'
 import { getMockExecutionHistoryResponse, mockApiDelay } from '@/utils/mockData'
 import { ReloadOutlined, SettingOutlined } from '@ant-design/icons'
-import { Button, Card, message, Space, Typography } from 'antd'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Button, Card, Space, Typography } from 'antd'
+import uiMessage from '@/utils/uiMessage'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ExecutionRecordTable } from './ExecutionRecordTable'
 
@@ -17,70 +18,80 @@ const { Title, Paragraph } = Typography
 export const ExecutionHistory: React.FC = () => {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
-    const [allExecutionRecords, setAllExecutionRecords] = useState<ExecutionLogItem[]>([])
-    const [currentPage, setCurrentPage] = useState(1)
+    const [records, setRecords] = useState<ExecutionLogItem[]>([])
+    const [pageNo, setPageNo] = useState(1)
     const [pageSize, setPageSize] = useState(10)
+    const [total, setTotal] = useState(0)
     const [usingMockData, setUsingMockData] = useState(false) // 标记是否使用模拟数据
 
     /**
      * 获取执行历史数据
      */
-    const fetchExecutionHistory = useCallback(async () => {
-        try {
-            setLoading(true)
-
-            // 添加模拟延迟，模拟真实API调用
-            await mockApiDelay(800)
-
+    const fetchExecutionHistory = useCallback(
+        async (page: number = pageNo, size: number = pageSize) => {
             try {
-                // 尝试调用真实接口
-                const response = await DataGovernanceService.getExecutionLogPage()
+                setLoading(true)
 
-                if (response.code === 200) {
-                    setAllExecutionRecords(response.data)
-                    setUsingMockData(false)
-                    logger.info('成功获取执行历史数据', response.data.length)
-                } else {
-                    throw new Error(response.msg || '接口返回错误')
+                // 添加模拟延迟，模拟真实API调用
+                await mockApiDelay(800)
+
+                try {
+                    // 尝试调用真实接口
+                    const response = await DataGovernanceService.getExecutionLogPage({
+                        pageNo: page,
+                        pageSize: size,
+                    })
+
+                    if (response.code === 200) {
+                        const { list, total } = response.data
+                        setRecords(list)
+                        setTotal(total)
+                        setUsingMockData(false)
+                        logger.info('成功获取执行历史数据', list.length)
+                    } else {
+                        throw new Error(response.msg || '接口返回错误')
+                    }
+                } catch (apiError) {
+                    // 接口调用失败时使用模拟数据
+                    logger.warn('接口调用失败，使用模拟数据', apiError)
+                    const mockResponse = getMockExecutionHistoryResponse(50, page, size)
+                    const { list, total } = mockResponse.data
+                    setRecords(list)
+                    setTotal(total)
+                    setUsingMockData(true)
+
+                    uiMessage.warning('接口暂时无法连接，当前显示模拟数据')
                 }
-            } catch (apiError) {
-                // 接口调用失败时使用模拟数据
-                logger.warn('接口调用失败，使用模拟数据', apiError)
-                const mockResponse = getMockExecutionHistoryResponse(50)
-                setAllExecutionRecords(mockResponse.data)
+            } catch (error) {
+                logger.error('获取执行历史失败', error as Error)
+                uiMessage.error('获取执行历史失败，请稍后重试')
+
+                // 即使出现错误也提供模拟数据
+                const mockResponse = getMockExecutionHistoryResponse(20, page, size)
+                const { list, total } = mockResponse.data
+                setRecords(list)
+                setTotal(total)
                 setUsingMockData(true)
-
-                message.warning('接口暂时无法连接，当前显示模拟数据')
+            } finally {
+                setLoading(false)
             }
-        } catch (error) {
-            logger.error('获取执行历史失败', error as Error)
-            message.error('获取执行历史失败，请稍后重试')
-
-            // 即使出现错误也提供模拟数据
-            const mockResponse = getMockExecutionHistoryResponse(20)
-            setAllExecutionRecords(mockResponse.data)
-            setUsingMockData(true)
-        } finally {
-            setLoading(false)
-        }
-    }, [])
-
-    /**
-     * 计算当前页显示的数据
-     */
-    const currentPageData = useMemo(() => {
-        const startIndex = (currentPage - 1) * pageSize
-        const endIndex = startIndex + pageSize
-        return allExecutionRecords.slice(startIndex, endIndex)
-    }, [allExecutionRecords, currentPage, pageSize])
+        },
+        [pageNo, pageSize]
+    )
 
     /**
      * 处理分页变化
      */
-    const handlePageChange = useCallback((page: number, size: number) => {
-        setCurrentPage(page)
-        setPageSize(size)
-    }, [])
+    const handlePageChange = useCallback(
+        (page: number, size?: number) => {
+            const nextSize = size ?? pageSize
+            setPageNo(page)
+            setPageSize(nextSize)
+            // 立即按新分页参数拉取数据，避免异步状态更新导致的旧参数请求
+            fetchExecutionHistory(page, nextSize)
+        },
+        [fetchExecutionHistory, pageSize]
+    )
 
     /**
      * 页面初始化时获取数据
@@ -108,7 +119,7 @@ export const ExecutionHistory: React.FC = () => {
      */
     const handleViewDetails = useCallback(
         (record: ExecutionLogItem) => {
-            navigate(`/data-governance/execution/${record.id}`)
+            navigate(`/data-governance/workflow/${record.batch_id}`)
         },
         [navigate]
     )
@@ -179,14 +190,14 @@ export const ExecutionHistory: React.FC = () => {
 
             {/* 执行记录表格 */}
             <ExecutionRecordTable
-                data={currentPageData}
+                data={records}
                 loading={loading}
                 onViewDetails={handleViewDetails}
                 onRefresh={handleRefresh}
                 pagination={{
-                    current: currentPage,
+                    current: pageNo,
                     pageSize: pageSize,
-                    total: allExecutionRecords.length,
+                    total: total,
                     showSizeChanger: true,
                     showQuickJumper: true,
                     showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,

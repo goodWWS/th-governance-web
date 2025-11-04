@@ -9,7 +9,6 @@ import {
     Switch,
     Tag,
     Popconfirm,
-    message,
     Row,
     Col,
     Card,
@@ -39,6 +38,7 @@ import { selectActiveUsers } from '../../../store/slices/systemUserSlice'
 import type { ColumnsType } from 'antd/es/table'
 import type { TransferProps } from 'antd/es/transfer'
 import { logger } from '../../../utils/logger'
+import uiMessage from '@/utils/uiMessage'
 
 const { Search } = Input
 const { TextArea } = Input
@@ -78,7 +78,7 @@ const RoleSettings: React.FC = () => {
     // 处理删除角色
     const handleDelete = (id: string) => {
         dispatch(deleteRole(id))
-        message.success('角色删除成功')
+        uiMessage.success('角色删除成功')
     }
 
     // 处理状态变更
@@ -89,7 +89,7 @@ const RoleSettings: React.FC = () => {
                 status: checked ? 'active' : 'inactive',
             })
         )
-        message.success(`角色${checked ? '启用' : '禁用'}成功`)
+        uiMessage.success(`角色${checked ? '启用' : '禁用'}成功`)
     }
 
     // 处理分配用户
@@ -218,7 +218,7 @@ const RoleSettings: React.FC = () => {
                         ...values,
                     })
                 )
-                message.success('角色更新成功')
+                uiMessage.success('角色更新成功')
             } else {
                 // 添加角色
                 dispatch(
@@ -228,7 +228,7 @@ const RoleSettings: React.FC = () => {
                         userIds: [],
                     })
                 )
-                message.success('角色添加成功')
+                uiMessage.success('角色添加成功')
             }
 
             setIsModalVisible(false)
@@ -258,7 +258,7 @@ const RoleSettings: React.FC = () => {
                     userIds: targetKeys.map(key => String(key)),
                 })
             )
-            message.success('用户分配成功')
+            uiMessage.success('用户分配成功')
             setIsUserModalVisible(false)
             setAssigningRole(null)
         }

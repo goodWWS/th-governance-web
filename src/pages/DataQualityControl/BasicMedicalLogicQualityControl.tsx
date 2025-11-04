@@ -19,10 +19,10 @@ import {
     Statistic,
     Table,
     Typography,
-    message,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import React, { useState } from 'react'
+import uiMessage from '@/utils/uiMessage'
 
 const { Title, Text } = Typography
 
@@ -243,10 +243,10 @@ const BasicMedicalLogicQualityControl: React.FC = () => {
                 avgMatchRate,
             })
 
-            message.success('医疗逻辑检查完成！')
+            uiMessage.success('医疗逻辑检查完成！')
         } catch (error) {
             logger.error('医疗逻辑检查失败:', error)
-            message.error('医疗逻辑检查失败，请重试')
+            uiMessage.error('医疗逻辑检查失败，请重试')
         } finally {
             setLoading(false)
         }

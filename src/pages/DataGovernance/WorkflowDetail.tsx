@@ -3,8 +3,10 @@ import {
     ReloadOutlined,
     EyeOutlined,
     PlayCircleOutlined,
+    CloudSyncOutlined,
 } from '@ant-design/icons'
-import { Button, Card, Progress, Spin, Steps, Tag, Typography, Modal, Space, message } from 'antd'
+import { Button, Card, Progress, Spin, Steps, Tag, Typography, Modal, Space } from 'antd'
+import uiMessage from '@/utils/uiMessage'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../../store/hooks'
@@ -21,7 +23,7 @@ import {
     WorkflowNodeType,
 } from '../../types'
 import { statusConfig } from './const'
-import { continueWorkflow } from '@/utils/workflowUtils'
+import { continueWorkflow, subscribeWorkflow } from '@/utils/workflowUtils'
 // 移除直接请求，统一通过 service 调用
 
 const { Title, Text } = Typography
@@ -113,8 +115,8 @@ const WorkflowDetail: React.FC = () => {
     // 继续执行状态
     const [continueLoading, setContinueLoading] = useState(false)
 
-    // 数据录入按钮加载状态
-    const [dataEntryLoading, setDataEntryLoading] = useState(false)
+    // 数据同步（数据录入）按钮加载状态
+    const [dataSyncLoading, setDataSyncLoading] = useState(false)
 
     // Redux状态 - 按taskId获取特定工作流的执行信息
     const { loading } = useAppSelector(state => state.dataGovernance)
@@ -169,19 +171,55 @@ const WorkflowDetail: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [taskId, dispatch, fetchLogDetail]) // workflowExecution 在此处不应作为依赖，避免无限循环
 
+    // 订阅工作流完成/关闭事件：遵循既定流程，避免额外处理
+    useEffect(() => {
+        if (!taskId) return
+
+        let unsubscribe: (() => void) | null = null
+        try {
+            unsubscribe = subscribeWorkflow(String(taskId), evt => {
+                if (!evt || evt.taskId !== String(taskId)) return
+                if (evt.type === 'completed' || evt.type === 'closed') {
+                    // 仅在完成或关闭时刷新详情
+                    fetchLogDetail()
+                }
+            })
+        } catch (e) {
+            const errMsg = e instanceof Error ? e.message : '订阅工作流事件时发生未知错误'
+            console.error('订阅工作流事件失败', { taskId, error: errMsg })
+        }
+
+        // 清理订阅
+        return () => {
+            try {
+                unsubscribe?.()
+            } catch (e) {
+                const errMsg = e instanceof Error ? e.message : '取消订阅时发生未知错误'
+                console.error('取消订阅工作流事件失败', { taskId, error: errMsg })
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [taskId])
+
     // 获取工作流详情，如果有SSE连接的情况下优先从SSE中步骤详情
     const displayDetail = useMemo(() => {
         const detail = JSON.parse(JSON.stringify(logDetailData)) as WorkflowLogDetailData
         // 将 executionMessages 移到 useMemo 内部，避免依赖问题
         const executionMessages = workflowExecution?.messages || []
-        logger.debug(`[${taskId}] executionMessages:`, executionMessages)
+        console.debug(`[${taskId}] executionMessages:`, executionMessages)
+        console.log('executionMessages:===>', executionMessages)
 
         if (executionMessages?.length && detail?.logList) {
-            // 找到当前正在执行的步骤
-            let currentExecutingStepIndex = -1
-            // 记录当前正在执行的步骤索引
+            // 找到最后一个正在执行的步骤索引
+            const lastExecutingStep = executionMessages.at(-1)
+            const lastNode = executionMessages.findLast(
+                msg => msg.executionStatus === 'running' && !!msg.node
+            )
+            const isEnd =
+                lastExecutingStep?.executionStatus === 'end' ||
+                lastNode?.node.nodeType === detail?.logList?.at(-1)?.node_type
 
-            executionMessages.forEach((msgInfo, index) => {
+            executionMessages.forEach(msgInfo => {
                 const { node, tableQuantity, completedQuantity, status } = msgInfo
 
                 const step = detail.logList.find(
@@ -190,38 +228,25 @@ const WorkflowDetail: React.FC = () => {
                 if (step) {
                     step.completedQuantity = completedQuantity
                     step.table_quantity = tableQuantity
-                    step.step_status = status
+                    // 找到最后一个的索引
+                    const lastIndex = detail.logList?.findIndex(
+                        step => step.node_type === lastNode?.node.nodeType
+                    )
 
-                    // 记录最新的执行步骤
-                    if (index === executionMessages.length - 1) {
-                        currentExecutingStepIndex = detail.logList.findIndex(
-                            log => log.node_type === node.nodeType
-                        )
+                    if ((isEnd || step.step_no + 1 < lastIndex) && step.enabled) {
+                        step.step_status = 2
+                    } else {
+                        step.step_status = status
                     }
-                }
-
-                if (index === executionMessages?.length - 1 && detail?.logSummary) {
-                    detail.logSummary.status = 1
                 }
             })
 
-            // 更新步骤状态：当前步骤前的所有步骤都应该是已完成(2)或已跳过(4)
-            if (currentExecutingStepIndex >= 0) {
-                detail.logList.forEach((step, index) => {
-                    if (index < currentExecutingStepIndex) {
-                        // 当前步骤之前的步骤，如果状态还是等待中(0)，则设置为已完成(2)
-                        if (step.step_status === 0) {
-                            step.step_status = 2 // 已完成
-                        }
-                    } else if (index === currentExecutingStepIndex) {
-                        // 当前正在执行的步骤，设置为执行中(1)
-                        if (step.step_status !== 3) {
-                            // 如果不是暂停状态，则设置为执行中
-                            step.step_status = 1 // 执行中
-                        }
-                    }
-                    // 当前步骤之后的步骤保持原状态不变
-                })
+            if (isEnd) {
+                detail.logSummary.status = 2
+            } else if (lastNode?.node && !lastNode.node.isAuto) {
+                detail.logSummary.status = 3
+            } else {
+                detail.logSummary.status = 1
             }
         }
 
@@ -241,24 +266,13 @@ const WorkflowDetail: React.FC = () => {
     }
 
     const getCurrentStep = () => {
-        // 如果工作流已完成，指向完成节点（最后一个节点）
-        const isWorkflowCompleted =
-            displayDetail?.logSummary?.status === 2 ||
-            (displayDetail?.logList &&
-                displayDetail.logList.every(
-                    step => step.step_status === 2 || step.step_status === 4
-                ))
-
-        if (isWorkflowCompleted) {
-            return displayDetail?.logList?.length || 0 // 指向完成节点
-        }
-
-        // 否则返回当前执行的步骤索引
-        return (
-            displayDetail?.logList.findIndex(
-                log => log.node_type === displayDetail?.logSummary?.node_type
-            ) || 0
+        return displayDetail?.logList?.findIndex(
+            step => displayDetail?.logSummary?.node_type === step.node_type
         )
+    }
+
+    const isCompletedNode = (step: WorkflowStepLog) => {
+        return step.step_status === 2 || (step.enabled && step.step_status === 0)
     }
 
     // 查看执行结果
@@ -305,10 +319,10 @@ const WorkflowDetail: React.FC = () => {
         }
 
         // 为已完成状态添加打勾标记，并简化文字显示
-        if (status === 2) {
+        if (step && isHistoricalNode && isCompletedNode(step)) {
             // 已完成状态
             return (
-                <Tag color={config.color}>
+                <Tag color='success'>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>✓ 已完成</span>
                 </Tag>
             )
@@ -317,10 +331,15 @@ const WorkflowDetail: React.FC = () => {
         return <Tag color={config.color}>{config.text}</Tag>
     }
 
+    // 计算是否全部步骤已完成
+    const isWorkflowCompleted = useMemo(() => {
+        return displayDetail?.logSummary?.status === 2
+    }, [displayDetail])
+
     // 继续执行工作流
     const handleContinueExecution = async () => {
         if (!taskId) {
-            message.error('任务ID不存在，无法继续执行')
+            uiMessage.error('任务ID不存在，无法继续执行')
             return
         }
 
@@ -332,13 +351,13 @@ const WorkflowDetail: React.FC = () => {
             // 调用继续执行接口，复用启动工作流的SSE连接逻辑
             const success = await continueWorkflow(taskId, {
                 onSuccess: () => {
-                    message.success('工作流继续执行成功')
+                    uiMessage.success('工作流继续执行成功')
                     setContinueLoading(false)
                     // 刷新页面数据
                     fetchLogDetail()
                 },
                 onError: (error: string) => {
-                    message.error(`继续执行失败: ${error}`)
+                    uiMessage.error(`继续执行失败: ${error}`)
                     setContinueLoading(false)
                     logger.error('继续执行工作流失败', { taskId, error })
                 },
@@ -353,43 +372,43 @@ const WorkflowDetail: React.FC = () => {
             }
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : '继续执行时发生未知错误'
-            message.error(`继续执行失败: ${errorMsg}`)
+            uiMessage.error(`继续执行失败: ${errorMsg}`)
             setContinueLoading(false)
             logger.error('继续执行工作流异常', { taskId, error: errorMsg })
         }
     }
 
-    // 处理数据录入按钮点击
-    const handleDataEntry = async () => {
+    // 触发数据同步（数据录入）
+    // 使用后端已定义的同步接口，无需传参；成功后提示并尝试刷新详情
+    const handleDataSync = async () => {
+        if (!taskId) {
+            uiMessage.error('任务ID不存在，无法进行数据录入')
+            return
+        }
+
         try {
-            setDataEntryLoading(true)
-            logger.info('开始数据录入操作', { taskId })
+            setDataSyncLoading(true)
+            logger.info('开始数据录入（数据同步）', { taskId })
 
-            // 通过 service 封装进行数据录入（同步）
-            const response = await DataGovernanceService.syncDataEntry({
-                taskId: taskId as string,
-                workflowData: displayDetail,
-            })
+            const result = await DataGovernanceService.sync()
+            result?.code === 200
+                ? uiMessage.success('数据录入（同步）成功')
+                : uiMessage.error('数据录入（同步）失败')
+            logger.info('数据录入（同步）成功', { taskId })
 
-            // 统一按 { code, msg, data } 结构处理
-            if (response.code === 200 && response.data?.success) {
-                message.success('数据录入成功！')
-                logger.info('数据录入操作成功', { taskId, response })
-            } else {
-                throw new Error(response.data?.message || response.msg || '数据录入失败')
-            }
+            // 尝试刷新展示数据
+            await fetchLogDetail()
         } catch (error) {
-            const errorMsg = error instanceof Error ? error.message : '数据录入操作失败'
-            message.error(errorMsg)
-            logger.error('数据录入操作异常', { taskId, error: errorMsg })
+            const errorMsg = error instanceof Error ? error.message : '数据录入（同步）失败'
+            uiMessage.error(errorMsg)
+            logger.error('数据录入（同步）异常', { taskId, error: errorMsg })
         } finally {
-            setDataEntryLoading(false)
+            setDataSyncLoading(false)
         }
     }
 
     // 渲染进度条
     const renderProgressBar = (step: WorkflowStepLog) => {
-        // 如果步骤已关闭且不是自动流转，不显示进度条
         if ([3, 4].includes(step.step_status) && !step.is_auto) {
             return null
         }
@@ -559,60 +578,21 @@ const WorkflowDetail: React.FC = () => {
                             />
                         )
                     })}
-
-                    {/* 完成状态展示节点 - 当工作流完成时显示 */}
-                    {(displayDetail?.logSummary?.status === 2 ||
-                        (displayDetail?.logList &&
-                            displayDetail.logList.every(
-                                step => step.step_status === 2 || step.step_status === 4
-                            ))) && (
-                        <Step
-                            key='completion'
-                            title={
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span>工作流执行完成</span>
-                                    <Space>
-                                        <Tag color='success'>已完成</Tag>
-                                    </Space>
-                                </div>
-                            }
-                            description={
-                                <div>
-                                    <div style={{ marginBottom: 8, color: '#52c41a' }}>
-                                        🎉 所有步骤已成功执行完成，工作流处理结束
-                                    </div>
-                                    <div
-                                        style={{
-                                            fontSize: '12px',
-                                            color: '#666',
-                                            marginBottom: 12,
-                                        }}
-                                    >
-                                        完成时间：{displayDetail?.logSummary?.end_time || '刚刚'}
-                                    </div>
-                                    {/* 数据录入按钮 */}
-                                    <Button
-                                        type='primary'
-                                        size='default'
-                                        loading={dataEntryLoading}
-                                        onClick={handleDataEntry}
-                                        style={{
-                                            backgroundColor: '#1890ff',
-                                            borderColor: '#1890ff',
-                                            marginTop: 8,
-                                            height: '40px',
-                                            fontSize: '16px',
-                                            fontWeight: 500,
-                                            minWidth: '120px',
-                                        }}
-                                    >
-                                        数据录入
-                                    </Button>
-                                </div>
-                            }
-                        />
-                    )}
                 </Steps>
+
+                {/* 全部完成后显示数据录入按钮 */}
+                {isWorkflowCompleted && (
+                    <div style={{ marginTop: 8 }}>
+                        <Button
+                            type='primary'
+                            icon={<CloudSyncOutlined />}
+                            onClick={handleDataSync}
+                            loading={dataSyncLoading}
+                        >
+                            数据录入
+                        </Button>
+                    </div>
+                )}
             </Card>
             {/* 执行结果查看弹窗 */}
             <Modal

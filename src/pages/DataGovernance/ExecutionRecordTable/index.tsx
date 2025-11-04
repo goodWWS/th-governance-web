@@ -1,9 +1,5 @@
-import {
-    ExecutionLogItem,
-    ExecutionStepStatus,
-    ExecutionStepStatusColors,
-    ExecutionStepStatusLabels,
-} from '@/types'
+import { ExecutionLogItem } from '@/types'
+import { statusConfig } from '@/pages/DataGovernance/const'
 import { Button, Card, Table, Tag, Typography } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -43,10 +39,13 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
     /**
      * 渲染步骤状态标签
      */
-    const renderStatus = (status: ExecutionStepStatus) => {
-        const label = ExecutionStepStatusLabels[status]
-        const color = ExecutionStepStatusColors[status]
-        return <Tag color={color}>{label}</Tag>
+    const renderStatus = (status: number) => {
+        // 使用统一的状态配置映射（0未执行，1执行中，2已完成，3暂停，4跳过，5失败）
+        const config = statusConfig[status as keyof typeof statusConfig] || {
+            text: '未知',
+            color: 'default',
+        }
+        return <Tag color={config.color}>{config.text}</Tag>
     }
 
     /**
@@ -120,21 +119,24 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             title: '节点类型',
             dataIndex: 'node_type',
             key: 'node_type',
-            width: 120,
+            width: 140,
             render: (nodeType: string) => {
-                const nodeTypeMap: Record<string, { label: string; color: string }> = {
-                    dataLoad: { label: '数据加载', color: 'blue' },
+                // 与后端返回的节点类型保持一致（参考 WorkflowNodeType 枚举）
+                const nodeTypeLabelMap: Record<string, { label: string; color: string }> = {
                     DataCleansing: { label: '数据清洗', color: 'green' },
-                    dataDedupe: { label: '数据去重', color: 'orange' },
-                    typeConvert: { label: '类型转换', color: 'purple' },
-                    standardMap: { label: '标准对照', color: 'cyan' },
-                    empiDistribute: { label: 'EMPI发放', color: 'magenta' },
-                    emoiDistribute: { label: 'EMOI发放', color: 'volcano' },
-                    dataUnify: { label: '数据归一', color: 'lime' },
-                    orphanDrop: { label: '丢孤儿', color: 'red' },
-                    dataDesensitize: { label: '数据脱敏', color: 'geekblue' },
+                    DataDeduplication: { label: '数据去重', color: 'orange' },
+                    dataTransform: { label: '类型转换', color: 'purple' },
+                    StandardMapping: { label: '标准对照', color: 'cyan' },
+                    EMPIDefinitionDistribution: { label: 'EMPI发放', color: 'magenta' },
+                    EMOIDefinitionDistribution: { label: 'EMOI发放', color: 'volcano' },
+                    DataStandardization: { label: '数据标准化', color: 'lime' },
+                    DataOrphan: { label: '丢孤记录', color: 'red' },
+                    DataDesensitization: { label: '数据脱敏', color: 'geekblue' },
                 }
-                const config = nodeTypeMap[nodeType] || { label: nodeType, color: 'default' }
+                const config = nodeTypeLabelMap[nodeType] || {
+                    label: nodeType || '未知节点',
+                    color: 'default',
+                }
                 return <Tag color={config.color}>{config.label}</Tag>
             },
         },
@@ -146,9 +148,12 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
             align: 'center',
             render: renderStatus,
             filters: [
-                { text: '成功', value: 0 },
-                { text: '失败', value: 1 },
-                { text: '进行中', value: 2 },
+                { text: '未执行', value: 0 },
+                { text: '执行中', value: 1 },
+                { text: '已完成', value: 2 },
+                { text: '暂停', value: 3 },
+                { text: '跳过', value: 4 },
+                { text: '失败', value: 5 },
             ],
             onFilter: (value, record) => record.status === value,
         },
@@ -203,7 +208,10 @@ export const ExecutionRecordTable: React.FC<ExecutionRecordTableProps> = ({
                 dataSource={tableData}
                 loading={loading}
                 pagination={pagination}
-                scroll={{ x: 1200 }}
+                // 限制表格最大高度，超出时启用内部滚动，避免页面过长
+                // 选择中等高度以兼顾视野与可读性；如需更动态可改为根据窗口高度计算
+                scroll={{ x: 1200, y: 560 }}
+                sticky
                 size='middle'
             />
         </Card>

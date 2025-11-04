@@ -1,4 +1,4 @@
-import type { ExecutionLogItem } from '@/types'
+import type { ExecutionLogItem, ExecutionLogPageResponse } from '@/types'
 import dayjs from 'dayjs'
 
 /**
@@ -117,11 +117,22 @@ export const generateMockExecutionHistory = (count: number = 50): ExecutionLogIt
 /**
  * 模拟API响应格式
  */
-export const getMockExecutionHistoryResponse = (count?: number) => {
+export const getMockExecutionHistoryResponse = (
+    totalCount: number = 50,
+    pageNo: number = 1,
+    pageSize: number = 10
+): ExecutionLogPageResponse => {
+    const all = generateMockExecutionHistory(totalCount)
+    const startIndex = (pageNo - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    const list = all.slice(startIndex, endIndex)
     return {
         code: 200,
-        msg: '获取成功',
-        data: generateMockExecutionHistory(count),
+        msg: '操作成功',
+        data: {
+            total: totalCount,
+            list,
+        },
     }
 }
 

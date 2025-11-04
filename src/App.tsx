@@ -4,6 +4,7 @@ import React from 'react'
 import { RouterProvider } from 'react-router-dom'
 import './App.css'
 import { router } from './router'
+import GlobalMessageHost from '@/components/GlobalMessageHost'
 
 /**
  * 应用程序根组件
@@ -15,6 +16,8 @@ const App: React.FC = () => {
         <ConfigProvider locale={zhCN}>
             <AntdApp>
                 <RouterProvider router={router} />
+                {/* Mount message host so all uiMessage calls work in React 19 */}
+                <GlobalMessageHost />
             </AntdApp>
         </ConfigProvider>
     )

@@ -14,7 +14,6 @@ import {
     Row,
     Col,
     Descriptions,
-    message,
     Popconfirm,
 } from 'antd'
 import {
@@ -42,6 +41,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import type { DataNode } from 'antd/es/tree'
 import { logger } from '../../../utils/logger'
+import uiMessage from '@/utils/uiMessage'
 
 const { Option } = Select
 
@@ -135,7 +135,7 @@ const PermissionSettings: React.FC = () => {
 
     const handleDeletePermission = (_permissionId: string) => {
         // 这里应该调用删除权限的 Redux action
-        message.success('权限删除成功')
+        uiMessage.success('权限删除成功')
     }
 
     // 表格列配置 - 树形表格
@@ -253,10 +253,10 @@ const PermissionSettings: React.FC = () => {
             await form.validateFields()
             if (editingPermission) {
                 // 更新权限
-                message.success('权限更新成功')
+                uiMessage.success('权限更新成功')
             } else {
                 // 添加权限
-                message.success('权限添加成功')
+                uiMessage.success('权限添加成功')
             }
             setIsPermissionModalVisible(false)
             form.resetFields()
@@ -322,7 +322,7 @@ const PermissionSettings: React.FC = () => {
                     permissionIds: checkedPermissions,
                 })
             )
-            message.success('角色权限分配成功')
+            uiMessage.success('角色权限分配成功')
             setIsRolePermissionModalVisible(false)
             setSelectedRole(null)
             setCheckedPermissions([])

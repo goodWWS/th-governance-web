@@ -11,6 +11,7 @@ import {
     getWorkflowSSEStatus,
     type StartWorkflowConfig,
     type SSEConnectionState,
+    subscribeWorkflow as serviceSubscribeWorkflow,
 } from '../services/workflowExecutionService'
 
 /**
@@ -200,6 +201,24 @@ export const startWorkflowWithoutNavigation = async (
 export const isWorkflowRunning = (): boolean => {
     const status = getSSEStatus()
     return status.status === 'connected' || status.status === 'connecting'
+}
+
+/**
+ * 订阅指定任务的工作流事件（完成/关闭/错误）
+ * 返回取消订阅函数
+ *
+ * @example
+ * const unsubscribe = subscribeWorkflow('task-123', (evt) => {
+ *   if (evt.type === 'completed') console.log('完成')
+ * })
+ * // 页面卸载时
+ * unsubscribe()
+ */
+export const subscribeWorkflow = (
+    taskId: string,
+    callback: (event: { type: 'completed' | 'closed' | 'error'; taskId: string }) => void
+): (() => void) => {
+    return serviceSubscribeWorkflow(taskId, callback)
 }
 
 // 重新导出类型，方便使用

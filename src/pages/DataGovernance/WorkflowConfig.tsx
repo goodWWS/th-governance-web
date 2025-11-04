@@ -9,7 +9,8 @@ import {
     SwapOutlined,
     UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Card, message, Space, Spin, Switch, Typography } from 'antd'
+import { Alert, Button, Card, Space, Spin, Switch, Typography } from 'antd'
+import uiMessage from '@/utils/uiMessage'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDebounceCallback } from '../../hooks/useDebounce'
@@ -69,14 +70,14 @@ const WorkflowConfig: React.FC = () => {
 
         try {
             // 显示保存中的toast提示
-            const hideLoading = message.loading('正在保存配置...', 0)
+            const loadingKey = uiMessage.loading('正在保存配置...', 0)
 
             // 使用Redux action进行更新
             await dispatch(updateWorkflowConfig(updates)).unwrap()
 
             // 隐藏loading提示
-            hideLoading()
-            message.success(`成功更新 ${updates.length} 个配置项`)
+            uiMessage.destroy(loadingKey)
+            uiMessage.success(`成功更新 ${updates.length} 个配置项`)
 
             // 清空待更新列表
             pendingUpdatesRef.current.clear()
@@ -87,7 +88,7 @@ const WorkflowConfig: React.FC = () => {
             )
             const errorMessage =
                 error instanceof Error ? error.message : '更新工作流配置失败，请稍后重试'
-            message.error(errorMessage)
+            uiMessage.error(errorMessage)
         }
     }, [dispatch])
 
@@ -164,10 +165,10 @@ const WorkflowConfig: React.FC = () => {
             const success = await startWorkflow({
                 onSuccess: taskId => {
                     logger.debug('工作流启动成功，任务ID:', taskId)
-                    message.success('工作流启动成功！')
+                    uiMessage.success('工作流启动成功！')
                 },
                 onError: error => {
-                    message.error(`工作流启动失败: ${error}`)
+                    uiMessage.error(`工作流启动失败: ${error}`)
                 },
                 onMessage: msg => {
                     logger.debug('收到工作流消息:', msg)
@@ -179,14 +180,14 @@ const WorkflowConfig: React.FC = () => {
 
             if (!success) {
                 logger.warn('工作流启动失败')
-                message.error('工作流启动失败，请稍后重试')
+                uiMessage.error('工作流启动失败，请稍后重试')
             }
         } catch (_error) {
             logger.error(
                 '启动工作流时发生异常',
                 _error instanceof Error ? _error : new Error(String(_error))
             )
-            message.error('启动工作流时发生异常，请稍后重试')
+            uiMessage.error('启动工作流时发生异常，请稍后重试')
         }
     }
 

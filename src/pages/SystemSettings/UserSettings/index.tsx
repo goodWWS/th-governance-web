@@ -10,7 +10,6 @@ import {
     Switch,
     Tag,
     Popconfirm,
-    message,
     Row,
     Col,
     Card,
@@ -35,6 +34,7 @@ import {
 import { selectActiveRoles } from '../../../store/slices/systemRoleSlice'
 import type { ColumnsType } from 'antd/es/table'
 import { logger } from '../../../utils/logger'
+import uiMessage from '@/utils/uiMessage'
 
 const { Option } = Select
 const { Search } = Input
@@ -72,7 +72,7 @@ const UserSettings: React.FC = () => {
     // 处理删除用户
     const handleDelete = (id: string) => {
         dispatch(deleteUser(id))
-        message.success('用户删除成功')
+        uiMessage.success('用户删除成功')
     }
 
     // 处理状态变更
@@ -83,7 +83,7 @@ const UserSettings: React.FC = () => {
                 status: checked ? 'active' : 'inactive',
             })
         )
-        message.success(`用户${checked ? '启用' : '禁用'}成功`)
+        uiMessage.success(`用户${checked ? '启用' : '禁用'}成功`)
     }
 
     // 表格列配置
@@ -219,11 +219,11 @@ const UserSettings: React.FC = () => {
                         ...values,
                     })
                 )
-                message.success('用户更新成功')
+                uiMessage.success('用户更新成功')
             } else {
                 // 添加用户
                 dispatch(addUser(values))
-                message.success('用户添加成功')
+                uiMessage.success('用户添加成功')
             }
 
             setIsModalVisible(false)

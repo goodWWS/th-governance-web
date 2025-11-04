@@ -76,10 +76,10 @@ const handleApiError = (error: AxiosError): Promise<never> => {
                 new Error((data as { message?: string })?.message || '请求参数错误')
             )
         case 401:
-            // 未授权，清除 token 并跳转到登录页
+            // 未授权：清除本地凭证，但不进行路由跳转，交由调用方自行处理
+            // 说明：当前项目没有 /login 页面，且用户期望在错误时不跳转页面
             localStorage.removeItem('access_token')
             localStorage.removeItem('refresh_token')
-            window.location.href = '/login'
             return Promise.reject(
                 new Error((data as { message?: string })?.message || '未授权访问')
             )
