@@ -82,7 +82,7 @@ class WorkflowExecutionService {
         actionName: string
     ): Promise<boolean> {
         try {
-            console.debug(`开始${actionName}工作流...`, config)
+            // 开始工作流...
             // 保存配置
             this.currentConfig = config
 
@@ -92,10 +92,10 @@ class WorkflowExecutionService {
                 method: 'POST',
                 maxReconnectAttempts: 3,
                 reconnectInterval: 5000,
-                onOpen: event => {
-                    console.debug(`工作流${actionName}SSE连接已建立:`, event)
+                onOpen: _event => {
+                    // 工作流SSE连接已建立
                     this.sseStatus = SSEStatus.CONNECTED
-                    console.debug(`SSE连接已建立，开始监听工作流${actionName}过程`)
+                    // SSE连接已建立，开始监听工作流过程
 
                     // 如果配置了 onOpen 回调，在连接建立时调用
                     // 注意：此时还没有 taskId，需要等待第一个消息
@@ -103,8 +103,8 @@ class WorkflowExecutionService {
                 onMessage: event => {
                     this.handleSSEMessage(event, manager)
                 },
-                onError: event => {
-                    console.error(`工作流${actionName}SSE连接错误:`, event)
+                onError: _event => {
+                    // 工作流SSE连接错误
                     this.sseStatus = SSEStatus.ERROR
 
                     const errorMsg = `工作流${actionName}连接失败`
@@ -121,8 +121,8 @@ class WorkflowExecutionService {
                                     endTime: Date.now(),
                                 })
                             )
-                        } catch (e) {
-                            console.error('更新工作流错误状态失败', e)
+                        } catch {
+                            // 更新工作流错误状态失败
                         }
                         this.notifySubscribers(taskId, 'error')
                         this.cleanupManager(taskId, manager)
@@ -131,7 +131,7 @@ class WorkflowExecutionService {
                     config.onError?.(errorMsg)
                 },
                 onClose: () => {
-                    console.debug(`工作流${actionName}SSE连接已关闭`)
+                    // 工作流SSE连接已关闭
                     this.sseStatus = SSEStatus.DISCONNECTED
                     // 连接关闭时通知订阅者（通过 manager->taskId 映射）
                     const taskId = this.managerToTaskId.get(manager)
@@ -141,7 +141,7 @@ class WorkflowExecutionService {
                     }
                 },
                 onMaxReconnectAttemptsReached: () => {
-                    console.warn(`工作流${actionName}SSE重连次数已达上限`)
+                    // 工作流SSE重连次数已达上限
                     this.sseStatus = SSEStatus.MAX_RECONNECT_REACHED
 
                     const errorMsg = `工作流${actionName}连接失败，请检查网络连接`
@@ -158,8 +158,8 @@ class WorkflowExecutionService {
                                     endTime: Date.now(),
                                 })
                             )
-                        } catch (e) {
-                            console.error('更新工作流错误状态失败', e)
+                        } catch {
+                            // 更新工作流错误状态失败
                         }
                         this.notifySubscribers(taskId, 'error')
                         this.cleanupManager(taskId, manager)
@@ -172,11 +172,11 @@ class WorkflowExecutionService {
             // 建立SSE连接
             manager.connect()
 
-            console.debug(`SSE连接已启动，等待工作流${actionName}消息...`)
+            // SSE连接已启动，等待工作流消息...
             return true
         } catch (error) {
             const errorMsg = `${actionName}工作流失败: ${error instanceof Error ? error.message : '未知错误'}`
-            console.error(`${actionName}工作流异常:`, error)
+            // 工作流异常处理
 
             uiMessage.error(errorMsg)
 
@@ -228,8 +228,8 @@ class WorkflowExecutionService {
                 // 标记为运行中
                 try {
                     store.dispatch(updateExecutionStatus({ taskId, status: 'running' }))
-                } catch (e) {
-                    console.error('更新工作流运行状态失败', e)
+                } catch {
+                    // 更新工作流运行状态失败
                 }
 
                 if (config?.onOpen) {
@@ -238,21 +238,21 @@ class WorkflowExecutionService {
             }
 
             if (messageObj.executionStatus === 'end' && manager) {
-                console.debug('工作流执行完成，当前Redux状态:', store.getState().workflowExecution)
+                // 工作流执行完成，当前Redux状态已更新
                 // 标记完成并通知订阅者
                 try {
                     store.dispatch(
                         updateExecutionStatus({ taskId, status: 'completed', endTime: Date.now() })
                     )
-                } catch (e) {
-                    console.error('更新工作流完成状态失败', e)
+                } catch {
+                    // 更新工作流完成状态失败
                 }
                 this.notifySubscribers(taskId, 'completed')
                 manager.disconnect()
                 this.cleanupManager(taskId, manager)
             }
-        } catch (error) {
-            console.error('解析工作流启动SSE数据失败:', error)
+        } catch {
+            // 解析工作流启动SSE数据失败
         }
     }
 
@@ -264,8 +264,8 @@ class WorkflowExecutionService {
             if (this.sseManagers.size === 0) {
                 this.sseStatus = SSEStatus.DISCONNECTED
             }
-        } catch (e) {
-            console.error('清理SSE管理器失败', e)
+        } catch {
+            // 清理SSE管理器失败
         }
     }
 
@@ -289,14 +289,16 @@ class WorkflowExecutionService {
                     if (set.size === 0) {
                         this.subscribers.delete(taskId)
                     }
-                } catch (e) {
-                    console.error('取消订阅失败', e)
+                } catch {
+                    // 取消订阅失败
                 }
             }
-        } catch (e) {
-            console.error('注册订阅者失败', e)
+        } catch {
+            // 注册订阅者失败
             // 返回空操作的取消订阅函数，避免调用端出错
-            return () => {}
+            return () => {
+                // 空操作函数
+            }
         }
     }
 
@@ -307,8 +309,8 @@ class WorkflowExecutionService {
         subs.forEach(cb => {
             try {
                 cb({ type, taskId })
-            } catch (e) {
-                console.error('订阅者回调执行失败', e)
+            } catch {
+                // 订阅者回调执行失败
             }
         })
     }
@@ -318,7 +320,7 @@ class WorkflowExecutionService {
      */
     public stopWorkflow(): void {
         this.disconnectAll()
-        console.debug('工作流执行已停止')
+        // 工作流执行已停止
     }
 
     /**
@@ -327,7 +329,7 @@ class WorkflowExecutionService {
     public resetWorkflow(): void {
         this.disconnectAll()
         this.currentConfig = null
-        console.debug('工作流状态已重置')
+        // 工作流状态已重置
     }
 
     /**
@@ -357,14 +359,14 @@ class WorkflowExecutionService {
      */
     private disconnectAll(): void {
         try {
-            for (const [taskId, mgr] of this.sseManagers.entries()) {
-                console.debug('断开工作流启动SSE连接', taskId)
+            for (const [_taskId, mgr] of this.sseManagers.entries()) {
+                // 断开工作流启动SSE连接
                 mgr.disconnect()
             }
             this.sseManagers.clear()
             this.managerToTaskId.clear()
-        } catch (e) {
-            console.error('断开所有SSE连接失败', e)
+        } catch {
+            // 断开所有SSE连接失败
         }
         this.sseStatus = SSEStatus.DISCONNECTED
     }

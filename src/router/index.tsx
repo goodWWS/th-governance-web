@@ -25,6 +25,7 @@ import IndexMergeRules from '../pages/DataManagement/IndexMergeRules'
 import IndexProcessingManagement from '../pages/DataManagement/IndexProcessingManagement'
 import DataQualityControlManagement from '../pages/DataManagement/DataQualityControl'
 import DataQualityAssessment from '../pages/DataManagement/DataQualityAssessment'
+import DataParsing, { DataAnnotation, MedicalRecordParsing } from '../pages/DataParsing'
 
 export const router = createBrowserRouter([
     {
@@ -140,6 +141,18 @@ export const router = createBrowserRouter([
             {
                 path: 'data-management/quality-assessment',
                 element: <DataQualityAssessment />,
+            },
+            {
+                path: 'data-parsing',
+                element: <DataParsing />,
+            },
+            {
+                path: 'data-parsing/annotation',
+                element: <DataAnnotation />,
+            },
+            {
+                path: 'data-parsing/medical-record',
+                element: <MedicalRecordParsing />,
             },
         ],
     },

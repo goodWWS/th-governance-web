@@ -18,6 +18,8 @@ import {
     KeyOutlined,
     ToolOutlined,
     StarOutlined,
+    ApiOutlined,
+    TagOutlined,
 } from '@ant-design/icons'
 import { Button, Layout, Menu, MenuProps } from 'antd'
 import React, { useState } from 'react'
@@ -171,6 +173,28 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                 },
             ],
         },
+        {
+            key: 'data-parsing',
+            icon: <ApiOutlined />,
+            label: '数据解析',
+            children: [
+                {
+                    key: '/data-parsing',
+                    icon: <ApiOutlined />,
+                    label: '数据解析首页',
+                },
+                {
+                    key: '/data-parsing/annotation',
+                    icon: <TagOutlined />,
+                    label: '数据标注',
+                },
+                {
+                    key: '/data-parsing/medical-record',
+                    icon: <FileTextOutlined />,
+                    label: '电子病历解析',
+                },
+            ],
+        },
         // {
         //     key: '/style-demo',
         //     icon: <BgColorsOutlined />,
@@ -206,6 +230,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             // 如果是数据管理相关路径，展开数据管理菜单
             if (location.pathname.startsWith('/data-management')) {
                 return ['data-management']
+            }
+            // 如果是数据解析相关路径，展开数据解析菜单
+            if (location.pathname.startsWith('/data-parsing')) {
+                return ['data-parsing']
             }
         }
         return []

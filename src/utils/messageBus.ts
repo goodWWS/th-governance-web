@@ -16,7 +16,7 @@ class MessageBus {
             this.buffer.forEach(action => {
                 try {
                     fn(action)
-                } catch (e) {
+                } catch {
                     /* swallow */
                 }
             })
@@ -36,7 +36,7 @@ class MessageBus {
         this.subscribers.forEach(fn => {
             try {
                 fn(action)
-            } catch (e) {
+            } catch {
                 /* swallow */
             }
         })
