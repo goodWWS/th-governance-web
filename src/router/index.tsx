@@ -16,6 +16,15 @@ import SystemSettings from '../pages/SystemSettings'
 import UserSettings from '../pages/SystemSettings/UserSettings'
 import RoleSettings from '../pages/SystemSettings/RoleSettings'
 import PermissionSettings from '../pages/SystemSettings/PermissionSettings'
+import DataManagement from '../pages/DataManagement'
+import MetadataManagement from '../pages/DataManagement/MetadataManagement'
+import DataStandardManagement from '../pages/DataManagement/DataStandardManagement'
+import TableRelationshipManagement from '../pages/DataManagement/TableRelationshipManagement'
+import IndexGenerationRules from '../pages/DataManagement/IndexGenerationRules'
+import IndexMergeRules from '../pages/DataManagement/IndexMergeRules'
+import IndexProcessingManagement from '../pages/DataManagement/IndexProcessingManagement'
+import DataQualityControlManagement from '../pages/DataManagement/DataQualityControl'
+import DataQualityAssessment from '../pages/DataManagement/DataQualityAssessment'
 
 export const router = createBrowserRouter([
     {
@@ -95,6 +104,42 @@ export const router = createBrowserRouter([
                         element: <PermissionSettings />,
                     },
                 ],
+            },
+            {
+                path: 'data-management',
+                element: <DataManagement />,
+            },
+            {
+                path: 'data-management/metadata',
+                element: <MetadataManagement />,
+            },
+            {
+                path: 'data-management/standards',
+                element: <DataStandardManagement />,
+            },
+            {
+                path: 'data-management/relationships',
+                element: <TableRelationshipManagement />,
+            },
+            {
+                path: 'data-management/index-rules',
+                element: <IndexGenerationRules />,
+            },
+            {
+                path: 'data-management/merge-rules',
+                element: <IndexMergeRules />,
+            },
+            {
+                path: 'data-management/index-processing',
+                element: <IndexProcessingManagement />,
+            },
+            {
+                path: 'data-management/quality-control',
+                element: <DataQualityControlManagement />,
+            },
+            {
+                path: 'data-management/quality-assessment',
+                element: <DataQualityAssessment />,
             },
         ],
     },

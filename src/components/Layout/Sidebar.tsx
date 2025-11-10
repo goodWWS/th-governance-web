@@ -14,6 +14,10 @@ import {
     SettingOutlined,
     TeamOutlined,
     UserOutlined,
+    MergeCellsOutlined,
+    KeyOutlined,
+    ToolOutlined,
+    StarOutlined,
 } from '@ant-design/icons'
 import { Button, Layout, Menu, MenuProps } from 'antd'
 import React, { useState } from 'react'
@@ -115,6 +119,58 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                 },
             ],
         },
+        {
+            key: 'data-management',
+            icon: <DatabaseOutlined />,
+            label: '数据管理',
+            children: [
+                {
+                    key: '/data-management',
+                    icon: <DatabaseOutlined />,
+                    label: '数据管理首页',
+                },
+                {
+                    key: '/data-management/metadata',
+                    icon: <FileTextOutlined />,
+                    label: '元数据管理',
+                },
+                {
+                    key: '/data-management/standards',
+                    icon: <CheckCircleOutlined />,
+                    label: '数据标准管理',
+                },
+                {
+                    key: '/data-management/relationships',
+                    icon: <LinkOutlined />,
+                    label: '表关联关系管理',
+                },
+                {
+                    key: '/data-management/index-rules',
+                    icon: <KeyOutlined />,
+                    label: '主索引生成规则',
+                },
+                {
+                    key: '/data-management/merge-rules',
+                    icon: <MergeCellsOutlined />,
+                    label: '主索引合并规则',
+                },
+                {
+                    key: '/data-management/index-processing',
+                    icon: <ToolOutlined />,
+                    label: '主索引处理管理',
+                },
+                {
+                    key: '/data-management/quality-control',
+                    icon: <SafetyCertificateOutlined />,
+                    label: '数据质控',
+                },
+                {
+                    key: '/data-management/quality-assessment',
+                    icon: <StarOutlined />,
+                    label: '数据质量评估',
+                },
+            ],
+        },
         // {
         //     key: '/style-demo',
         //     icon: <BgColorsOutlined />,
@@ -146,6 +202,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             // 如果是系统设置相关路径，展开系统设置菜单
             if (location.pathname.startsWith('/system-settings')) {
                 return ['system-settings']
+            }
+            // 如果是数据管理相关路径，展开数据管理菜单
+            if (location.pathname.startsWith('/data-management')) {
+                return ['data-management']
             }
         }
         return []
