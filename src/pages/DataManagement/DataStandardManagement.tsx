@@ -261,18 +261,23 @@ const DataStandardManagement: React.FC = () => {
         form.resetFields()
     }
 
-    // const getStatusColor = (status: string) => {
-    //     switch (status) {
-    //         case 'published':
-    //             return 'success'
-    //         case 'draft':
-    //             return 'warning'
-    //         case 'deprecated':
-    //             return 'error'
-    //         default:
-    //             return 'default'
-    //     }
-    // }
+    /**
+     * 根据数据标准状态返回 AntD Tag 预设颜色标识
+     * - 使用预设语义色，保证视觉统一与可读性
+     * - 对未知状态返回 'default' 以避免运行时错误
+     */
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'published':
+                return 'success'
+            case 'draft':
+                return 'warning'
+            case 'deprecated':
+                return 'error'
+            default:
+                return 'default'
+        }
+    }
 
     const getStatusText = (status: string) => {
         switch (status) {

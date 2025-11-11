@@ -7,6 +7,7 @@ import {
     Input,
     Select,
     Tag,
+    Badge,
     Modal,
     Form,
     Row,

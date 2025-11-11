@@ -767,20 +767,4 @@ const MedicalRecordParsing: React.FC = () => {
     )
 }
 
-// 简单的统计组件
-const Statistic: React.FC<{
-    title: string
-    value: number | string
-    prefix?: React.ReactNode
-    valueStyle?: React.CSSProperties
-}> = ({ title, value, prefix, valueStyle }) => (
-    <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>{title}</div>
-        <div style={{ fontSize: '24px', fontWeight: 'bold', ...valueStyle }}>
-            {prefix}
-            {value}
-        </div>
-    </div>
-)
-
 export default MedicalRecordParsing

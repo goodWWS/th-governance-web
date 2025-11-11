@@ -20,6 +20,9 @@ import {
     StarOutlined,
     ApiOutlined,
     TagOutlined,
+    SearchOutlined,
+    LineChartOutlined,
+    EyeOutlined,
 } from '@ant-design/icons'
 import { Button, Layout, Menu, MenuProps } from 'antd'
 import React, { useState } from 'react'
@@ -100,28 +103,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             ],
         },
         {
-            key: 'system-settings',
-            icon: <SettingOutlined />,
-            label: '系统设置',
-            children: [
-                {
-                    key: '/system-settings/users',
-                    icon: <UserOutlined />,
-                    label: '用户设置',
-                },
-                {
-                    key: '/system-settings/roles',
-                    icon: <TeamOutlined />,
-                    label: '角色设置',
-                },
-                {
-                    key: '/system-settings/permissions',
-                    icon: <SafetyOutlined />,
-                    label: '权限设置',
-                },
-            ],
-        },
-        {
             key: 'data-management',
             icon: <DatabaseOutlined />,
             label: '数据管理',
@@ -192,6 +173,61 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                     key: '/data-parsing/medical-record',
                     icon: <FileTextOutlined />,
                     label: '电子病历解析',
+                },
+            ],
+        },
+        // 数据检索模块
+        {
+            key: 'data-retrieval',
+            icon: <SearchOutlined />,
+            label: '数据检索',
+            children: [
+                {
+                    key: '/data-retrieval/fulltext',
+                    icon: <SearchOutlined />,
+                    label: '全文检索',
+                },
+                {
+                    key: '/data-retrieval/advanced',
+                    icon: <FileTextOutlined />,
+                    label: '高级检索',
+                },
+                {
+                    key: '/data-retrieval/condition-tree',
+                    icon: <LinkOutlined />,
+                    label: '条件树检索',
+                },
+                {
+                    key: '/data-retrieval/analysis',
+                    icon: <LineChartOutlined />,
+                    label: '检索分析',
+                },
+                {
+                    key: '/data-retrieval/visualization',
+                    icon: <EyeOutlined />,
+                    label: '可视化查看',
+                },
+            ],
+        },
+        {
+            key: 'system-settings',
+            icon: <SettingOutlined />,
+            label: '系统设置',
+            children: [
+                {
+                    key: '/system-settings/users',
+                    icon: <UserOutlined />,
+                    label: '用户设置',
+                },
+                {
+                    key: '/system-settings/roles',
+                    icon: <TeamOutlined />,
+                    label: '角色设置',
+                },
+                {
+                    key: '/system-settings/permissions',
+                    icon: <SafetyOutlined />,
+                    label: '权限设置',
                 },
             ],
         },

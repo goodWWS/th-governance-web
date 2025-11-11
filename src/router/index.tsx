@@ -26,6 +26,11 @@ import IndexProcessingManagement from '../pages/DataManagement/IndexProcessingMa
 import DataQualityControlManagement from '../pages/DataManagement/DataQualityControl'
 import DataQualityAssessment from '../pages/DataManagement/DataQualityAssessment'
 import DataParsing, { DataAnnotation, MedicalRecordParsing } from '../pages/DataParsing'
+import FullTextSearch from '../pages/DataRetrieval/FullTextSearch'
+import AdvancedSearch from '../pages/DataRetrieval/AdvancedSearch'
+import ConditionTreeSearch from '../pages/DataRetrieval/ConditionTreeSearch'
+import SearchAnalysis from '../pages/DataRetrieval/SearchAnalysis'
+import VisualizationView from '../pages/DataRetrieval/VisualizationView'
 
 export const router = createBrowserRouter([
     {
@@ -153,6 +158,41 @@ export const router = createBrowserRouter([
             {
                 path: 'data-parsing/medical-record',
                 element: <MedicalRecordParsing />,
+            },
+            // 数据检索模块
+            {
+                path: 'data-retrieval',
+                children: [
+                    {
+                        index: true,
+                        element: <FullTextSearch />,
+                    },
+                    {
+                        path: 'fulltext',
+                        element: <FullTextSearch />,
+                    },
+                    {
+                        path: 'advanced',
+                        element: <AdvancedSearch />,
+                    },
+                    {
+                        path: 'condition-tree',
+                        element: <ConditionTreeSearch />,
+                    },
+                    {
+                        path: 'analysis',
+                        element: <SearchAnalysis />,
+                    },
+                    // 支持无 ID 的可视化路由，用于演示或回退到模拟数据
+                    {
+                        path: 'visualization',
+                        element: <VisualizationView />,
+                    },
+                    {
+                        path: 'visualization/:id',
+                        element: <VisualizationView />,
+                    },
+                ],
             },
         ],
     },

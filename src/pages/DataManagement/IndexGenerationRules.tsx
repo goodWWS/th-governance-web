@@ -27,6 +27,7 @@ import {
     SearchOutlined,
     ReloadOutlined,
     EyeOutlined,
+    CopyOutlined,
     PlayCircleOutlined,
 } from '@ant-design/icons'
 import { useDebounce } from '../../hooks/useDebounce'
